@@ -1,22 +1,37 @@
-import type { Request, Response } from 'express';
-import type { AdminAuthenticatedRequest } from '../types/admin.type.js';
-import { adminAuthService } from '../services/admin.auth.service.js';
-import { successResponse } from '../utils/response.util.js';
-import { asyncHandler } from '../utils/globalErrorHandler.util.js';
+import type { Request, Response } from 'express'
+import type { AdminAuthenticatedRequest } from '../types/admin.type.js'
+import { adminAuthService } from '../services/admin.auth.service.js'
+import { successResponse } from '../utils/response.util.js'
+import { asyncHandler } from '../utils/globalErrorHandler.util.js'
+import { adminRepository } from '../repositories/admin.repository.js'
 
 export const adminLogin = asyncHandler(async (req: Request, res: Response) => {
-  const result = await adminAuthService.login(req.body);
+  const result = await adminAuthService.login(req.body)
 
   successResponse(res, {
     statusCode: 200,
     message: 'Admin logged in successfully',
     data: result,
-  });
-});
+  })
+})
 
-export const getAdminMe = asyncHandler(async (req: AdminAuthenticatedRequest, res: Response) => {
-  successResponse(res, {
-    statusCode: 200,
-    data: { admin: req.admin },
-  });
-});
+export const getAdminMe = asyncHandler(
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    successResponse(res, {
+      statusCode: 200,
+      data: { admin: req.admin },
+    })
+  }
+)
+
+export const addQuestion = asyncHandler(
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    const result = await adminRepository.addQuestion(req.body.question)
+
+    successResponse(res, {
+      statusCode: 201,
+      message: 'Question added successfully',
+      data: result,
+    })
+  }
+)

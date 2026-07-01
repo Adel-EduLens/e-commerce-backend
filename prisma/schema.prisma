@@ -26,12 +26,30 @@ model User {
   phone     String?
   role      String   @default("user")
 }
+
+model Trader {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  phone     String?
+  role      String   @default("trader")
+}
+
 model Admin {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
-  password  String  
+  password  String
   createdAt DateTime @default(now())
   phone     String?
-  role      String   @default("trader")
+  role      String   @default("admin")
+}
+
+model FrequentlyAskedQuestion {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
 }
