@@ -26,7 +26,7 @@ model User {
   phone     String?
   role      String   @default("user")
 }
-model Trader{
+model Admin {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
