@@ -46,16 +46,16 @@ export const authService = {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: (data.role as "user" | "trader") || "user",
-        phone: data.phone,
-      } as any);
+        role: (data.role as "user" | "trader") || "trader",
+        phone: data.phone??"",
+      });
     } else {
       newUser = await userRepository.create({
         name: data.name,
         email: data.email,
         password: hashedPassword,
         role: (data.role as "user" | "trader") || "user",
-        phone: data.phone,
+        phone: data.phone??"",
       });
     }
 

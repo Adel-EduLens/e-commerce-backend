@@ -1,7 +1,8 @@
 import prisma from "../utils/prismaClient.js";
+import type { SignupData } from "../types/auth.type.js";
 
 class TraderProfileRepository {
-  async create(data) {
+  async create(data: SignupData) {
     return prisma.trader.create({
       data,
     });

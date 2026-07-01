@@ -1,12 +1,11 @@
-// import { User } from '../models/User.model.js';
 import prisma from "../utils/prismaClient.js";
+import type { SignupData } from "../types/auth.type.js";
 
-import type { IUser } from "../types/user.type.js";
-import { BaseRepository } from "./base.repository.js";
+
 
 class UserRepository {
 
-  async create(data) {
+  async create(data:SignupData) {
     return prisma.user.create({
       data,
     });
