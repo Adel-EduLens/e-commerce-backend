@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE `Trader` ADD COLUMN `role` VARCHAR(191) NOT NULL DEFAULT 'trader';
-
--- AlterTable
-ALTER TABLE `User` ADD COLUMN `role` VARCHAR(191) NOT NULL DEFAULT 'user';
