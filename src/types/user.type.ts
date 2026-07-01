@@ -20,7 +20,6 @@ export interface IUserResponse {
   phone?: string | undefined
   createdAt: Date
   updatedAt: Date
-  //hi
 }
 
 export interface AuthenticatedRequest extends Request {
