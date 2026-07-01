@@ -1,7 +1,8 @@
-import { userRepository } from '../repositories/user.repository.js';
-import { traderProfileRepository } from '../repositories/traderProfile.repository.js';
-import { signToken } from '../utils/jwt.util.js';
-import AppError from '../utils/AppError.util.js';
+import { userRepository } from "../repositories/user.repository.js";
+import { traderProfileRepository } from "../repositories/traderProfile.repository.js";
+import { signToken } from "../utils/jwt.util.js";
+import AppError from "../utils/AppError.util.js";
+import bcrypt from "bcrypt";
 
 interface SignupData {
   name: string;
@@ -19,32 +20,43 @@ interface LoginData {
 
 export const authService = {
   async signup(data: SignupData) {
-    const existingUser = await userRepository.findByEmail(data.email);
-    if (existingUser) {
-      throw new AppError('Email is already registered', 400);
+    let exist ;
+    if (data.role === "trader") {
+      exist = await traderProfileRepository.findByEmail(data.email);
+      console.log(exist);
+    } else {
+      exist = await userRepository.findByEmail(data.email);
     }
 
-    const newUser = await userRepository.create({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      role: (data.role as 'user' | 'trader') || 'user',
-      phone: data.phone,
-    });
-
-    if (newUser.role === 'trader') {
-      await traderProfileRepository.create({
-        user: newUser._id,
-        storeName: data.storeName || data.name,
+    if (exist) {
+      throw new AppError("Email is already registered", 400);
+    }
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    let newUser;
+    if (data.role === "trader") {
+      newUser = await traderProfileRepository.create({
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+        role: (data.role as "user" | "trader") || "user",
+        phone: data.phone,
       } as any);
+    } else {
+      newUser = await userRepository.create({
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+        role: (data.role as "user" | "trader") || "user",
+        phone: data.phone,
+      });
     }
 
-    const token = signToken(newUser._id.toString(), newUser.role);
+    const token = signToken(newUser.id.toString(), newUser.role);
 
     return {
       token,
       user: {
-        id: newUser._id,
+        id: newUser.id,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
@@ -56,20 +68,20 @@ export const authService = {
   async login(data: LoginData) {
     const user = await userRepository.findByEmail(data.email);
     if (!user) {
-      throw new AppError('Invalid email or password', 401);
+      throw new AppError("Invalid email or password", 401);
     }
 
-    const isPasswordCorrect = await user.comparePassword(data.password);
+    const isPasswordCorrect = await bcrypt.compare(data.password, user.password);
     if (!isPasswordCorrect) {
-      throw new AppError('Invalid email or password', 401);
+      throw new AppError("Invalid email or password", 401);
     }
 
-    const token = signToken(user._id.toString(), user.role);
+    const token = signToken(user.id.toString(), user.role);
 
     return {
       token,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,

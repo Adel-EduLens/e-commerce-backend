@@ -20,15 +20,6 @@ export const signupSchema = Joi.object({
     'any.only': 'Role must be user or trader',
   }),
   phone: Joi.string().allow('', null).optional(),
-  storeName: Joi.string().min(2).max(100).when('role', {
-    is: 'trader',
-    then: Joi.required(),
-    otherwise: Joi.forbidden(),
-  }).messages({
-    'string.empty': 'Store name cannot be empty',
-    'string.min': 'Store name must be at least 2 characters long',
-    'any.required': 'Store name is required for traders',
-  }),
 });
 
 export const loginSchema = Joi.object({
