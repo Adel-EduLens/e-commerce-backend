@@ -9,6 +9,9 @@ class TraderProfileRepository {
   async findByEmail(email: string) {
     return prisma.trader.findFirst({ where: { email } });
   }
+  async findByPhone(phone: string) {
+    return prisma.trader.findFirst({ where: { phone } });
+  }
 }
 export const traderProfileRepository = new TraderProfileRepository();
 

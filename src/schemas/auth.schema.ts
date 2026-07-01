@@ -19,7 +19,13 @@ export const signupSchema = Joi.object({
   role: Joi.string().valid('user', 'trader').default('user').messages({
     'any.only': 'Role must be user or trader',
   }),
-  phone: Joi.string().allow('', null).optional(),
+phone: Joi.string()
+  .pattern(/^01[0125][0-9]{8}$/)
+  .optional()
+  .allow("", null)
+  .messages({
+    "string.pattern.base": "Phone number must be a valid mobile number",
+  }),
 });
 
 export const loginSchema = Joi.object({

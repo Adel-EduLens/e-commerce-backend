@@ -20,16 +20,24 @@ interface LoginData {
 
 export const authService = {
   async signup(data: SignupData) {
-    let exist ;
+    let emailExist;
+    let phoneExist;
     if (data.role === "trader") {
-      exist = await traderProfileRepository.findByEmail(data.email);
-      console.log(exist);
+      emailExist = await traderProfileRepository.findByEmail(data.email);
+      phoneExist = data.phone
+        ? await traderProfileRepository.findByPhone(data.phone)
+        : null;
     } else {
-      exist = await userRepository.findByEmail(data.email);
+      emailExist = await userRepository.findByEmail(data.email);
+      phoneExist = data.phone
+        ? await userRepository.findByPhone(data.phone)
+        : null;
     }
 
-    if (exist) {
+    if (emailExist) {
       throw new AppError("Email is already registered", 400);
+    } else if (phoneExist) {
+      throw new AppError("Phone number is already registered", 400);
     }
     const hashedPassword = await bcrypt.hash(data.password, 10);
     let newUser;
@@ -71,7 +79,10 @@ export const authService = {
       throw new AppError("Invalid email or password", 401);
     }
 
-    const isPasswordCorrect = await bcrypt.compare(data.password, user.password);
+    const isPasswordCorrect = await bcrypt.compare(
+      data.password,
+      user.password,
+    );
     if (!isPasswordCorrect) {
       throw new AppError("Invalid email or password", 401);
     }

@@ -6,7 +6,6 @@ import { asyncHandler } from '../utils/globalErrorHandler.util.js';
 
 export const signup = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.signup(req.body);
-
   successResponse(res, {
     statusCode: 201,
     message: 'User registered successfully',

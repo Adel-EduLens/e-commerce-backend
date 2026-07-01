@@ -15,6 +15,9 @@ class UserRepository {
   async findByEmail(email: string) {
     return prisma.user.findFirst({ where: { email } });
   }
+  async findByPhone(phone: string) {
+    return prisma.user.findFirst({ where: { phone } });
+  }
 }
 
 export const userRepository = new UserRepository();
