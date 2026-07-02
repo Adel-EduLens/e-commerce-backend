@@ -7,15 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Trader {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  phone     String?
-  role      String   @default("trader")
-}
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -52,4 +43,12 @@ model FrequentlyAskedQuestion {
   question  String
   answer    String
   createdAt DateTime @default(now())
+}
+model Prize {
+  id        String   @id @default(cuid())
+  name      String
+  weight    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
 }
