@@ -6,6 +6,7 @@ import { connectDB, mongoose } from './db/db.connection.js';
 import { globalErrorHandler } from './utils/globalErrorHandler.util.js';
 import authRouter from './routes/auth.routes.js';
 import adminAuthRouter from './routes/admin.auth.routes.js';
+import prizeRouter from './routes/prize.route.js';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // App routes
 app.use('/api/auth', authRouter);
 app.use('/api/admin/auth', adminAuthRouter);
+app.use('/api/prizes', prizeRouter);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with MongoDB!');
