@@ -1,26 +1,28 @@
-import { adminRepository } from '../repositories/admin.repository.js';
-import { signToken } from '../utils/jwt.util.js';
-import AppError from '../utils/AppError.util.js';
-import bcrypt from 'bcrypt';
+import { adminRepository } from '../repositories/admin.repository.js'
+import { signToken } from '../utils/jwt.util.js'
+import AppError from '../utils/AppError.util.js'
+import bcrypt from 'bcrypt'
 
 interface LoginData {
-  email: string;
-  password: string;
+  email: string
+  password: string
 }
 
 export const adminAuthService = {
   async login(data: LoginData) {
-    const admin = await adminRepository.findByEmail(data.email);
+    const admin = await adminRepository.findByEmail(data.email)
     if (!admin) {
-      throw new AppError('Invalid email or password', 401);
+      throw new AppError('Invalid email or password', 401)
     }
-
-    const isPasswordCorrect = await bcrypt.compare(data.password, admin.password);
+    const isPasswordCorrect = await bcrypt.compare(
+      data.password,
+      admin.password
+    )
     if (!isPasswordCorrect) {
-      throw new AppError('Invalid email or password', 401);
+      throw new AppError('Invalid email or password', 401)
     }
 
-    const token = signToken(admin.id.toString(), 'admin');
+    const token = signToken(admin.id.toString(), 'admin')
 
     return {
       token,
@@ -31,6 +33,6 @@ export const adminAuthService = {
         role: 'admin' as const,
         phone: admin.phone,
       },
-    };
+    }
   },
-};
+}
