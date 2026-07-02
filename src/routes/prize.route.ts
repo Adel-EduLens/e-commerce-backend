@@ -10,10 +10,9 @@ const router = Router();
 
 router
   .get("/", getPrizes)
-  // .post("/", requireAdminAuth, addPrize)
-  .post("/", addPrize)
+  .post("/", requireAdminAuth, addPrize)
   .post("/spin", spinPrize)
-  // .delete("/:id", requireAdminAuth, deletePrize)
-  .delete("/:id", deletePrize);
+  .delete("/:id", requireAdminAuth, deletePrize);
+  
 
 export default router;
