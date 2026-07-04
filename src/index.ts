@@ -7,6 +7,7 @@ import authRouter from './routes/auth.routes.js'
 import adminAuthRouter from './routes/admin.auth.routes.js'
 import prizeRouter from './routes/prize.route.js'
 import FAQRouter from './routes/admin.FAQ.routes.js'
+import helpCenterRouter from './routes/admin.helpCenter.routes.js'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -26,6 +27,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // App routes
+app.use('/api/admin/help-center', helpCenterRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
 app.use('/api/admin/auth', adminAuthRouter)

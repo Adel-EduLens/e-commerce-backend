@@ -68,6 +68,39 @@ class AdminRepository extends BaseRepository<IAdmin> {
   async findByEmail(email: string) {
     return prisma.admin.findFirst({ where: { email } })
   }
+
+  async addvideo(title: string, category: string, youtubeId: string) {
+    return prisma.helpCenterVideo.create({
+      data: { title, category, youtubeId },
+    })
+  }
+  async getVideos() {
+    return prisma.helpCenterVideo.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        youtubeId: true,
+        createdAt: true,
+      },
+    })
+  }
+  async updateVideo(
+    id: string,
+    title: string,
+    category: string,
+    youtubeId: string
+  ) {
+    return prisma.helpCenterVideo.update({
+      where: { id },
+      data: { title, category, youtubeId },
+    })
+  }
+
+  async deleteVideo(id: string) {
+    return prisma.helpCenterVideo.delete({ where: { id } })
+  }
 }
 
 export const adminRepository = new AdminRepository()
