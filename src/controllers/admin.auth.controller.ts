@@ -76,6 +76,31 @@ export const deleteQuestion = asyncHandler(
   }
 )
 
+export const getAllUsers = asyncHandler(
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    const result = await adminRepository.getAllUsers()
+
+    successResponse(res, {
+      statusCode: 200,
+      message: 'Users fetched successfully',
+      data: result,
+    })
+  }
+)
+
+export const changeStatus = asyncHandler(
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    const userId = Number(req.params.id)
+    const { status } = req.body as { status: 'active' | 'suspended' }
+    const result = await adminRepository.changeStatus(userId, status)
+    successResponse(res, {
+      statusCode: 200,
+      message: 'User status updated successfully',
+      data: result,
+    })
+  }
+)
+
 export const updateQuestion = asyncHandler(
   async (req: AdminAuthenticatedRequest, res: Response) => {
     const questionId = Number(req.params.id)

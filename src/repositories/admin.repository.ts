@@ -36,6 +36,35 @@ class AdminRepository extends BaseRepository<IAdmin> {
     })
   }
 
+  async getAllUsers() {
+    return prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    })
+  }
+
+  async changeStatus(userId: number, status: 'active' | 'suspended') {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { status },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    })
+  }
+
   async findByEmail(email: string) {
     return prisma.admin.findFirst({ where: { email } })
   }

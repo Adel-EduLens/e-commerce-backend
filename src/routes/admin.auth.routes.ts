@@ -2,8 +2,10 @@ import { Router } from 'express'
 import {
   addQuestion,
   adminLogin,
+  changeStatus,
   deleteQuestion,
   getAdminMe,
+  getAllUsers,
   getPublicQuestions,
   getQuestions,
   updateQuestion,
@@ -34,5 +36,9 @@ router.put(
   validateRequest(addQuestionSchema),
   updateQuestion
 )
+
+router.get('/users', requireAdminAuth, getAllUsers)
+
+router.put('/users/:id/status', requireAdminAuth, changeStatus)
 
 export default router

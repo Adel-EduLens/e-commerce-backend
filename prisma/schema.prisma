@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -16,6 +15,7 @@ model User {
   createdAt DateTime @default(now())
   phone     String?
   role      String   @default("user")
+  status    String   @default("active")
 }
 
 model Admin {
@@ -34,11 +34,11 @@ model FrequentlyAskedQuestion {
   answer    String   @db.Text
   createdAt DateTime @default(now())
 }
+
 model Prize {
   id        String   @id @default(cuid())
   name      String
   weight    Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }
