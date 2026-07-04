@@ -68,7 +68,9 @@ class AdminRepository extends BaseRepository<IAdmin> {
   async findByEmail(email: string) {
     return prisma.admin.findFirst({ where: { email } })
   }
-
+  async FindById(id: number) {
+    return prisma.admin.findUnique({ where: { id } })
+  }
   async addvideo(title: string, category: string, youtubeId: string) {
     return prisma.helpCenterVideo.create({
       data: { title, category, youtubeId },
