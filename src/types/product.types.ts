@@ -4,7 +4,6 @@ export interface ProductCreateData {
   price: number;
   brand: string;
   rating: number;
-  reviews: string;
   categoryId: string;
   images: string[];
   sizes: string[];
@@ -18,7 +17,6 @@ export interface ProductUpdateData {
   price?: number;
   brand?: string;
   rating?: number;
-  reviews?: string;
   categoryId?: string;
   images?: string[];
   sizes?: string[];

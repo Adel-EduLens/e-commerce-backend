@@ -16,6 +16,7 @@ model User {
   phone     String?
   role      String   @default("user")
   status    String   @default("active")
+  reviews   Review[]
 }
 model Trader {
   id        Int      @id @default(autoincrement())
@@ -71,7 +72,7 @@ model Product {
   sizes       ProductSize[]
   colors      ProductColor[]
 
-  reviews     String?
+  reviews     Review[]
 
   traderId    Int
   trader      Trader   @relation(fields: [traderId], references: [id])
@@ -105,4 +106,22 @@ model ProductColor {
 
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+
+  rating    Int
+  comment   String?  @db.Text
+
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
 }

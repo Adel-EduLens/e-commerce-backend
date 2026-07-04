@@ -1,6 +1,8 @@
-
 import prisma from "../utils/prismaClient.js";
-import { ProductCreateData, ProductUpdateData } from "../types/product.types.js";
+import {
+  ProductCreateData,
+  ProductUpdateData,
+} from "../types/product.types.js";
 
 class ProductRepository {
   create(data: ProductCreateData) {
@@ -11,7 +13,6 @@ class ProductRepository {
         price: data.price,
         brand: data.brand,
         rating: data.rating ?? 0,
-        reviews: data.reviews,
         trader: {
           connect: {
             id: data.traderId,
@@ -49,13 +50,7 @@ class ProductRepository {
     });
   }
 
-  findAll({
-    search,
-    categoryId,
-  }: {
-    search?: string;
-    categoryId?: string;
-  }) {
+  findAll({ search, categoryId }: { search?: string; categoryId?: string }) {
     return prisma.product.findMany({
       where: {
         ...(search && {
@@ -105,11 +100,12 @@ class ProductRepository {
 
       data: {
         ...(data.name !== undefined && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
         ...(data.price !== undefined && { price: data.price }),
         ...(data.brand !== undefined && { brand: data.brand }),
         ...(data.rating !== undefined && { rating: data.rating }),
-        ...(data.reviews !== undefined && { reviews: data.reviews }),
 
         ...(data.categoryId && {
           category: { connect: { id: data.categoryId } },
@@ -156,6 +152,16 @@ class ProductRepository {
     return prisma.product.delete({
       where: {
         id,
+      },
+    });
+  }
+  updateRating(id: string, rating: number) {
+    return prisma.product.update({
+      where: {
+        id,
+      },
+      data: {
+        rating,
       },
     });
   }

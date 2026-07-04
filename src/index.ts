@@ -10,6 +10,7 @@ import prizeRouter from './routes/prize.route.js'
 import FAQRouter from './routes/admin.FAQ.routes.js'
 import categoryRouter from './routes/category.route.js';
 import productRouter from './routes/product.route.js';
+import reviewRouter from './routes/review.route.js';
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -39,6 +40,7 @@ app.use('/api/admin/auth', adminAuthRouter)
 app.use('/api/prizes', prizeRouter)
 app.use('/api/proudcts', productRouter);
 app.use('/api/categories', categoryRouter);
+app.use('/api/reviews', reviewRouter);
 
 
 app.get('/', (req: Request, res: Response) => {
