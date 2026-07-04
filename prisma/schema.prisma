@@ -7,16 +7,58 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  phone     String?
-  role      String   @default("user")
-  status    String   @default("active")
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
 }
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+  REWARD_EARNED
+  REWARD_REDEEMED
+  REFUND
+}
+
+enum NotificationType {
+  ORDER
+  WALLET
+  PROMOTION
+  SYSTEM
+}
+
+model User {
+  id            Int              @id @default(autoincrement())
+  email         String           @unique
+  name          String?
+  password      String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @default(now()) @updatedAt
+  phone         String?
+  role          String           @default("user")
+  status        String           @default("active")
+  avatar        String?
+  dateOfBirth   DateTime?
+  gender        String?
+  orders        Order[]
+  wallet        Wallet?
+  notifications Notification[]
+  notifyMe      NotifyMe[]
+  settings      UserSettings?
+}
+
 model Trader {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -26,6 +68,7 @@ model Trader {
   phone     String?
   role      String   @default("trader")
 }
+
 model Admin {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -50,6 +93,7 @@ model Prize {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model Category {
   id        String    @id @default(cuid())
   name      String    @unique
@@ -57,14 +101,15 @@ model Category {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
+
 model Product {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String?
   price       Float
 
   brand       String?
-  rating      Float    @default(0)
+  rating      Float         @default(0)
 
   images      ProductImage[]
   sizes       ProductSize[]
@@ -73,10 +118,12 @@ model Product {
   reviews     String?
 
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  category    Category      @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  notifyMe    NotifyMe[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model ProductImage {
@@ -101,4 +148,96 @@ model ProductColor {
 
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderNumber     String        @unique
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   String?
+  subtotal        Float         @default(0)
+  shippingFee     Float         @default(0)
+  discount        Float         @default(0)
+  total           Float         @default(0)
+  shippingAddress String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  total     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Wallet {
+  id            Int                  @id @default(autoincrement())
+  userId        Int                  @unique
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance       Float                @default(0)
+  rewardPoints  Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  transactions  WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          Int                  @id @default(autoincrement())
+  walletId    Int
+  wallet      Wallet               @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type        WalletTransactionType
+  amount      Float                @default(0)
+  points      Int                  @default(0)
+  description String?
+  reference   String?
+  createdAt   DateTime             @default(now())
+}
+
+model Notification {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String            @db.Text
+  type      NotificationType  @default(SYSTEM)
+  isRead    Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model NotifyMe {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  createdAt   DateTime @default(now())
+  notifiedAt  DateTime?
+  isActive    Boolean  @default(true)
+}
+
+model UserSettings {
+  id                  Int      @id @default(autoincrement())
+  userId              Int      @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language            String   @default("en")
+  currency            String   @default("USD")
+  darkMode            Boolean  @default(false)
+  emailNotifications  Boolean  @default(true)
+  pushNotifications   Boolean  @default(true)
+  smsNotifications    Boolean  @default(false)
+  marketingEmails     Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }

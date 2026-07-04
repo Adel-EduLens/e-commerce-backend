@@ -17,6 +17,25 @@ class UserRepository {
   async findByPhone(phone: string) {
     return prisma.user.findFirst({ where: { phone } });
   }
+
+  async findById(id: number) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        avatar: true,
+        dateOfBirth: true,
+        gender: true,
+        createdAt: true,
+        updatedAt: true,
+        status: true,
+      },
+    })
+  }
 }
 
 export const userRepository = new UserRepository();

@@ -13,13 +13,17 @@ export interface IUser extends Document {
 }
 
 export interface IUserResponse {
-  _id: string
-  name: string
+  id: number
+  name: string | null
   email: string
-  role: 'user' | 'trader'
-  phone?: string | undefined
+  role: string
+  phone?: string | null
+  avatar?: string | null
+  dateOfBirth?: Date | null
+  gender?: string | null
   createdAt: Date
   updatedAt: Date
+  status?: string
 }
 
 export interface AuthenticatedRequest extends Request {

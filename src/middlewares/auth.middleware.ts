@@ -1,5 +1,4 @@
 import type { Response, NextFunction } from 'express'
-import type { BaseRepository } from '../repositories/base.repository.js'
 import { verifyToken } from '../utils/jwt.util.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { adminRepository } from '../repositories/admin.repository.js'
@@ -10,7 +9,6 @@ import AppError from '../utils/AppError.util.js'
 type AuthRequest = AuthenticatedRequest & AdminAuthenticatedRequest
 
 const createAuthMiddleware = (
-  repository: BaseRepository<any>,
   requestKey: 'user' | 'admin',
   requiredRole?: string
 ) => {
@@ -38,6 +36,22 @@ const createAuthMiddleware = (
         return next(new AppError(`Access denied. ${requiredRole} only.`, 403))
       }
 
+      const entityId = Number(decoded.id)
+
+      if (requestKey === 'user') {
+        const user = await userRepository.findById(entityId)
+        if (!user) {
+          return next(new AppError('User not authenticated.', 401))
+        }
+        req.user = user
+      } else {
+        const admin = await adminRepository.findById(String(entityId))
+        if (!admin) {
+          return next(new AppError('Admin not authenticated.', 401))
+        }
+        req.admin = admin
+      }
+
       next()
     } catch (error: any) {
       if (error.name === 'JsonWebTokenError') {
@@ -53,13 +67,9 @@ const createAuthMiddleware = (
   }
 }
 
-export const requireAuth = createAuthMiddleware(userRepository, 'user')
+export const requireAuth = createAuthMiddleware('user')
 
-export const requireAdminAuth = createAuthMiddleware(
-  adminRepository,
-  'admin',
-  'admin'
-)
+export const requireAdminAuth = createAuthMiddleware('admin', 'admin')
 
 export const requireRole = (...roles: Array<'user' | 'trader'>) => {
   return (
@@ -71,7 +81,7 @@ export const requireRole = (...roles: Array<'user' | 'trader'>) => {
       return next(new AppError('User not authenticated.', 401))
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!roles.some((role) => req.user?.role === role)) {
       return next(
         new AppError('You do not have permission to perform this action.', 403)
       )

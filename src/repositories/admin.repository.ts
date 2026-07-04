@@ -68,6 +68,20 @@ class AdminRepository extends BaseRepository<IAdmin> {
   async findByEmail(email: string) {
     return prisma.admin.findFirst({ where: { email } })
   }
+
+  async findById(id: string, select?: string): Promise<any> {
+    return prisma.admin.findUnique({
+      where: { id: Number(id) },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+      },
+    })
+  }
 }
 
 export const adminRepository = new AdminRepository()

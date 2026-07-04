@@ -8,8 +8,10 @@ import authRouter from './routes/auth.routes.js'
 import adminAuthRouter from './routes/admin.auth.routes.js'
 import prizeRouter from './routes/prize.route.js'
 import FAQRouter from './routes/admin.FAQ.routes.js'
-import categoryRouter from './routes/category.route.js';
-import productRouter from './routes/product.route.js';
+import categoryRouter from './routes/category.route.js'
+import productRouter from './routes/product.route.js'
+import accountRouter from './routes/account.routes.js'
+import helpRouter from './routes/help.routes.js'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -37,8 +39,10 @@ app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
 app.use('/api/admin/auth', adminAuthRouter)
 app.use('/api/prizes', prizeRouter)
-app.use('/api/proudcts', productRouter);
-app.use('/api/categories', categoryRouter);
+app.use('/api/proudcts', productRouter)
+app.use('/api/categories', categoryRouter)
+app.use('/api/account', accountRouter)
+app.use('/api/help', helpRouter)
 
 
 app.get('/', (req: Request, res: Response) => {
