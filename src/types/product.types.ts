@@ -9,6 +9,7 @@ export interface ProductCreateData {
   images: string[];
   sizes: string[];
   colors: string[];
+  traderId:number;
 }
 
 export interface ProductUpdateData {
@@ -22,4 +23,5 @@ export interface ProductUpdateData {
   images?: string[];
   sizes?: string[];
   colors?: string[];
+  traderId:number;
 }

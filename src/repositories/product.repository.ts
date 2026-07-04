@@ -12,7 +12,11 @@ class ProductRepository {
         brand: data.brand,
         rating: data.rating ?? 0,
         reviews: data.reviews,
-
+        trader: {
+          connect: {
+            id: data.traderId,
+          },
+        },
         category: {
           connect: { id: data.categoryId },
         },

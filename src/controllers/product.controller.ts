@@ -4,8 +4,7 @@ import { successResponse } from '../utils/response.util.js';
 import { productService } from "../services/product.service.js";
 
 export const createProduct = asyncHandler(async (req: Request, res: Response) => {
-    const result = await productService.create(req.body);
-
+    const result = await productService.create({ ...req.body, traderId: Number(req.user!.id) });
     successResponse(res, {
         statusCode: 201,
         message: "Product created successfully",
@@ -37,7 +36,7 @@ export const getProduct = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
     const id = String(req.params.id);
-    const result = await productService.update(id, req.body);
+    const result = await productService.update(id, { ...req.body, traderId: Number(req.user!.id) });
 
     successResponse(res, {
         message: "Product updated successfully",
@@ -47,7 +46,7 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
 
 export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
     const id = String(req.params.id);
-    await productService.delete(id);
+    await productService.delete(id,Number(req.user!.id));
 
     successResponse(res, {
         message: "Product deleted successfully",

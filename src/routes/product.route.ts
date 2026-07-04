@@ -8,11 +8,14 @@ import {
   deleteProduct,
 } from "../controllers/product.controller.js";
 import { validateRequest } from '../middlewares/validation.middleware.js';
-import {createProductSchema, updateProductSchema} from "../schemas/product.schema.js"
+import { createProductSchema, updateProductSchema } from "../schemas/product.schema.js"
+import { requireRole, requireAuth } from "../middlewares/auth.middleware.js"
 const router = Router();
 router.post(
   "/",
   validateRequest(createProductSchema),
+  requireAuth,
+  requireRole("trader"),
   createProduct
 );
 
@@ -22,6 +25,8 @@ router.get("/:id", getProduct);
 router.patch(
   "/:id",
   validateRequest(updateProductSchema),
+  requireAuth,
+  requireRole("trader"),
   updateProduct
 );
 

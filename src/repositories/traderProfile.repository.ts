@@ -13,21 +13,12 @@ class TraderProfileRepository {
   async findByPhone(phone: string) {
     return prisma.trader.findFirst({ where: { phone } });
   }
+  async findById(id: number) {
+    return prisma.trader.findUnique({ where: { id } });
+  }
 }
 export const traderProfileRepository = new TraderProfileRepository();
 
-// import { TraderProfile } from '../models/TraderProfile.model.js';
-// import type { ITraderProfile } from '../types/trader.type.js';
-// import { BaseRepository } from './base.repository.js';
 
-// class TraderProfileRepository extends BaseRepository<ITraderProfile> {
-//   constructor() {
-//     super(TraderProfile);
-//   }
-
-//   async findByUserId(userId: string) {
-//     return this.findOne({ user: userId as any });
-//   }
-// }
 
 // export const traderProfileRepository = new TraderProfileRepository();

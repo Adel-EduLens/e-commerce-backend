@@ -24,6 +24,7 @@ model Trader {
   password  String
   createdAt DateTime @default(now())
   phone     String?
+  products  Product[]
   role      String   @default("trader")
 }
 model Admin {
@@ -71,6 +72,9 @@ model Product {
   colors      ProductColor[]
 
   reviews     String?
+
+  traderId    Int
+  trader      Trader   @relation(fields: [traderId], references: [id])
 
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
