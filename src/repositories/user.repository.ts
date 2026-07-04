@@ -5,10 +5,14 @@ import type { SignupData } from "../types/auth.type.js";
 
 class UserRepository {
 
-  async create(data:SignupData) {
+  async create(data: SignupData) {
     return prisma.user.create({
       data,
     });
+  }
+
+  async findById(id: number) {
+    return prisma.user.findUnique({ where: { id } });
   }
 
   async findByEmail(email: string) {

@@ -3,7 +3,7 @@ import type { Model, Document } from 'mongoose';
 export class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
 
-  async findById(id: string, select?: string) {
+  async findById(id: number, select?: string) {
     const query = this.model.findById(id);
     if (select) query.select(select);
     return query.exec();

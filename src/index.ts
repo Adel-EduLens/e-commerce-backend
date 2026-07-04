@@ -1,3 +1,4 @@
+
 import express from 'express'
 import type { Request, Response } from 'express'
 import cors from 'cors'
@@ -8,10 +9,17 @@ import adminAuthRouter from './routes/admin.auth.routes.js'
 import prizeRouter from './routes/prize.route.js'
 import FAQRouter from './routes/admin.FAQ.routes.js'
 import helpCenterRouter from './routes/admin.helpCenter.routes.js'
+import categoryRouter from './routes/category.route.js';
+import productRouter from './routes/product.route.js';
+import reviewRouter from './routes/review.route.js';
+
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 dotenv.config({ path: envFile })
+
+
+
 
 const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -27,11 +35,19 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // App routes
+<<<<<<< ours
 app.use('/api/admin/help-center', helpCenterRouter)
+=======
+
+>>>>>>> theirs
 app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
 app.use('/api/admin/auth', adminAuthRouter)
 app.use('/api/prizes', prizeRouter)
+app.use('/api/proudcts', productRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/reviews', reviewRouter);
+
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with MongoDB!')
