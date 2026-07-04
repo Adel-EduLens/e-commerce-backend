@@ -3,10 +3,9 @@ import { verifyToken } from '../utils/jwt.util.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { adminRepository } from '../repositories/admin.repository.js'
 import { traderProfileRepository } from '../repositories/traderProfile.repository.js'
-import type { AuthenticatedRequest } from '../types/user.type.js'
 import AppError from '../utils/AppError.util.js'
 
-type AuthRequest = AuthenticatedRequest
+
 
 // =======================================================
 // AUTH MIDDLEWARE (MULTI TABLE SEARCH - FIXED VERSION)
@@ -26,22 +25,36 @@ export const requireAuth = async (
     const decoded = verifyToken(token)
 
    
-    const user =
-      (await userRepository.findById(Number(decoded.id))) ||
-      (await traderProfileRepository.findById(Number(decoded.id))) ||
-      (await adminRepository.findById(Number(decoded.id)))
+    const id = Number(decoded.id);
 
-    if (!user) {
-      return next(new AppError('User not found', 401))
+    const user = await userRepository.findById(id);
+    if (user) {
+      req.user = {
+        id: user.id,
+        role: "user",
+      };
+      return next();
     }
 
-    // attach user to request
-    req.user = {
-      id: user.id,
-      role: user.role,
+    const trader = await traderProfileRepository.findById(id);
+    if (trader) {
+      req.user = {
+        id: trader.id,
+        role: "trader",
+      };
+      return next();
     }
 
-    next()
+    const admin = await adminRepository.findById(id);
+    if (admin) {
+      req.user = {
+        id: admin.id,
+        role: "admin",
+      };
+      return next();
+    }
+
+    return next(new AppError("User not found", 401));
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError') {
       return next(new AppError('Invalid token. Please log in again.', 401))
