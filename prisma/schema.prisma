@@ -138,3 +138,10 @@ model Review {
 
   @@unique([userId, productId])
 }
+
+model Design {
+  id        String @id @default(cuid())
+  title     String
+  imagePath String
+  votes     Int    @default(0)
+}

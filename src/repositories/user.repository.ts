@@ -1,5 +1,6 @@
 import prisma from '../utils/prismaClient.js'
 import type { SignupData } from '../types/auth.type.js'
+import { Request } from 'express'
 
 class UserRepository {
   async create(data: SignupData) {

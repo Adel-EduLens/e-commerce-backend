@@ -12,6 +12,8 @@ import categoryRouter from './routes/category.route.js'
 import productRouter from './routes/product.route.js'
 import reviewRouter from './routes/review.route.js'
 import userRouter from './routes/user.routes.js'
+import uploadRouter from './routes/upload.routes.js'
+import path from 'path'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -29,11 +31,13 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')))
 
 // App routes
 
 app.use('/api/admin/help-center', helpCenterRouter)
 app.use('/api/user', userRouter)
+app.use('/api/upload', uploadRouter)
 
 app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
