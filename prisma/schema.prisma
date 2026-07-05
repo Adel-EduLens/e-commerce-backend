@@ -79,18 +79,20 @@ model Product {
   name        String
   description String?
   price       Float
+  sizeguide   String?
 
-  brand  String?
   rating Float   @default(0)
 
   images ProductImage[]
   sizes  ProductSize[]
   colors ProductColor[]
-
   reviews Review[]
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id])
+
+  brandId String?
+  brand Brand? @relation(fields: [brandId], references: [id])
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -98,11 +100,19 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+model Brand {
+  id   String @id @default(cuid())
+  name String @unique
 
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 model ProductImage {
   id  String @id @default(cuid())
   url String
-
+  color String?
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
