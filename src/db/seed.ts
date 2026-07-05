@@ -52,6 +52,197 @@ const seedDatabase = async () => {
     });
     console.log('👤 Normal user created successfully:', user.email);
 
+    // ===== Retail Categories =====
+    console.log('🏬 Creating retail categories...');
+    const clothingCategory = await prisma.retailCategory.upsert({
+      where: { slug: 'clothing' },
+      update: {},
+      create: {
+        name: 'Clothing',
+        slug: 'clothing',
+        description: 'Apparel and clothing items',
+        isActive: true
+      }
+    });
+
+    const shoesCategory = await prisma.retailCategory.upsert({
+      where: { slug: 'shoes' },
+      update: {},
+      create: {
+        name: 'Shoes',
+        slug: 'shoes',
+        description: 'Footwear and shoes',
+        isActive: true
+      }
+    });
+
+    const accessoriesCategory = await prisma.retailCategory.upsert({
+      where: { slug: 'accessories' },
+      update: {},
+      create: {
+        name: 'Accessories',
+        slug: 'accessories',
+        description: 'Fashion accessories',
+        isActive: true
+      }
+    });
+    console.log('✅ Retail categories created');
+
+    // ===== Retail Products =====
+    console.log('🛍️ Creating retail products...');
+
+    // Delete existing retail products first
+    await prisma.retailProduct.deleteMany({
+      where: {
+        slug: { in: ['retail-hoodie', 'retail-sneakers', 'retail-cap'] }
+      }
+    });
+
+    const hoodieProduct = await prisma.retailProduct.create({
+      data: {
+        name: 'Retail Hoodie',
+        slug: 'retail-hoodie',
+        description: 'Premium cotton comfortable hoodie perfect for casual wear',
+        shortDescription: 'Comfortable everyday hoodie',
+        price: 850,
+        discountPrice: 699,
+        stock: 25,
+        sku: 'RH-001',
+        brand: 'Nasu',
+        isFeatured: true,
+        isActive: true,
+        categoryId: clothingCategory.id,
+        images: {
+          createMany: {
+            data: [
+              {
+                url: 'https://example.com/hoodie-1.jpg',
+                alt: 'Black hoodie front',
+                isMain: true
+              },
+              {
+                url: 'https://example.com/hoodie-2.jpg',
+                alt: 'Black hoodie back',
+                isMain: false
+              }
+            ]
+          }
+        },
+        colors: {
+          createMany: {
+            data: [
+              { name: 'Black', hexCode: '#000000' },
+              { name: 'Gray', hexCode: '#808080' }
+            ]
+          }
+        },
+        sizes: {
+          createMany: {
+            data: [
+              { name: 'S', stock: 5 },
+              { name: 'M', stock: 10 },
+              { name: 'L', stock: 10 }
+            ]
+          }
+        }
+      }
+    });
+    console.log('✅ Hoodie product created');
+
+    const sneakersProduct = await prisma.retailProduct.create({
+      data: {
+        name: 'Retail Sneakers',
+        slug: 'retail-sneakers',
+        description: 'High-quality running sneakers with comfortable fit',
+        shortDescription: 'Premium running shoes',
+        price: 1200,
+        discountPrice: 999,
+        stock: 30,
+        sku: 'RS-001',
+        brand: 'Nasu',
+        isFeatured: true,
+        isActive: true,
+        categoryId: shoesCategory.id,
+        images: {
+          createMany: {
+            data: [
+              {
+                url: 'https://example.com/sneaker-1.jpg',
+                alt: 'Sneakers side view',
+                isMain: true
+              },
+              {
+                url: 'https://example.com/sneaker-2.jpg',
+                alt: 'Sneakers top view',
+                isMain: false
+              }
+            ]
+          }
+        },
+        colors: {
+          createMany: {
+            data: [
+              { name: 'White', hexCode: '#FFFFFF' },
+              { name: 'Black', hexCode: '#000000' },
+              { name: 'Navy', hexCode: '#000080' }
+            ]
+          }
+        },
+        sizes: {
+          createMany: {
+            data: [
+              { name: '6', stock: 8 },
+              { name: '7', stock: 12 },
+              { name: '8', stock: 10 }
+            ]
+          }
+        }
+      }
+    });
+    console.log('✅ Sneakers product created');
+
+    const capProduct = await prisma.retailProduct.create({
+      data: {
+        name: 'Retail Cap',
+        slug: 'retail-cap',
+        description: 'Stylish baseball cap with UV protection',
+        shortDescription: 'Trendy baseball cap',
+        price: 350,
+        discountPrice: 249,
+        stock: 50,
+        sku: 'RC-001',
+        brand: 'Nasu',
+        isFeatured: false,
+        isActive: true,
+        categoryId: accessoriesCategory.id,
+        images: {
+          createMany: {
+            data: [
+              {
+                url: 'https://example.com/cap-1.jpg',
+                alt: 'Cap front view',
+                isMain: true
+              }
+            ]
+          }
+        },
+        colors: {
+          createMany: {
+            data: [
+              { name: 'Red', hexCode: '#FF0000' },
+              { name: 'Blue', hexCode: '#0000FF' }
+            ]
+          }
+        },
+        sizes: {
+          createMany: {
+            data: [{ name: 'One Size', stock: 50 }]
+          }
+        }
+      }
+    });
+    console.log('✅ Cap product created');
+
     console.log('👋 Seeding process finished.');
     process.exit(0);
   } catch (error) {

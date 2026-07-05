@@ -12,6 +12,7 @@ import categoryRouter from './routes/category.route.js'
 import productRouter from './routes/product.route.js'
 import accountRouter from './routes/account.routes.js'
 import helpRouter from './routes/help.routes.js'
+import retailRouter from './routes/retail.routes.js'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -43,7 +44,7 @@ app.use('/api/proudcts', productRouter)
 app.use('/api/categories', categoryRouter)
 app.use('/api/account', accountRouter)
 app.use('/api/help', helpRouter)
-
+app.use('/api/retail', retailRouter)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with MongoDB!')

@@ -40,23 +40,24 @@ enum NotificationType {
 }
 
 model User {
-  id            Int              @id @default(autoincrement())
-  email         String           @unique
-  name          String?
-  password      String
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @default(now()) @updatedAt
-  phone         String?
-  role          String           @default("user")
-  status        String           @default("active")
-  avatar        String?
-  dateOfBirth   DateTime?
-  gender        String?
-  orders        Order[]
-  wallet        Wallet?
-  notifications Notification[]
-  notifyMe      NotifyMe[]
-  settings      UserSettings?
+  id              Int              @id @default(autoincrement())
+  email           String           @unique
+  name            String?
+  password        String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  phone           String?
+  role            String           @default("user")
+  status          String           @default("active")
+  avatar          String?
+  dateOfBirth     DateTime?
+  gender          String?
+  orders          Order[]
+  wallet          Wallet?
+  notifications   Notification[]
+  notifyMe        NotifyMe[]
+  settings        UserSettings?
+  retailNotifyMes RetailNotifyMe[]
 }
 
 model Trader {
@@ -103,51 +104,51 @@ model Category {
 }
 
 model Product {
-  id          String        @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
   price       Float
 
-  brand       String?
-  rating      Float         @default(0)
+  brand  String?
+  rating Float   @default(0)
 
-  images      ProductImage[]
-  sizes       ProductSize[]
-  colors      ProductColor[]
+  images ProductImage[]
+  sizes  ProductSize[]
+  colors ProductColor[]
 
-  reviews     String?
+  reviews String?
 
-  categoryId  String
-  category    Category      @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
-  notifyMe    NotifyMe[]
+  categoryId String
+  category   Category    @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  notifyMe   NotifyMe[]
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ProductImage {
-  id        String   @id @default(cuid())
-  url       String
+  id  String @id @default(cuid())
+  url String
 
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ProductSize {
-  id        String   @id @default(cuid())
-  size      String
+  id   String @id @default(cuid())
+  size String
 
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ProductColor {
-  id        String   @id @default(cuid())
-  color     String
+  id    String @id @default(cuid())
+  color String
 
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Order {
@@ -182,62 +183,139 @@ model OrderItem {
 }
 
 model Wallet {
-  id            Int                  @id @default(autoincrement())
-  userId        Int                  @unique
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  balance       Float                @default(0)
-  rewardPoints  Int                  @default(0)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  transactions  WalletTransaction[]
+  id           Int                 @id @default(autoincrement())
+  userId       Int                 @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance      Float               @default(0)
+  rewardPoints Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  transactions WalletTransaction[]
 }
 
 model WalletTransaction {
-  id          Int                  @id @default(autoincrement())
+  id          Int                   @id @default(autoincrement())
   walletId    Int
-  wallet      Wallet               @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet      Wallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
   type        WalletTransactionType
-  amount      Float                @default(0)
-  points      Int                  @default(0)
+  amount      Float                 @default(0)
+  points      Int                   @default(0)
   description String?
   reference   String?
-  createdAt   DateTime             @default(now())
+  createdAt   DateTime              @default(now())
 }
 
 model Notification {
-  id        Int               @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   userId    Int
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
-  message   String            @db.Text
-  type      NotificationType  @default(SYSTEM)
-  isRead    Boolean           @default(false)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  message   String           @db.Text
+  type      NotificationType @default(SYSTEM)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 }
 
 model NotifyMe {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  createdAt   DateTime @default(now())
-  notifiedAt  DateTime?
-  isActive    Boolean  @default(true)
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id])
+  createdAt  DateTime  @default(now())
+  notifiedAt DateTime?
+  isActive   Boolean   @default(true)
 }
 
 model UserSettings {
-  id                  Int      @id @default(autoincrement())
-  userId              Int      @unique
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  language            String   @default("en")
-  currency            String   @default("USD")
-  darkMode            Boolean  @default(false)
-  emailNotifications  Boolean  @default(true)
-  pushNotifications   Boolean  @default(true)
-  smsNotifications    Boolean  @default(false)
-  marketingEmails     Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 Int              @id @default(autoincrement())
+  userId             Int              @unique
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language           String           @default("en")
+  currency           String           @default("USD")
+  darkMode           Boolean          @default(false)
+  emailNotifications Boolean          @default(true)
+  pushNotifications  Boolean          @default(true)
+  smsNotifications   Boolean          @default(false)
+  marketingEmails    Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  retailNotifyMe     RetailNotifyMe[]
+}
+
+// ============ Retail Products ============
+
+model RetailCategory {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  slug        String          @unique
+  description String?         @db.Text
+  imageUrl    String?
+  isActive    Boolean         @default(true)
+  products    RetailProduct[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model RetailProduct {
+  id               Int                  @id @default(autoincrement())
+  name             String
+  slug             String               @unique
+  description      String?              @db.Text
+  shortDescription String?
+  price            Float
+  discountPrice    Float?
+  stock            Int                  @default(0)
+  sku              String?              @unique
+  brand            String?
+  isFeatured       Boolean              @default(false)
+  isActive         Boolean              @default(true)
+  categoryId       Int
+  category         RetailCategory       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  images           RetailProductImage[]
+  colors           RetailProductColor[]
+  sizes            RetailProductSize[]
+  notifyMe         RetailNotifyMe[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+}
+
+model RetailProductImage {
+  id        Int           @id @default(autoincrement())
+  url       String
+  alt       String?
+  isMain    Boolean       @default(false)
+  productId Int
+  product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model RetailProductColor {
+  id        Int           @id @default(autoincrement())
+  name      String
+  hexCode   String?
+  productId Int
+  product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model RetailProductSize {
+  id        Int           @id @default(autoincrement())
+  name      String
+  stock     Int?
+  productId Int
+  product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model RetailNotifyMe {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  retailProductId Int
+  retailProduct   RetailProduct @relation(fields: [retailProductId], references: [id], onDelete: Cascade)
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  userSettings    UserSettings? @relation(fields: [userSettingsId], references: [id])
+  userSettingsId  Int?
+
+  @@unique([userId, retailProductId])
 }
