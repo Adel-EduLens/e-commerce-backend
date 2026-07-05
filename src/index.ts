@@ -15,6 +15,7 @@ import wholesaleRouter from './routes/wholesale.route.js'
 import userRouter from './routes/user.routes.js'
 import uploadRouter from './routes/upload.routes.js'
 import path from 'path'
+import traderRouter from './routes/trader.auth.routes.js'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -39,7 +40,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')))
 app.use('/api/admin/help-center', helpCenterRouter)
 app.use('/api/user', userRouter)
 app.use('/api/upload', uploadRouter)
-
+app.use('/api/trader', traderRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
 app.use('/api/admin/auth', adminAuthRouter)
