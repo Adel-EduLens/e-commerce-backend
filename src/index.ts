@@ -39,7 +39,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
 app.use('/api/admin/auth', adminAuthRouter)
 app.use('/api/prizes', prizeRouter)
-app.use('/api/proudcts', productRouter)
+app.use('/api/products', productRouter)
 app.use('/api/categories', categoryRouter)
 app.use('/api/reviews', reviewRouter)
 
