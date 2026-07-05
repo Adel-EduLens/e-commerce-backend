@@ -20,14 +20,15 @@ model User {
 }
 
 model Trader {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  name      String?
-  password  String
-  createdAt DateTime  @default(now())
-  phone     String?
-  products  Product[]
-  role      String    @default("trader")
+  id         Int          @id @default(autoincrement())
+  email      String       @unique
+  name       String?
+  password   String
+  createdAt  DateTime     @default(now())
+  phone      String?
+  products   Product[]
+  wholesales Wholesale[]
+  role       String       @default("trader")
 }
 
 model Admin {
@@ -65,11 +66,12 @@ model HelpCenterVideo {
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String      @id @default(cuid())
+  name       String      @unique
+  products   Product[]
+  wholesales Wholesale[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 model Product {
@@ -137,4 +139,52 @@ model Review {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, productId])
+}
+
+model Wholesale {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  minOrder    Int     @default(1)
+
+  brand  String?
+  rating Float   @default(0)
+
+  images WholesaleImage[]
+  sizes  WholesaleSize[]
+  colors WholesaleColor[]
+
+  traderId Int
+  trader   Trader @relation(fields: [traderId], references: [id])
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WholesaleImage {
+  id  String @id @default(cuid())
+  url String
+
+  wholesaleId String
+  wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
+}
+
+model WholesaleSize {
+  id   String @id @default(cuid())
+  size String
+
+  wholesaleId String
+  wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
+}
+
+model WholesaleColor {
+  id    String @id @default(cuid())
+  color String
+
+  wholesaleId String
+  wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
 }
