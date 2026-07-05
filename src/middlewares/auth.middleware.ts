@@ -5,8 +5,6 @@ import { adminRepository } from '../repositories/admin.repository.js'
 import { traderProfileRepository } from '../repositories/traderProfile.repository.js'
 import AppError from '../utils/AppError.util.js'
 
-
-
 // =======================================================
 // AUTH MIDDLEWARE (MULTI TABLE SEARCH - FIXED VERSION)
 // =======================================================
@@ -17,44 +15,42 @@ export const requireAuth = async (
 ) => {
   try {
     const token = req.headers.authorization
-
     if (!token) {
       return next(new AppError('No token provided', 401))
     }
 
     const decoded = verifyToken(token)
 
-   
-    const id = Number(decoded.id);
+    const id = Number(decoded.id)
 
-    const user = await userRepository.findById(id);
+    const user = await userRepository.findById(id)
     if (user) {
       req.user = {
         id: user.id,
-        role: "user",
-      };
-      return next();
+        role: 'user',
+      }
+      return next()
     }
 
-    const trader = await traderProfileRepository.findById(id);
+    const trader = await traderProfileRepository.findById(id)
     if (trader) {
       req.user = {
         id: trader.id,
-        role: "trader",
-      };
-      return next();
+        role: 'trader',
+      }
+      return next()
     }
 
-    const admin = await adminRepository.findById(id);
+    const admin = await adminRepository.findById(id)
     if (admin) {
       req.user = {
         id: admin.id,
-        role: "admin",
-      };
-      return next();
+        role: 'admin',
+      }
+      return next()
     }
 
-    return next(new AppError("User not found", 401));
+    return next(new AppError('User not found', 401))
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError') {
       return next(new AppError('Invalid token. Please log in again.', 401))
@@ -71,18 +67,14 @@ export const requireAuth = async (
 // =======================================================
 // ROLE-BASED ACCESS CONTROL
 // =======================================================
-export const requireRole = (
-  ...roles: Array<'user' | 'trader' | 'admin'>
-) => {
+export const requireRole = (...roles: Array<'user' | 'trader' | 'admin'>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError('Not authenticated', 401))
     }
 
     if (!roles.includes(req.user.role)) {
-      return next(
-        new AppError('Forbidden: insufficient permissions', 403)
-      )
+      return next(new AppError('Forbidden: insufficient permissions', 403))
     }
 
     next()
@@ -103,18 +95,15 @@ export const requireAdminAuth = async (
     if (!token) {
       return next(new AppError('No token provided', 401))
     }
-
     const decoded = verifyToken(token)
-
-    const admin = await adminRepository.findById(Number(decoded.id))
+    const admin = await adminRepository.FindById(Number(decoded.id))
 
     if (!admin) {
       return next(new AppError('Admin not found', 401))
     }
-
     req.user = {
       id: admin.id,
-      role: "admin",
+      role: 'admin',
     }
 
     next()
