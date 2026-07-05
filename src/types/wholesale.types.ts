@@ -3,6 +3,9 @@ export interface WholesaleCreateData {
   description: string;
   price: number;
   minOrder: number;
+  isBestDeal: boolean;
+  isMostPopular: boolean;
+  isPremiumCollection: boolean;
   brand: string;
   rating: number;
   categoryId: string;
@@ -17,6 +20,9 @@ export interface WholesaleUpdateData {
   description?: string;
   price?: number;
   minOrder?: number;
+  isBestDeal?: boolean;
+  isMostPopular?: boolean;
+  isPremiumCollection?: boolean;
   brand?: string;
   rating?: number;
   categoryId?: string;

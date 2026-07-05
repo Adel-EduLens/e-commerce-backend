@@ -13,9 +13,14 @@ export const createWholesale = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const getWholesales = asyncHandler(async (req: Request, res: Response) => {
+  const parseBool = (val: unknown) => val === 'true' ? true : val === 'false' ? false : undefined;
   const result = await wholesaleService.getAll({
     search: req.query.search as string,
     categoryId: req.query.categoryId as string,
+    categoryName: req.query.category as string,
+    isBestDeal: parseBool(req.query.isBestDeal),
+    isMostPopular: parseBool(req.query.isMostPopular),
+    isPremiumCollection: parseBool(req.query.isPremiumCollection),
   });
 
   successResponse(res, {

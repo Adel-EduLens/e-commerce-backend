@@ -19,7 +19,7 @@ export const wholesaleService = {
     return wholesaleRepository.create({ ...data });
   },
 
-  async getAll(query: { search?: string; categoryId?: string }) {
+  async getAll(query: { search?: string; categoryId?: string; categoryName?: string; isBestDeal?: boolean; isMostPopular?: boolean; isPremiumCollection?: boolean }) {
     return wholesaleRepository.findAll(query);
   },
 
