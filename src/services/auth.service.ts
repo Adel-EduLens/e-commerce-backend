@@ -101,4 +101,9 @@ export const authService = {
       },
     }
   },
+
+  async getVideosByCategory(id: string) {
+    const videos = await userRepository.getVideosByCategorei(id)
+    return videos
+  },
 }
