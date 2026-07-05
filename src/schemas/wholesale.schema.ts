@@ -9,6 +9,10 @@ export const createWholesaleSchema = Joi.object({
 
   minOrder: Joi.number().integer().min(1).optional(),
 
+  isBestDeal: Joi.boolean().optional(),
+  isMostPopular: Joi.boolean().optional(),
+  isPremiumCollection: Joi.boolean().optional(),
+
   brand: Joi.string().allow("", null),
 
   rating: Joi.number().min(0).max(5).optional(),
@@ -39,6 +43,10 @@ export const updateWholesaleSchema = Joi.object({
   price: Joi.number().positive(),
 
   minOrder: Joi.number().integer().min(1),
+
+  isBestDeal: Joi.boolean(),
+  isMostPopular: Joi.boolean(),
+  isPremiumCollection: Joi.boolean(),
 
   brand: Joi.string().allow("", null),
 

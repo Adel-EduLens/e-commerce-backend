@@ -12,6 +12,9 @@ class WholesaleRepository {
         description: data.description,
         price: data.price,
         minOrder: data.minOrder ?? 1,
+        isBestDeal: data.isBestDeal ?? false,
+        isMostPopular: data.isMostPopular ?? false,
+        isPremiumCollection: data.isPremiumCollection ?? false,
         brand: data.brand,
         rating: data.rating ?? 0,
         trader: {
@@ -39,13 +42,17 @@ class WholesaleRepository {
     });
   }
 
-  findAll({ search, categoryId }: { search?: string; categoryId?: string }) {
+  findAll({ search, categoryId, categoryName, isBestDeal, isMostPopular, isPremiumCollection }: { search?: string; categoryId?: string; categoryName?: string; isBestDeal?: boolean; isMostPopular?: boolean; isPremiumCollection?: boolean }) {
     return prisma.wholesale.findMany({
       where: {
         ...(search && {
           name: { contains: search },
         }),
         ...(categoryId && { categoryId }),
+        ...(categoryName && { category: { name: { equals: categoryName } } }),
+        ...(isBestDeal !== undefined && { isBestDeal }),
+        ...(isMostPopular !== undefined && { isMostPopular }),
+        ...(isPremiumCollection !== undefined && { isPremiumCollection }),
       },
       include: {
         category: true,
@@ -94,6 +101,9 @@ class WholesaleRepository {
         ...(data.description !== undefined && { description: data.description }),
         ...(data.price !== undefined && { price: data.price }),
         ...(data.minOrder !== undefined && { minOrder: data.minOrder }),
+        ...(data.isBestDeal !== undefined && { isBestDeal: data.isBestDeal }),
+        ...(data.isMostPopular !== undefined && { isMostPopular: data.isMostPopular }),
+        ...(data.isPremiumCollection !== undefined && { isPremiumCollection: data.isPremiumCollection }),
         ...(data.brand !== undefined && { brand: data.brand }),
         ...(data.rating !== undefined && { rating: data.rating }),
         ...(data.categoryId && {

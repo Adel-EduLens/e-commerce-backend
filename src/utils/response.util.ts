@@ -19,7 +19,9 @@ export const successResponse = (
   const response: any = { success: true };
 
   if (message) response.message = message;
-  if (data && Object.keys(data).length > 0) response.data = data;
+  if (data !== undefined && data !== null) {
+    if (Array.isArray(data) || Object.keys(data).length > 0) response.data = data;
+  }
 
   return res.status(statusCode).json(response);
 };
