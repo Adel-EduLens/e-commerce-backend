@@ -5,10 +5,17 @@ import {
 } from "../types/product.types.js";
 
 type GetProductsQuery = {
+
   search?: string | undefined;
   categoryId?: string | undefined;
   brandId?: string | undefined;
   traderId?: number | undefined;
+  filter?: string;
+  size?: string;
+  color?: string;
+  priceMin?: number | undefined;
+  priceMax?: number | undefined;
+
 
   sortBy?: string | undefined;
   sortOrder?: "asc" | "desc" | undefined;
@@ -16,34 +23,27 @@ type GetProductsQuery = {
   page?: number | undefined;
   limit?: number | undefined;
 };
+const FILTER_MAP: Record<
+  string,
+  { isMustHave?: boolean; isFlashDeals?: boolean }
+> = {
+  "must-have": { isMustHave: true },
+  "flash-deals": { isFlashDeals: true },
+};
 
 class ProductRepository {
   getOrderBy = (sortBy?: string, sortOrder: "asc" | "desc" = "asc") => {
     switch (sortBy) {
       case "name":
-        return {
-          name: sortOrder,
-        };
-
+        return { name: sortOrder };
       case "price":
-        return {
-          price: sortOrder,
-        };
-
+        return { price: sortOrder };
       case "rating":
-        return {
-          rating: sortOrder,
-        };
-
+        return { rating: sortOrder };
       case "createdAt":
-        return {
-          createdAt: sortOrder,
-        };
-
+        return { createdAt: sortOrder };
       default:
-        return {
-          createdAt: "desc" as const,
-        };
+        return { createdAt: "desc" as const };
     }
   };
 
@@ -56,24 +56,18 @@ class ProductRepository {
         rating: data.rating ?? 0,
         sizeguide: data.sizeguide ?? null,
 
-        trader: {
-          connect: {
-            id: data.traderId,
-          },
-        },
+        isMustHave: data.isMustHave ?? false,
+        isFlashDeals: data.isFlashDeals ?? false,
+        flashDealPrice: data.flashDealPrice ?? null,
+        flashDealEndsAt: data.flashDealEndsAt
+          ? new Date(data.flashDealEndsAt)
+          : null,
 
-        category: {
-          connect: {
-            id: data.categoryId,
-          },
-        },
+        trader: { connect: { id: data.traderId } },
+        category: { connect: { id: data.categoryId } },
 
         ...(data.brandId && {
-          brand: {
-            connect: {
-              id: data.brandId,
-            },
-          },
+          brand: { connect: { id: data.brandId } },
         }),
 
         images: {
@@ -84,15 +78,11 @@ class ProductRepository {
         },
 
         sizes: {
-          create: data.sizes.map((size) => ({
-            size,
-          })),
+          create: data.sizes.map((size) => ({ size })),
         },
 
         colors: {
-          create: data.colors.map((color) => ({
-            color,
-          })),
+          create: data.colors.map((color) => ({ color })),
         },
       },
 
@@ -107,85 +97,103 @@ class ProductRepository {
   }
 
   async findAll({
-    search,
-    categoryId,
-    brandId,
-    traderId,
-    sortBy,
-    sortOrder = "asc",
-    page = 1,
-    limit = 16,
-  }: GetProductsQuery) {
-    const where = {
-      ...(search && {
-        OR: [
-          {
+  search,
+  categoryId,
+  brandId,
+  traderId,
+  filter,
+  size,
+  color,
+  priceMin,
+  priceMax,
+  sortBy,
+  sortOrder = "asc",
+  page = 1,
+  limit = 16,
+}: GetProductsQuery) {
+  const priceRangeFilter =
+    priceMin !== undefined || priceMax !== undefined
+      ? {
+          ...(priceMin !== undefined && { gte: priceMin }),
+          ...(priceMax !== undefined && { lte: priceMax }),
+        }
+      : null;
+
+
+  const andConditions: any[] = [];
+
+  if (search) {
+    andConditions.push({
+      OR: [
+        {
+          name: {
+            contains: search,
+          },
+        },
+        {
+          category: {
             name: {
               contains: search,
             },
           },
-          {
-            category: {
-              name: {
-                contains: search,
-              },
+        },
+        {
+          brand: {
+            name: {
+              contains: search,
             },
           },
-          {
-            brand: {
-              name: {
-                contains: search,
-              },
-            },
-          },
-        ],
-      }),
-
-      ...(categoryId && {
-        categoryId,
-      }),
-
-      ...(brandId && {
-        brandId,
-      }),
-
-      ...(traderId && {
-        traderId,
-      }),
-    };
-
-    const total = await prisma.product.count({
-      where,
+        },
+      ],
     });
-
-    const products = await prisma.product.findMany({
-      where,
-
-      include: {
-        category: true,
-        brand: true,
-        images: true,
-        sizes: true,
-        colors: true,
-      },
-
-      orderBy: this.getOrderBy(sortBy, sortOrder),
-
-      skip: (page - 1) * limit,
-
-      take: limit,
-    });
-
-    return {
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
   }
+
+  if (priceRangeFilter) {
+    andConditions.push({
+      OR: [
+        { isFlashDeals: true, flashDealPrice: priceRangeFilter },
+        { isFlashDeals: false, price: priceRangeFilter },
+      ],
+    });
+  }
+
+  const where = {
+    ...(categoryId && { categoryId }),
+    ...(brandId && { brandId }),
+    ...(traderId && { traderId }),
+    ...(filter && FILTER_MAP[filter]),
+    ...(size && { sizes: { some: { size } } }),
+    ...(color && { colors: { some: { color } } }),
+    ...(andConditions.length > 0 && { AND: andConditions }),
+  };
+
+  const total = await prisma.product.count({ where });
+
+  const products = await prisma.product.findMany({
+    where,
+    include: {
+      category: true,
+      brand: true,
+      images: true,
+      sizes: true,
+      colors: true,
+    },
+    orderBy: this.getOrderBy(sortBy, sortOrder),
+    skip: (page - 1) * limit,
+    take: limit,
+  });
+
+  return {
+    products,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
   findById(id: string) {
     return prisma.product.findUnique({
       where: {
@@ -204,47 +212,37 @@ class ProductRepository {
 
   update(id: string, data: ProductUpdateData) {
     return prisma.product.update({
-      where: {
-        id,
-      },
-
+      where: { id },
       data: {
-        ...(data.name !== undefined && {
-          name: data.name,
-        }),
-
+        ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && {
           description: data.description,
         }),
-        ...(data.sizeguide !== undefined && {
-          sizeguide: data.sizeguide,
-        }),
-        ...(data.price !== undefined && {
-          price: data.price,
-        }),
+        ...(data.sizeguide !== undefined && { sizeguide: data.sizeguide }),
+        ...(data.price !== undefined && { price: data.price }),
+        ...(data.rating !== undefined && { rating: data.rating }),
 
-        ...(data.rating !== undefined && {
-          rating: data.rating,
+        ...(data.isMustHave !== undefined && { isMustHave: data.isMustHave }),
+        ...(data.isFlashDeals !== undefined && {
+          isFlashDeals: data.isFlashDeals,
+        }),
+        ...(data.flashDealPrice !== undefined && {
+          flashDealPrice: data.flashDealPrice,
+        }),
+        ...(data.flashDealEndsAt !== undefined && {
+          flashDealEndsAt: data.flashDealEndsAt
+            ? new Date(data.flashDealEndsAt)
+            : null,
         }),
 
         ...(data.categoryId && {
-          category: {
-            connect: {
-              id: data.categoryId,
-            },
-          },
+          category: { connect: { id: data.categoryId } },
         }),
 
         ...(data.brandId !== undefined && {
           brand: data.brandId
-            ? {
-                connect: {
-                  id: data.brandId,
-                },
-              }
-            : {
-                disconnect: true,
-              },
+            ? { connect: { id: data.brandId } }
+            : { disconnect: true },
         }),
 
         ...(data.images && {
@@ -260,18 +258,14 @@ class ProductRepository {
         ...(data.sizes && {
           sizes: {
             deleteMany: {},
-            create: data.sizes.map((size) => ({
-              size,
-            })),
+            create: data.sizes.map((size) => ({ size })),
           },
         }),
 
         ...(data.colors && {
           colors: {
             deleteMany: {},
-            create: data.colors.map((color) => ({
-              color,
-            })),
+            create: data.colors.map((color) => ({ color })),
           },
         }),
       },
