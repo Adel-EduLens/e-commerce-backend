@@ -18,7 +18,7 @@ import path from 'path'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
-dotenv.config({ path: envFile })
+dotenv.config({ path: envFile, override: true })
 
 const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
