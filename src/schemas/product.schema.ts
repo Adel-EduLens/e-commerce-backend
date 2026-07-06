@@ -1,5 +1,11 @@
 import Joi from "joi";
 
+const imageSchema = Joi.object({
+  url: Joi.string().required(),
+  color: Joi.string().required(),
+});
+
+
 export const createProductSchema = Joi.object({
   name: Joi.string().trim().required(),
 
@@ -7,38 +13,29 @@ export const createProductSchema = Joi.object({
 
   price: Joi.number().positive().required(),
 
-  brand: Joi.string().allow("", null),
+  brandId: Joi.string().allow("", null),
 
   rating: Joi.number().min(0).max(5).optional(),
-
+  sizeguide: Joi.string().allow("", null),
   reviews: Joi.string().allow("", null),
 
   categoryId: Joi.string().required(),
 
-  images: Joi.array()
-    .items(Joi.string().required())
-    .min(1)
-    .required(),
+  images: Joi.array().items(imageSchema).min(1).required(),
 
-  sizes: Joi.array()
-    .items(Joi.string().required())
-    .min(1)
-    .required(),
+  sizes: Joi.array().items(Joi.string().required()).min(1).required(),
 
-  colors: Joi.array()
-    .items(Joi.string().required())
-    .min(1)
-    .required(),
+  colors: Joi.array().items(Joi.string().required()).min(1).required(),
 });
 
 export const updateProductSchema = Joi.object({
   name: Joi.string().trim(),
-
+  sizeguide: Joi.string().allow("", null),
   description: Joi.string().allow("", null),
 
   price: Joi.number().positive(),
 
-  brand: Joi.string().allow("", null),
+  brandId: Joi.string().allow("", null),
 
   rating: Joi.number().min(0).max(5),
 
@@ -46,7 +43,7 @@ export const updateProductSchema = Joi.object({
 
   categoryId: Joi.string(),
 
-  images: Joi.array().items(Joi.string()),
+  images: Joi.array().items(imageSchema),
 
   sizes: Joi.array().items(Joi.string()),
 

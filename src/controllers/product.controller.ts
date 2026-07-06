@@ -13,15 +13,20 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
-    const result = await productService.getAll({
-        search: req.query.search as string,
-        categoryId: req.query.categoryId as string,
-    });
+  const result = await productService.getAll({
+    search: req.query.search as string,
+    categoryId: req.query.categoryId as string,
+      brandId: req.query.brandId as string,
+    sortBy: req.query.sortBy as string,
+    sortOrder: req.query.sortOrder as "asc" | "desc",
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 16,
+  });
 
-    successResponse(res, {
-        message: "Products fetched successfully",
-        data: result,
-    });
+  successResponse(res, {
+    message: "Products fetched successfully",
+    data: result,
+  });
 });
 
 export const getProduct = asyncHandler(async (req: Request, res: Response) => {

@@ -2,24 +2,30 @@ export interface ProductCreateData {
   name: string;
   description: string;
   price: number;
-  brand: string;
+  brandId?: string;
   rating: number;
   categoryId: string;
-  images: string[];
+  images: ProductImageInput[];
+  sizeguide?: string;
   sizes: string[];
   colors: string[];
-  traderId:number;
+  traderId: number;
 }
+export type ProductImageInput = {
+  url: string;
+  color: string;
+};
 
 export interface ProductUpdateData {
   name?: string;
   description?: string;
   price?: number;
-  brand?: string;
+  brandId?: string;
   rating?: number;
   categoryId?: string;
-  images?: string[];
+  sizeguide?: string;
+  images?: ProductImageInput[];
   sizes?: string[];
   colors?: string[];
-  traderId:number;
+  traderId: number;
 }

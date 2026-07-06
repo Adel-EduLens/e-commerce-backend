@@ -13,8 +13,13 @@ import productRouter from './routes/product.route.js'
 import reviewRouter from './routes/review.route.js'
 import wholesaleRouter from './routes/wholesale.route.js'
 import userRouter from './routes/user.routes.js'
+
 import uploadRouter from './routes/upload.routes.js'
 import path from 'path'
+import traderRouter from './routes/trader.auth.routes.js'
+
+
+import brandRouter from './routes/brand.route.js'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -39,7 +44,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')))
 app.use('/api/admin/help-center', helpCenterRouter)
 app.use('/api/user', userRouter)
 app.use('/api/upload', uploadRouter)
-
+app.use('/api/trader', traderRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
 app.use('/api/admin/auth', adminAuthRouter)
@@ -48,6 +53,7 @@ app.use('/api/products', productRouter)
 app.use('/api/categories', categoryRouter)
 app.use('/api/reviews', reviewRouter)
 app.use('/api/wholesales', wholesaleRouter)
+app.use('/api/brands', brandRouter)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with MongoDB!')
