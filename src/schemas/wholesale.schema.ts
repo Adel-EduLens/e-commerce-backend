@@ -23,16 +23,6 @@ export const createWholesaleSchema = Joi.object({
     .items(Joi.string().required())
     .min(1)
     .required(),
-
-  sizes: Joi.array()
-    .items(Joi.string().required())
-    .min(1)
-    .required(),
-
-  colors: Joi.array()
-    .items(Joi.string().required())
-    .min(1)
-    .required(),
 });
 
 export const updateWholesaleSchema = Joi.object({
@@ -55,8 +45,4 @@ export const updateWholesaleSchema = Joi.object({
   categoryId: Joi.string(),
 
   images: Joi.array().items(Joi.string()),
-
-  sizes: Joi.array().items(Joi.string()),
-
-  colors: Joi.array().items(Joi.string()),
 });

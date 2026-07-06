@@ -172,8 +172,6 @@ model Wholesale {
   rating Float   @default(0)
 
   images WholesaleImage[]
-  sizes  WholesaleSize[]
-  colors WholesaleColor[]
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id])
@@ -194,18 +192,3 @@ model WholesaleImage {
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
 }
 
-model WholesaleSize {
-  id   String @id @default(cuid())
-  size String
-
-  wholesaleId String
-  wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
-}
-
-model WholesaleColor {
-  id    String @id @default(cuid())
-  color String
-
-  wholesaleId String
-  wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
-}

@@ -10,8 +10,6 @@ export interface WholesaleCreateData {
   rating: number;
   categoryId: string;
   images: { url: string; color?: string }[];
-  sizes: string[];
-  colors: string[];
   traderId: number;
 }
 
@@ -26,8 +24,6 @@ export interface WholesaleUpdateData {
   brand?: string;
   rating?: number;
   categoryId?: string;
-  images?: string[];
-  sizes?: string[];
-  colors?: string[];
+  images?: { url: string; color?: string }[];
   traderId: number;
 }
