@@ -50,9 +50,20 @@ export class RetailNotifyMeRepository {
     })
   }
 
-  async delete(id: number) {
-    return prismaClient.retailNotifyMe.delete({
-      where: { id }
+  async updateStatus(id: number, isActive: boolean) {
+    return prismaClient.retailNotifyMe.update({
+      where: { id },
+      data: { isActive },
+      include: {
+        retailProduct: {
+          include: {
+            category: true,
+            images: true,
+            colors: true,
+            sizes: true
+          }
+        }
+      }
     })
   }
 
@@ -67,14 +78,15 @@ export class RetailNotifyMeRepository {
     })
   }
 
-  async deleteByUserAndProduct(userId: number, retailProductId: number) {
-    return prismaClient.retailNotifyMe.delete({
+  async deactivateByUserAndProduct(userId: number, retailProductId: number) {
+    return prismaClient.retailNotifyMe.update({
       where: {
         userId_retailProductId: {
           userId,
           retailProductId
         }
-      }
+      },
+      data: { isActive: false }
     })
   }
 }

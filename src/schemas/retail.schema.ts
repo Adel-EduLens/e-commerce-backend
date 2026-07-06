@@ -100,3 +100,7 @@ export const createRetailNotifyMeSchema = Joi.object({
   userId: Joi.number().required(),
   retailProductId: Joi.number().required()
 })
+
+export const retailProductRatingSchema = Joi.object({
+  rating: Joi.number().integer().min(1).max(5).required()
+})

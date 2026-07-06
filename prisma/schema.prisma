@@ -40,24 +40,28 @@ enum NotificationType {
 }
 
 model User {
-  id              Int              @id @default(autoincrement())
-  email           String           @unique
-  name            String?
-  password        String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now()) @updatedAt
-  phone           String?
-  role            String           @default("user")
-  status          String           @default("active")
-  avatar          String?
-  dateOfBirth     DateTime?
-  gender          String?
-  orders          Order[]
-  wallet          Wallet?
-  notifications   Notification[]
-  notifyMe        NotifyMe[]
-  settings        UserSettings?
-  retailNotifyMes RetailNotifyMe[]
+  id                   Int                   @id @default(autoincrement())
+  email                String                @unique
+  name                 String?
+  password             String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @default(now()) @updatedAt
+  phone                String?
+  role                 String                @default("user")
+  status               String                @default("active")
+  avatar               String?
+  dateOfBirth          DateTime?
+  gender               String?
+  orders               Order[]
+  wallet               Wallet?
+  notifications        Notification[]
+  notifyMe             NotifyMe[]
+  settings             UserSettings?
+  retailNotifyMes      RetailNotifyMe[]
+  cart                 Cart?
+  wishlist             WishlistItem[]
+  productRatings       ProductRating[]
+  retailProductRatings RetailProductRating[]
 }
 
 model Trader {
@@ -123,8 +127,11 @@ model Product {
   orderItems OrderItem[]
   notifyMe   NotifyMe[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  ratings       ProductRating[]
 }
 
 model ProductImage {
@@ -259,26 +266,29 @@ model RetailCategory {
 }
 
 model RetailProduct {
-  id               Int                  @id @default(autoincrement())
+  id               Int                   @id @default(autoincrement())
   name             String
-  slug             String               @unique
-  description      String?              @db.Text
+  slug             String                @unique
+  description      String?               @db.Text
   shortDescription String?
   price            Float
   discountPrice    Float?
-  stock            Int                  @default(0)
-  sku              String?              @unique
+  stock            Int                   @default(0)
+  sku              String?               @unique
   brand            String?
-  isFeatured       Boolean              @default(false)
-  isActive         Boolean              @default(true)
+  isFeatured       Boolean               @default(false)
+  isActive         Boolean               @default(true)
   categoryId       Int
-  category         RetailCategory       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category         RetailCategory        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   images           RetailProductImage[]
   colors           RetailProductColor[]
   sizes            RetailProductSize[]
   notifyMe         RetailNotifyMe[]
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
+  ratings          RetailProductRating[]
 }
 
 model RetailProductImage {
@@ -296,6 +306,7 @@ model RetailProductColor {
   hexCode   String?
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
 }
 
 model RetailProductSize {
@@ -304,6 +315,7 @@ model RetailProductSize {
   stock     Int?
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
 }
 
 model RetailNotifyMe {
@@ -316,6 +328,78 @@ model RetailNotifyMe {
   createdAt       DateTime      @default(now())
   userSettings    UserSettings? @relation(fields: [userSettingsId], references: [id])
   userSettingsId  Int?
+
+  @@unique([userId, retailProductId])
+}
+
+enum WishlistProductType {
+  RETAIL
+  WHOLESALE
+  SHOP
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id              Int                 @id @default(autoincrement())
+  cartId          Int
+  cart            Cart                @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId       String?
+  product         Product?            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  retailProductId Int?
+  retailProduct   RetailProduct?      @relation(fields: [retailProductId], references: [id], onDelete: Cascade)
+  retailColorId   Int?
+  retailColor     RetailProductColor? @relation(fields: [retailColorId], references: [id], onDelete: SetNull)
+  retailSizeId    Int?
+  retailSize      RetailProductSize?  @relation(fields: [retailSizeId], references: [id], onDelete: SetNull)
+  quantity        Int                 @default(1)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model WishlistItem {
+  id                 Int                 @id @default(autoincrement())
+  userId             Int
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productType        WishlistProductType
+  retailProductId    Int?
+  retailProduct      RetailProduct?      @relation(fields: [retailProductId], references: [id], onDelete: Cascade)
+  wholesaleProductId Int?
+  shopProductId      String?
+  shopProduct        Product?            @relation(fields: [shopProductId], references: [id], onDelete: Cascade)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model ProductRating {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+}
+
+model RetailProductRating {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  retailProductId Int
+  retailProduct   RetailProduct @relation(fields: [retailProductId], references: [id], onDelete: Cascade)
+  rating          Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@unique([userId, retailProductId])
 }

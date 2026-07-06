@@ -30,7 +30,16 @@ export const deleteNotification = asyncHandler(async (req: Request, res: Respons
   await retailNotifyMeService.deleteNotification(Number(id))
   successResponse(res, {
     statusCode: 200,
-    message: 'Notification deleted successfully'
+    message: 'Notification deactivated successfully'
+  })
+})
+
+export const deactivateNotification = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  await retailNotifyMeService.deleteNotification(Number(id))
+  successResponse(res, {
+    statusCode: 200,
+    message: 'Notification deactivated successfully'
   })
 })
 

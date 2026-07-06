@@ -1,5 +1,6 @@
 import { RetailNotifyMeRepository } from '../repositories/retailNotifyMe.repository.js'
 import { RetailProductRepository } from '../repositories/retailProduct.repository.js'
+import { userRepository } from '../repositories/user.repository.js'
 import AppError from '../utils/AppError.util.js'
 
 const retailNotifyMeRepository = new RetailNotifyMeRepository()
@@ -19,16 +20,22 @@ export class RetailNotifyMeService {
   }
 
   async createNotification(userId: number, retailProductId: number) {
-    // Validate product exists
+    const user = await userRepository.findById(userId)
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
     const product = await retailProductRepository.findById(retailProductId)
     if (!product) {
       throw new AppError('Product not found', 404)
     }
 
-    // Check if already subscribed
     const existing = await retailNotifyMeRepository.existsByUserAndProduct(userId, retailProductId)
-    if (existing && existing.isActive) {
-      throw new AppError('Already subscribed to this product', 400)
+    if (existing) {
+      if (existing.isActive) {
+        return existing
+      }
+      return retailNotifyMeRepository.updateStatus(existing.id, true)
     }
 
     return retailNotifyMeRepository.create(userId, retailProductId)
@@ -40,7 +47,7 @@ export class RetailNotifyMeService {
       throw new AppError('Notification not found', 404)
     }
 
-    return retailNotifyMeRepository.delete(id)
+    return retailNotifyMeRepository.updateStatus(id, false)
   }
 
   async deleteNotificationByUserAndProduct(userId: number, retailProductId: number) {
@@ -49,6 +56,6 @@ export class RetailNotifyMeService {
       throw new AppError('Subscription not found', 404)
     }
 
-    return retailNotifyMeRepository.deleteByUserAndProduct(userId, retailProductId)
+    return retailNotifyMeRepository.deactivateByUserAndProduct(userId, retailProductId)
   }
 }

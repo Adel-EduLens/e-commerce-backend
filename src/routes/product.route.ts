@@ -6,9 +6,11 @@ import {
   getProduct,
   updateProduct,
   deleteProduct,
+  rateProduct,
 } from "../controllers/product.controller.js";
 import { validateRequest } from '../middlewares/validation.middleware.js';
-import {createProductSchema, updateProductSchema} from "../schemas/product.schema.js"
+import { createProductSchema, updateProductSchema, productRatingSchema } from "../schemas/product.schema.js"
+import { requireAuth } from '../middlewares/auth.middleware.js'
 const router = Router();
 router.post(
   "/",
@@ -18,6 +20,7 @@ router.post(
 
 router.get("/", getProducts);
 router.get("/:id", getProduct);
+router.post("/:id/rating", requireAuth, validateRequest(productRatingSchema), rateProduct);
 
 router.patch(
   "/:id",

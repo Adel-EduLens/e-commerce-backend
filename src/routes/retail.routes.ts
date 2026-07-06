@@ -16,11 +16,16 @@ import {
   deleteProduct
 } from '../controllers/retailProduct.controller.js'
 import {
+  rateRetailProduct,
+  getRetailProductRating,
+} from '../controllers/retailProductRating.controller.js'
+import {
   getUserNotifications,
   createNotification,
   deleteNotification,
   deleteNotificationByProduct
 } from '../controllers/retailNotifyMe.controller.js'
+import { requireAuth, optionalAuth } from '../middlewares/auth.middleware.js'
 import { validateRequest } from '../middlewares/validation.middleware.js'
 import {
   createRetailCategorySchema,
@@ -47,6 +52,8 @@ router.get('/products/slug/:slug', getProductBySlug)
 router.post('/products', validateRequest(createRetailProductSchema), createProduct)
 router.put('/products/:id', validateRequest(updateRetailProductSchema), updateProduct)
 router.delete('/products/:id', deleteProduct)
+router.post('/products/:id/rating', requireAuth, rateRetailProduct)
+router.get('/products/:id/rating', optionalAuth, getRetailProductRating)
 
 // ===== Retail Notify Me =====
 router.get('/notify-me/user/:userId', getUserNotifications)

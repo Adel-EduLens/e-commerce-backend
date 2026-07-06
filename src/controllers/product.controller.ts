@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import { asyncHandler } from '../utils/globalErrorHandler.util.js';
+import AppError from '../utils/AppError.util.js';
 import { successResponse } from '../utils/response.util.js';
 import { productService } from "../services/product.service.js";
+import type { AuthenticatedRequest } from '../types/user.type.js';
 
 export const createProduct = asyncHandler(async (req: Request, res: Response) => {
     const result = await productService.create(req.body);
@@ -51,5 +53,22 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
 
     successResponse(res, {
         message: "Product deleted successfully",
+    });
+});
+
+export const rateProduct = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = Number(req.user?.id);
+    if (!userId) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    const productId = String(req.params.id);
+    const rating = Number(req.body.rating);
+
+    const result = await productService.rateProduct(userId, productId, rating);
+
+    successResponse(res, {
+        message: "Product rating saved successfully",
+        data: result,
     });
 });

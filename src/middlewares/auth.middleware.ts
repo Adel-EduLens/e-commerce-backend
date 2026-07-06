@@ -90,3 +90,30 @@ export const requireRole = (...roles: Array<'user' | 'trader'>) => {
     next()
   }
 }
+
+export const optionalAuth = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const token = req.headers.authorization?.startsWith('Bearer')
+      ? req.headers.authorization.split(' ')[1]
+      : undefined
+    if (!token) {
+      return next()
+    }
+
+    const decoded = verifyToken(token)
+    const entityId = Number(decoded.id)
+
+    const user = await userRepository.findById(entityId)
+    if (user) {
+      req.user = user
+    }
+    next()
+  } catch (error: any) {
+    // If token is invalid or expired, just proceed without req.user
+    next()
+  }
+}

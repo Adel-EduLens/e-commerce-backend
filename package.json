@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prestart": "npm run build",
     "start": "cross-env NODE_ENV=production node dist/index.js",
-    "build": "npm install && npx tsc",
+    "build": "npx tsc",
     "seed": "node prisma/seed.js",
+    "seed:retail": "npx tsx src/seed/retail.seed.ts",
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts"
   },
   "keywords": [],
