@@ -9,7 +9,7 @@ export interface WholesaleCreateData {
   brand: string;
   rating: number;
   categoryId: string;
-  images: string[];
+  images: { url: string; color?: string }[];
   sizes: string[];
   colors: string[];
   traderId: number;

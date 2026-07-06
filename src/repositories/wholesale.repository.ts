@@ -24,7 +24,7 @@ class WholesaleRepository {
           connect: { id: data.categoryId },
         },
         images: {
-          create: data.images.map((url) => ({ url })),
+          create: data.images.map((img) => ({ url: img.url, color: img.color ?? null })),
         },
         sizes: {
           create: data.sizes.map((size) => ({ size })),
@@ -112,7 +112,7 @@ class WholesaleRepository {
         ...(data.images && {
           images: {
             deleteMany: {},
-            create: data.images.map((url) => ({ url })),
+            create: data.images.map((img) => ({ url: img.url, color: img.color ?? null })),
           },
         }),
         ...(data.sizes && {

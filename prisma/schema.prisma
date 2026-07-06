@@ -186,8 +186,9 @@ model Wholesale {
 }
 
 model WholesaleImage {
-  id  String @id @default(cuid())
-  url String
+  id    String  @id @default(cuid())
+  url   String
+  color String?
 
   wholesaleId String
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
