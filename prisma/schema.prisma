@@ -175,8 +175,6 @@ model Wholesale {
   rating Float   @default(0)
 
   images WholesaleImage[]
-  sizes  WholesaleSize[]
-  colors WholesaleColor[]
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id])
@@ -189,13 +187,15 @@ model Wholesale {
 }
 
 model WholesaleImage {
-  id  String @id @default(cuid())
-  url String
+  id    String  @id @default(cuid())
+  url   String
+  color String?
 
   wholesaleId String
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
 }
 
+<<<<<<< HEAD
 model WholesaleSize {
   id   String @id @default(cuid())
   size String
@@ -230,3 +230,5 @@ model Coupon {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 }
+=======
+>>>>>>> d6ce432633e52dab50e8e03730ed701e6282c74c

@@ -24,20 +24,12 @@ class WholesaleRepository {
           connect: { id: data.categoryId },
         },
         images: {
-          create: data.images.map((url) => ({ url })),
-        },
-        sizes: {
-          create: data.sizes.map((size) => ({ size })),
-        },
-        colors: {
-          create: data.colors.map((color) => ({ color })),
+          create: data.images.map((img) => ({ url: img.url, color: img.color ?? null })),
         },
       },
       include: {
         category: true,
         images: true,
-        sizes: true,
-        colors: true,
       },
     });
   }
@@ -57,8 +49,6 @@ class WholesaleRepository {
       include: {
         category: true,
         images: true,
-        sizes: true,
-        colors: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -72,8 +62,6 @@ class WholesaleRepository {
       include: {
         category: true,
         images: true,
-        sizes: true,
-        colors: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -87,8 +75,6 @@ class WholesaleRepository {
       include: {
         category: true,
         images: true,
-        sizes: true,
-        colors: true,
       },
     });
   }
@@ -112,27 +98,13 @@ class WholesaleRepository {
         ...(data.images && {
           images: {
             deleteMany: {},
-            create: data.images.map((url) => ({ url })),
-          },
-        }),
-        ...(data.sizes && {
-          sizes: {
-            deleteMany: {},
-            create: data.sizes.map((size) => ({ size })),
-          },
-        }),
-        ...(data.colors && {
-          colors: {
-            deleteMany: {},
-            create: data.colors.map((color) => ({ color })),
+            create: data.images.map((img) => ({ url: img.url, color: img.color ?? null })),
           },
         }),
       },
       include: {
         category: true,
         images: true,
-        sizes: true,
-        colors: true,
       },
     });
   }

@@ -5,7 +5,7 @@ import { adminRepository } from '../repositories/admin.repository.js';
 import { traderProfileRepository } from '../repositories/traderProfile.repository.js';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-dotenv.config({ path: envFile });
+dotenv.config({ path: envFile, override: true });
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/nasu';
 
