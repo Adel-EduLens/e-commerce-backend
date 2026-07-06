@@ -5,15 +5,16 @@ import {
 } from "../types/product.types.js";
 
 type GetProductsQuery = {
-  search?: string;
-  categoryId?: string;
-  brandId?: string;
+  search?: string | undefined;
+  categoryId?: string | undefined;
+  brandId?: string | undefined;
+  traderId?: number | undefined;
 
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortBy?: string | undefined;
+  sortOrder?: "asc" | "desc" | undefined;
 
-  page?: number;
-  limit?: number;
+  page?: number | undefined;
+  limit?: number | undefined;
 };
 
 class ProductRepository {
@@ -109,6 +110,7 @@ class ProductRepository {
     search,
     categoryId,
     brandId,
+    traderId,
     sortBy,
     sortOrder = "asc",
     page = 1,
@@ -145,6 +147,10 @@ class ProductRepository {
 
       ...(brandId && {
         brandId,
+      }),
+
+      ...(traderId && {
+        traderId,
       }),
     };
 

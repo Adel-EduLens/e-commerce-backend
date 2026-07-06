@@ -9,15 +9,16 @@ import {
 import { traderProfileRepository } from "../repositories/traderProfile.repository.js";
 
 type GetProductsQuery = {
-  search?: string;
-  categoryId?: string;
-  brandId?: string;
+  search?: string | undefined;
+  categoryId?: string | undefined;
+  brandId?: string | undefined;
+  traderId?: number | undefined;
 
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortBy?: string | undefined;
+  sortOrder?: "asc" | "desc" | undefined;
 
-  page?: number;
-  limit?: number;
+  page?: number | undefined;
+  limit?: number | undefined;
 };
 
 export const productService = {

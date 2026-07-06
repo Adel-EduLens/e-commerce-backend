@@ -28,6 +28,7 @@ model Trader {
   phone      String?
   products   Product[]
   wholesales Wholesale[]
+  coupons    Coupon[]
   role       String      @default("trader")
 }
 
@@ -70,6 +71,7 @@ model Category {
   name       String      @unique
   products   Product[]
   wholesales Wholesale[]
+  coupons    Coupon[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }
@@ -87,6 +89,7 @@ model Product {
   sizes  ProductSize[]
   colors ProductColor[]
   reviews Review[]
+  coupons Coupon[]
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id])
@@ -207,4 +210,23 @@ model WholesaleColor {
 
   wholesaleId String
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  discount   Float
+  validUntil DateTime
+
+  traderId   Int
+  trader     Trader    @relation(fields: [traderId], references: [id], onDelete: Cascade)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  productId  String?
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }

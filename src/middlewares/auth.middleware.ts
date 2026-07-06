@@ -20,34 +20,36 @@ export const requireAuth = async (
     }
 
     const decoded = verifyToken(token)
-
     const id = Number(decoded.id)
+    const role = decoded.role
 
-    const user = await userRepository.findById(id)
-    if (user) {
-      req.user = {
-        id: user.id,
-        role: 'user',
+    if (role === 'admin') {
+      const admin = await adminRepository.findById(id)
+      if (admin) {
+        req.user = {
+          id: admin.id,
+          role: 'admin',
+        }
+        return next()
       }
-      return next()
-    }
-
-    const trader = await traderProfileRepository.findById(id)
-    if (trader) {
-      req.user = {
-        id: trader.id,
-        role: 'trader',
+    } else if (role === 'trader') {
+      const trader = await traderProfileRepository.findById(id)
+      if (trader) {
+        req.user = {
+          id: trader.id,
+          role: 'trader',
+        }
+        return next()
       }
-      return next()
-    }
-
-    const admin = await adminRepository.findById(id)
-    if (admin) {
-      req.user = {
-        id: admin.id,
-        role: 'admin',
+    } else {
+      const user = await userRepository.findById(id)
+      if (user) {
+        req.user = {
+          id: user.id,
+          role: 'user',
+        }
+        return next()
       }
-      return next()
     }
 
     return next(new AppError('User not found', 401))

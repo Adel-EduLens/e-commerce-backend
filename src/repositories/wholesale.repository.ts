@@ -42,7 +42,7 @@ class WholesaleRepository {
     });
   }
 
-  findAll({ search, categoryId, categoryName, isBestDeal, isMostPopular, isPremiumCollection }: { search?: string; categoryId?: string; categoryName?: string; isBestDeal?: boolean; isMostPopular?: boolean; isPremiumCollection?: boolean }) {
+  findAll({ search, categoryId, categoryName, isBestDeal, isMostPopular, isPremiumCollection }: { search?: string | undefined; categoryId?: string | undefined; categoryName?: string | undefined; isBestDeal?: boolean | undefined; isMostPopular?: boolean | undefined; isPremiumCollection?: boolean | undefined }) {
     return prisma.wholesale.findMany({
       where: {
         ...(search && {

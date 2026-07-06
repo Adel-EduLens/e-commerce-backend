@@ -21,6 +21,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
     sortOrder: req.query.sortOrder as "asc" | "desc",
     page: Number(req.query.page) || 1,
     limit: Number(req.query.limit) || 16,
+    traderId: req.query.traderId ? Number(req.query.traderId) : undefined,
   });
 
   successResponse(res, {

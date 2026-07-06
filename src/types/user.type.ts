@@ -23,5 +23,5 @@ export interface IUserResponse {
 }
 
 export interface AuthenticatedRequest extends Request {
-  user?: IUserResponse
+  user?: IUserResponse & { id: string | number; role: 'user' | 'trader' | 'admin' }
 }

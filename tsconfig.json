@@ -42,5 +42,6 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-  }
+  },
+  "exclude": ["src/db"]
 }

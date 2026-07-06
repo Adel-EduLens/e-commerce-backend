@@ -62,8 +62,7 @@ async function main() {
   const existingWholesales = await prisma.wholesale.count()
   if (existingWholesales > 0) {
     console.log('✅ Wholesale products already exist.')
-    return
-  }
+  } else {
 
   const wholesaleProducts = [
     // Men
@@ -242,6 +241,107 @@ async function main() {
     })
   }
   console.log(`✅ ${wholesaleProducts.length} wholesale products seeded!`)
+  }
+
+  // ── Brands ──
+  const brandNames = ['Nike', 'Adidas', 'Zara', 'H&M', 'Puma']
+  const brands = {}
+  for (const name of brandNames) {
+    let brand = await prisma.brand.findUnique({ where: { name } })
+    if (!brand) {
+      brand = await prisma.brand.create({ data: { name } })
+    }
+    brands[name] = brand
+  }
+  console.log('✅ Brands ready.')
+
+  // ── Retail Products ──
+  const existingProducts = await prisma.product.count()
+  if (existingProducts > 0) {
+    console.log('✅ Retail products already exist.')
+  } else {
+    const retailProducts = [
+      {
+        name: 'Nike Air Max Sneaker',
+        description: 'Iconic sneaker with maximum cushioning and comfort for daily wear.',
+        price: 129.99,
+        sizeguide: 'Standard sneaker sizing',
+        rating: 4.8,
+        brandId: brands['Nike'].id,
+        categoryId: categories['Men'].id,
+        images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500'],
+        sizes: ['8', '9', '10', '11'],
+        colors: ['Red', 'Black'],
+      },
+      {
+        name: 'Adidas Trefoil Hoodie',
+        description: 'Classic hoodie featuring the iconic Trefoil logo on the chest.',
+        price: 65.00,
+        sizeguide: 'Regular fit',
+        rating: 4.6,
+        brandId: brands['Adidas'].id,
+        categoryId: categories['Men'].id,
+        images: ['https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500'],
+        sizes: ['S', 'M', 'L', 'XL'],
+        colors: ['Blue', 'Black'],
+      },
+      {
+        name: 'Zara Summer Dress',
+        description: 'Flowy patterned midi dress with puff sleeves and adjustable belt.',
+        price: 59.90,
+        sizeguide: 'Loose fit',
+        rating: 4.5,
+        brandId: brands['Zara'].id,
+        categoryId: categories['Women'].id,
+        images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500'],
+        sizes: ['XS', 'S', 'M', 'L'],
+        colors: ['Floral', 'White'],
+      },
+      {
+        name: 'H&M Knit Sweater',
+        description: 'Soft knit sweater in a wool blend with raglan sleeves.',
+        price: 34.99,
+        sizeguide: 'Relaxed fit',
+        rating: 4.2,
+        brandId: brands['H&M'].id,
+        categoryId: categories['Women'].id,
+        images: ['https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500'],
+        sizes: ['S', 'M', 'L'],
+        colors: ['Beige', 'Gray'],
+      },
+      {
+        name: 'Kids Puma Active Shorts',
+        description: 'Breathable training shorts with dryCELL technology for active kids.',
+        price: 24.99,
+        sizeguide: 'Fits true to size',
+        rating: 4.4,
+        brandId: brands['Puma'].id,
+        categoryId: categories['Kids'].id,
+        images: ['https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500'],
+        sizes: ['S (6-7)', 'M (8-9)', 'L (10-12)'],
+        colors: ['Navy', 'Black'],
+      }
+    ]
+
+    for (const product of retailProducts) {
+      await prisma.product.create({
+        data: {
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          sizeguide: product.sizeguide,
+          rating: product.rating,
+          trader: { connect: { id: trader.id } },
+          category: { connect: { id: product.categoryId } },
+          brand: { connect: { id: product.brandId } },
+          images: { create: product.images.map((url) => ({ url, color: product.colors[0] })) },
+          sizes: { create: product.sizes.map((size) => ({ size })) },
+          colors: { create: product.colors.map((color) => ({ color })) },
+        },
+      })
+    }
+    console.log(`✅ ${retailProducts.length} retail products seeded!`)
+  }
 }
 
 main()

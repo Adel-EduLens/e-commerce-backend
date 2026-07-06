@@ -1,0 +1,80 @@
+import { Request, Response } from "express";
+import { asyncHandler } from '../utils/globalErrorHandler.util.js';
+import { successResponse } from '../utils/response.util.js';
+import { couponService } from "../services/coupon.service.js";
+
+export const createCoupon = asyncHandler(async (req: Request, res: Response) => {
+    const traderId = Number(req.user!.id);
+    const result = await couponService.create({
+        ...req.body,
+        validUntil: new Date(req.body.validUntil),
+        traderId
+    });
+    
+    successResponse(res, {
+        statusCode: 201,
+        message: "Coupon created successfully",
+        data: result,
+    });
+});
+
+export const getCoupons = asyncHandler(async (req: Request, res: Response) => {
+    // If the authenticated user is a trader, filter by their traderId
+    const filter: { traderId?: number } = {};
+    if (req.user && req.user.role === 'trader') {
+        filter.traderId = Number(req.user.id);
+    }
+    
+    const result = await couponService.getAll(filter);
+
+    successResponse(res, {
+        message: "Coupons fetched successfully",
+        data: result,
+    });
+});
+
+export const getCoupon = asyncHandler(async (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const result = await couponService.getById(id);
+
+    successResponse(res, {
+        message: "Coupon fetched successfully",
+        data: result,
+    });
+});
+
+export const getCouponByCode = asyncHandler(async (req: Request, res: Response) => {
+    const code = String(req.params.code).toUpperCase();
+    const result = await couponService.getByCode(code);
+
+    successResponse(res, {
+        message: "Coupon is valid",
+        data: result,
+    });
+});
+
+export const updateCoupon = asyncHandler(async (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const traderId = Number(req.user!.id);
+    
+    const result = await couponService.update(id, traderId, {
+        ...req.body,
+        validUntil: req.body.validUntil ? new Date(req.body.validUntil) : undefined
+    });
+
+    successResponse(res, {
+        message: "Coupon updated successfully",
+        data: result,
+    });
+});
+
+export const deleteCoupon = asyncHandler(async (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const traderId = Number(req.user!.id);
+    
+    await couponService.delete(id, traderId);
+
+    successResponse(res, {
+        message: "Coupon deleted successfully",
+    });
+});
