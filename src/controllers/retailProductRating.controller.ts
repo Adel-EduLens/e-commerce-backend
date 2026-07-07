@@ -1,14 +1,12 @@
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { asyncHandler } from '../utils/globalErrorHandler.util.js'
 import { successResponse } from '../utils/response.util.js'
 import { RetailProductRatingService } from '../services/retailProductRating.service.js'
-import type { AuthenticatedRequest } from '../types/user.type.js'
-import AppError from '../utils/AppError.util.js'
 
 const ratingService = new RetailProductRatingService()
 
 // POST /api/retail/products/:id/rating
-export const rateRetailProduct = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const rateRetailProduct = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.id ? Number(req.user.id) : null
   if (!userId) {
     return res.status(401).json({ success: false, message: 'You must be logged in to rate a product' })
@@ -30,7 +28,7 @@ export const rateRetailProduct = asyncHandler(async (req: AuthenticatedRequest, 
 })
 
 // POST /api/ratings  (unified endpoint called by frontend first)
-export const rateProductUnified = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const rateProductUnified = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.id ? Number(req.user.id) : null
   if (!userId) {
     return res.status(401).json({ success: false, message: 'You must be logged in to rate a product' })
@@ -59,7 +57,7 @@ export const rateProductUnified = asyncHandler(async (req: AuthenticatedRequest,
 })
 
 // GET /api/retail/products/:id/rating
-export const getRetailProductRating = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const getRetailProductRating = asyncHandler(async (req: Request, res: Response) => {
   const retailProductId = Number(req.params.id)
   const result = await ratingService.getProductRatings(retailProductId)
   return successResponse(res, {

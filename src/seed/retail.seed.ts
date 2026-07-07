@@ -6,9 +6,6 @@ async function main() {
   console.log('🌱 Starting retail seed...')
 
   // Clean up and seed default test users
-  await prisma.wishlistItem.deleteMany()
-  await prisma.cartItem.deleteMany()
-  await prisma.cart.deleteMany()
   await prisma.user.deleteMany()
 
   const bcrypt = await import('bcrypt')
