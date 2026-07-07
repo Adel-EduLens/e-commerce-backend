@@ -85,9 +85,16 @@ model Product {
 
   rating Float @default(0)
 
-  images  ProductImage[]
-  sizes   ProductSize[]
-  colors  ProductColor[]
+  images ProductImage[]
+  sizes  ProductSize[]
+  colors ProductColor[]
+
+  flashDealPrice  Float?
+  flashDealEndsAt DateTime?
+
+  isMustHave   Boolean @default(false)
+  isFlashDeals Boolean @default(false)
+
   reviews Review[]
   coupons Coupon[]
 
