@@ -10,6 +10,10 @@ export interface ProductCreateData {
   sizes: string[];
   colors: string[];
   traderId: number;
+  isMustHave?: boolean;
+  isFlashDeals?: boolean;
+  flashDealPrice?: number;
+  flashDealEndsAt?: string | Date;
 }
 export type ProductImageInput = {
   url: string;
@@ -28,4 +32,8 @@ export interface ProductUpdateData {
   sizes?: string[];
   colors?: string[];
   traderId: number;
+  isMustHave?: boolean;
+  isFlashDeals?: boolean;
+  flashDealPrice?: number | null;
+  flashDealEndsAt?: string | Date | null;
 }

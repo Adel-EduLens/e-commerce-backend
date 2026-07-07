@@ -19,6 +19,12 @@ export const createProductSchema = Joi.object({
   sizeguide: Joi.string().allow("", null),
   reviews: Joi.string().allow("", null),
 
+  isMustHave: Joi.boolean().optional(),
+  isFlashDeals: Joi.boolean().optional(),
+
+  flashDealPrice: Joi.number().positive().optional(),
+  flashDealEndsAt: Joi.date().iso().optional(),
+
   categoryId: Joi.string().required(),
 
   images: Joi.array().items(imageSchema).min(1).required(),
@@ -40,6 +46,12 @@ export const updateProductSchema = Joi.object({
   rating: Joi.number().min(0).max(5),
 
   reviews: Joi.string().allow("", null),
+
+  isMustHave: Joi.boolean().optional(),
+  isFlashDeals: Joi.boolean().optional(),
+
+  flashDealPrice: Joi.number().positive().allow(null).optional(),
+  flashDealEndsAt: Joi.date().iso().allow(null).optional(),
 
   categoryId: Joi.string(),
 
