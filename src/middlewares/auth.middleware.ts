@@ -73,6 +73,47 @@ export const requireAuth = async (
 }
 
 // =======================================================
+// OPTIONAL AUTH (attaches user if token present, continues if not)
+// =======================================================
+export const optionalAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const token = req.headers.authorization
+    if (!token) {
+      return next()
+    }
+
+    const decoded = verifyToken(token)
+    const id = Number(decoded.id)
+    const role = decoded.role
+
+    if (role === 'admin') {
+      const admin = await adminRepository.findById(id, { id: true, role: true })
+      if (admin) {
+        req.user = { id: admin.id, role: 'admin' }
+      }
+    } else if (role === 'trader') {
+      const trader = await traderProfileRepository.findById(id, { id: true, role: true })
+      if (trader) {
+        req.user = { id: trader.id, role: 'trader' }
+      }
+    } else {
+      const user = await userRepository.findById(id, { id: true, role: true })
+      if (user) {
+        req.user = { id: user.id, role: 'user' }
+      }
+    }
+
+    next()
+  } catch {
+    next()
+  }
+}
+
+// =======================================================
 // ROLE-BASED ACCESS CONTROL
 // =======================================================
 export const requireRole = (...roles: Array<'user' | 'trader' | 'admin'>) => {

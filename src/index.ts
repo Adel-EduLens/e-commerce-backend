@@ -22,6 +22,7 @@ import traderRouter from './routes/trader.auth.routes.js'
 
 import brandRouter from './routes/brand.route.js'
 import couponRouter from './routes/coupon.route.js'
+import retailRouter from './routes/retail.routes.js'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -57,6 +58,7 @@ app.use('/api/reviews', reviewRouter)
 app.use('/api/wholesales', wholesaleRouter)
 app.use('/api/brands', brandRouter)
 app.use('/api/coupons', couponRouter)
+app.use('/api/retail', retailRouter)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with Prisma!')
