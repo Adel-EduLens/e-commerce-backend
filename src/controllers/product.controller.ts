@@ -40,6 +40,15 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+export const getFilters = asyncHandler(async (req: Request, res: Response) => {
+  const result = await productService.getFilters();
+
+  successResponse(res, {
+    message: "Filters fetched successfully",
+    data: result,
+  });
+});
+
 export const getProduct = asyncHandler(async (req: Request, res: Response) => {
   const id = String(req.params.id);
   const result = await productService.getById(id);

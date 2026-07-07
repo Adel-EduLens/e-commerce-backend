@@ -119,6 +119,10 @@ export const productService = {
     return productRepository.findAll(query);
   },
 
+  async getFilters() {
+    return productRepository.getFilters();
+  },
+
   async getById(id: string) {
     const product = await productRepository.findById(id);
 
