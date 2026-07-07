@@ -83,11 +83,11 @@ model Product {
   price       Float
   sizeguide   String?
 
-  rating Float   @default(0)
+  rating Float @default(0)
 
-  images ProductImage[]
-  sizes  ProductSize[]
-  colors ProductColor[]
+  images  ProductImage[]
+  sizes   ProductSize[]
+  colors  ProductColor[]
   reviews Review[]
   coupons Coupon[]
 
@@ -95,7 +95,7 @@ model Product {
   trader   Trader @relation(fields: [traderId], references: [id])
 
   brandId String?
-  brand Brand? @relation(fields: [brandId], references: [id])
+  brand   Brand?  @relation(fields: [brandId], references: [id])
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -103,6 +103,7 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model Brand {
   id   String @id @default(cuid())
   name String @unique
@@ -112,10 +113,11 @@ model Brand {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model ProductImage {
-  id  String @id @default(cuid())
-  url String
-  color String?
+  id        String  @id @default(cuid())
+  url       String
+  color     String?
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
@@ -162,11 +164,11 @@ model Design {
 }
 
 model Wholesale {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  minOrder    Int     @default(1)
+  id                  String  @id @default(cuid())
+  name                String
+  description         String?
+  price               Float
+  minOrder            Int     @default(1)
   isBestDeal          Boolean @default(false)
   isMostPopular       Boolean @default(false)
   isPremiumCollection Boolean @default(false)
@@ -182,8 +184,10 @@ model Wholesale {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  wholesaleSizes  WholesaleSize[]
+  wholesaleColors WholesaleColor[]
 }
 
 model WholesaleImage {
@@ -195,7 +199,6 @@ model WholesaleImage {
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
 }
 
-<<<<<<< HEAD
 model WholesaleSize {
   id   String @id @default(cuid())
   size String
@@ -213,22 +216,20 @@ model WholesaleColor {
 }
 
 model Coupon {
-  id         String    @id @default(cuid())
-  code       String    @unique
+  id         String   @id @default(cuid())
+  code       String   @unique
   discount   Float
   validUntil DateTime
 
-  traderId   Int
-  trader     Trader    @relation(fields: [traderId], references: [id], onDelete: Cascade)
+  traderId Int
+  trader   Trader @relation(fields: [traderId], references: [id], onDelete: Cascade)
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  productId  String?
-  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-=======
->>>>>>> d6ce432633e52dab50e8e03730ed701e6282c74c
