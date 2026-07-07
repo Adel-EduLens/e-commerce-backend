@@ -26,3 +26,29 @@ export const addQuestionSchema = Joi.object({
     'any.required': 'Answer is required',
   }),
 });
+
+export const changeStatusSchema = Joi.object({
+  status: Joi.string().valid('active', 'suspended').required().messages({
+    'any.only': 'Status must be either active or suspended',
+    'any.required': 'Status is required',
+  }),
+});
+
+export const videoSchema = Joi.object({
+  title: Joi.string().trim().min(3).max(255).required().messages({
+    'string.empty': 'Title cannot be empty',
+    'string.min': 'Title must be at least 3 characters',
+    'string.max': 'Title cannot exceed 255 characters',
+    'any.required': 'Title is required',
+  }),
+  category: Joi.string().trim().min(3).max(100).required().messages({
+    'string.empty': 'Category cannot be empty',
+    'string.min': 'Category must be at least 3 characters',
+    'string.max': 'Category cannot exceed 100 characters',
+    'any.required': 'Category is required',
+  }),
+  youtubeId: Joi.string().trim().required().messages({
+    'string.empty': 'Youtube ID cannot be empty',
+    'any.required': 'Youtube ID is required',
+  }),
+});

@@ -1,13 +1,7 @@
-import { Admin } from '../models/Admin.model.js'
 import prisma from '../utils/prismaClient.js'
+import AppError from '../utils/AppError.util.js'
 
-import type { IAdmin } from '../types/admin.type.js'
-import { BaseRepository } from './base.repository.js'
-
-class AdminRepository extends BaseRepository<IAdmin> {
-  constructor() {
-    super(Admin)
-  }
+class AdminRepository {
 
   async addQuestion(question: string, answer: string) {
     return prisma.frequentlyAskedQuestion.create({ data: { question, answer } })
@@ -26,10 +20,14 @@ class AdminRepository extends BaseRepository<IAdmin> {
   }
 
   async deleteQuestion(id: number) {
+    const exists = await prisma.frequentlyAskedQuestion.findUnique({ where: { id } })
+    if (!exists) throw new AppError('Question not found', 404)
     return prisma.frequentlyAskedQuestion.delete({ where: { id } })
   }
 
   async updateQuestion(id: number, question: string, answer: string) {
+    const exists = await prisma.frequentlyAskedQuestion.findUnique({ where: { id } })
+    if (!exists) throw new AppError('Question not found', 404)
     return prisma.frequentlyAskedQuestion.update({
       where: { id },
       data: { question, answer },
@@ -51,6 +49,8 @@ class AdminRepository extends BaseRepository<IAdmin> {
   }
 
   async changeStatus(userId: number, status: 'active' | 'suspended') {
+    const exists = await prisma.user.findUnique({ where: { id: userId } })
+    if (!exists) throw new AppError('User not found', 404)
     return prisma.user.update({
       where: { id: userId },
       data: { status },
@@ -68,8 +68,8 @@ class AdminRepository extends BaseRepository<IAdmin> {
   async findByEmail(email: string) {
     return prisma.admin.findFirst({ where: { email } })
   }
-  async FindById(id: number) {
-    return prisma.admin.findUnique({ where: { id } })
+  async findById(id: number, select?: any) {
+    return prisma.admin.findUnique({ where: { id }, ...(select && { select }) })
   }
   async addvideo(title: string, category: string, youtubeId: string) {
     return prisma.helpCenterVideo.create({
@@ -94,6 +94,8 @@ class AdminRepository extends BaseRepository<IAdmin> {
     category: string,
     youtubeId: string
   ) {
+    const exists = await prisma.helpCenterVideo.findUnique({ where: { id } })
+    if (!exists) throw new AppError('Video not found', 404)
     return prisma.helpCenterVideo.update({
       where: { id },
       data: { title, category, youtubeId },
@@ -101,6 +103,8 @@ class AdminRepository extends BaseRepository<IAdmin> {
   }
 
   async deleteVideo(id: string) {
+    const exists = await prisma.helpCenterVideo.findUnique({ where: { id } })
+    if (!exists) throw new AppError('Video not found', 404)
     return prisma.helpCenterVideo.delete({ where: { id } })
   }
 }

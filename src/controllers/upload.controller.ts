@@ -18,7 +18,9 @@ export const uploadImage = asyncHandler(async (req: Request, res: Response) => {
 })
 
 export const getImages = asyncHandler(async (req: Request, res: Response) => {
-  const result = await uploadService.getImages()
+  const page = parseInt(req.query.page as string) || 1
+  const limit = parseInt(req.query.limit as string) || 16
+  const result = await uploadService.getImages(page, limit)
   successResponse(res, {
     statusCode: 200,
     message: 'Images fetched successfully',

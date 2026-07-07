@@ -8,6 +8,7 @@ import adminAuthRouter from './routes/admin.auth.routes.js'
 import prizeRouter from './routes/prize.route.js'
 import FAQRouter from './routes/admin.FAQ.routes.js'
 import helpCenterRouter from './routes/admin.helpCenter.routes.js'
+import adminUserRouter from './routes/admin.user.routes.js'
 import categoryRouter from './routes/category.route.js'
 import productRouter from './routes/product.route.js'
 import reviewRouter from './routes/review.route.js'
@@ -29,7 +30,6 @@ dotenv.config({ path: envFile, override: true })
 const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT || '3000', 10),
-  MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/nasu',
 }
 
 const app = express()
@@ -49,6 +49,7 @@ app.use('/api/trader', traderRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/admin/faqs', FAQRouter)
 app.use('/api/admin/auth', adminAuthRouter)
+app.use('/api/admin/users', adminUserRouter)
 app.use('/api/prizes', prizeRouter)
 app.use('/api/products', productRouter)
 app.use('/api/categories', categoryRouter)
@@ -58,7 +59,7 @@ app.use('/api/brands', brandRouter)
 app.use('/api/coupons', couponRouter)
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from TypeScript Express with MongoDB!')
+  res.send('Hello from TypeScript Express with Prisma!')
 })
 
 // Global Error Handler
@@ -66,30 +67,11 @@ app.use(globalErrorHandler)
 
 // Start server after DB connection
 const startServer = async () => {
-  // await connectDB(env.MONGODB_URI);
   const server = app.listen(env.PORT, () => {
     console.log(
       `🚀 Server is running at http://localhost:${env.PORT} in ${env.NODE_ENV} mode`
     )
   })
-
-  // Graceful shutdown
-  // const gracefulShutdown = async () => {
-  //   try {
-  //     await mongoose.connection.close();
-  //     console.log('Mongoose connection closed');
-  //     server.close(() => {
-  //       console.log('Express server closed');
-  //       process.exit(0);
-  //     });
-  //   } catch (err) {
-  //     console.error('Error during shutdown:', err);
-  //     process.exit(1);
-  //   }
-  // };
-
-  // process.on('SIGINT', gracefulShutdown);
-  // process.on('SIGTERM', gracefulShutdown);
 }
 
 startServer()

@@ -9,8 +9,8 @@ class UserRepository {
     })
   }
 
-  async findById(id: number) {
-    return prisma.user.findUnique({ where: { id } })
+  async findById(id: number, select?: any) {
+    return prisma.user.findUnique({ where: { id }, ...(select && { select }) })
   }
 
   async findByEmail(email: string) {

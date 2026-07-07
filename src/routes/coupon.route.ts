@@ -16,8 +16,8 @@ import { requireRole, requireAuth } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Publicly validate coupon by its code (e.g. at checkout)
-router.get("/validate/:code", getCouponByCode);
+// Validate coupon by its code (e.g. at checkout)
+router.get("/validate/:code", requireAuth, getCouponByCode);
 
 // Protected routes
 router.post(

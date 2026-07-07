@@ -7,8 +7,8 @@ export const uploadService = {
     return result
   },
 
-  async getImages() {
-    const result = await uploadRepository.getImages()
+  async getImages(page: number, limit: number) {
+    const result = await uploadRepository.getImages(page, limit)
     return result
   },
 

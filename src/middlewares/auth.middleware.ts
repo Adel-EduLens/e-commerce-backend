@@ -24,7 +24,7 @@ export const requireAuth = async (
     const role = decoded.role
 
     if (role === 'admin') {
-      const admin = await adminRepository.findById(id)
+      const admin = await adminRepository.findById(id, { id: true, role: true })
       if (admin) {
         req.user = {
           id: admin.id,
@@ -33,7 +33,10 @@ export const requireAuth = async (
         return next()
       }
     } else if (role === 'trader') {
-      const trader = await traderProfileRepository.findById(id)
+      const trader = await traderProfileRepository.findById(id, {
+        id: true,
+        role: true,
+      })
       if (trader) {
         req.user = {
           id: trader.id,
@@ -42,7 +45,10 @@ export const requireAuth = async (
         return next()
       }
     } else {
-      const user = await userRepository.findById(id)
+      const user = await userRepository.findById(id, {
+        id: true,
+        role: true,
+      })
       if (user) {
         req.user = {
           id: user.id,
@@ -98,7 +104,10 @@ export const requireAdminAuth = async (
       return next(new AppError('No token provided', 401))
     }
     const decoded = verifyToken(token)
-    const admin = await adminRepository.FindById(Number(decoded.id))
+    const admin = await adminRepository.findById(Number(decoded.id), {
+      id: true,
+      role: true,
+    })
 
     if (!admin) {
       return next(new AppError('Admin not found', 401))

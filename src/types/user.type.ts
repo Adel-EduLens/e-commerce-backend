@@ -1,27 +1,26 @@
-import type { Document } from 'mongoose'
 import type { Request } from 'express'
 
-export interface IUser extends Document {
-  name: string
+export interface IUser {
+  id: number
+  name: string | null
   email: string
-  password: string
-  role: 'user' | 'trader'
-  phone?: string | undefined
+  password?: string
+  role: string
+  phone?: string | null
+  status?: string
   createdAt: Date
-  updatedAt: Date
-  comparePassword(password: string): Promise<boolean>
 }
 
 export interface IUserResponse {
-  _id: string
-  name: string
+  id: number
+  name: string | null
   email: string
-  role: 'user' | 'trader'
-  phone?: string | undefined
+  role: string
+  phone?: string | null
+  status?: string
   createdAt: Date
-  updatedAt: Date
 }
 
 export interface AuthenticatedRequest extends Request {
-  user?: IUserResponse & { id: string | number; role: 'user' | 'trader' | 'admin' }
+  user?: { id: number; role: 'user' | 'trader' | 'admin' }
 }

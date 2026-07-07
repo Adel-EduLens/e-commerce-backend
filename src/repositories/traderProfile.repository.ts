@@ -13,8 +13,8 @@ class TraderProfileRepository {
   async findByPhone(phone: string) {
     return prisma.trader.findFirst({ where: { phone } });
   }
-  async findById(id: number) {
-    return prisma.trader.findUnique({ where: { id } });
+  async findById(id: number, select?: any) {
+    return prisma.trader.findUnique({ where: { id }, ...(select && { select }) });
   }
 }
 export const traderProfileRepository = new TraderProfileRepository();

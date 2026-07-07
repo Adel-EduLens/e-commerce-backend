@@ -1,13 +1,11 @@
 import { Router } from 'express'
 import {
   addQuestion,
-  changeStatus,
   deleteQuestion,
-  getAllUsers,
   getPublicQuestions,
   getQuestions,
   updateQuestion,
-} from '../controllers/admin.auth.controller.js'
+} from '../controllers/admin.faq.controller.js'
 import { requireAdminAuth } from '../middlewares/auth.middleware.js'
 import { validateRequest } from '../middlewares/validation.middleware.js'
 import { addQuestionSchema } from '../schemas/admin.auth.schema.js'
@@ -30,8 +28,6 @@ FAQRouter.put(
   updateQuestion
 )
 
-FAQRouter.get('/users', requireAdminAuth, getAllUsers)
 
-FAQRouter.put('/users/:id/status', requireAdminAuth, changeStatus)
 
 export default FAQRouter

@@ -1,13 +1,19 @@
 import { Request, Response } from "express";
 import { asyncHandler } from '../utils/globalErrorHandler.util.js';
 import { successResponse } from '../utils/response.util.js';
+import AppError from '../utils/AppError.util.js';
 import { couponService } from "../services/coupon.service.js";
 
 export const createCoupon = asyncHandler(async (req: Request, res: Response) => {
     const traderId = Number(req.user!.id);
+    const validUntilDate = new Date(req.body.validUntil);
+    if (isNaN(validUntilDate.getTime())) {
+        throw new AppError("Invalid validUntil date format", 400);
+    }
+
     const result = await couponService.create({
         ...req.body,
-        validUntil: new Date(req.body.validUntil),
+        validUntil: validUntilDate,
         traderId
     });
     
@@ -57,9 +63,17 @@ export const updateCoupon = asyncHandler(async (req: Request, res: Response) => 
     const id = String(req.params.id);
     const traderId = Number(req.user!.id);
     
+    let validUntil: Date | undefined = undefined;
+    if (req.body.validUntil) {
+        validUntil = new Date(req.body.validUntil);
+        if (isNaN(validUntil.getTime())) {
+            throw new AppError("Invalid validUntil date format", 400);
+        }
+    }
+
     const result = await couponService.update(id, traderId, {
         ...req.body,
-        validUntil: req.body.validUntil ? new Date(req.body.validUntil) : undefined
+        validUntil
     });
 
     successResponse(res, {
