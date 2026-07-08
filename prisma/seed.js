@@ -342,6 +342,71 @@ async function main() {
     }
     console.log(`✅ ${retailProducts.length} retail products seeded!`)
   }
+
+  // ── Help Center Categories & Videos ──
+  const helpCenterData = [
+    {
+      category: 'Orders & Shipping',
+      videos: [
+        { title: 'How to Track Your Order', youtubeId: 'dQw4w9WgXcQ' },
+        { title: 'Understanding Shipping Options', youtubeId: 'jNQXAC9IVRw' },
+        { title: 'What to Do If Your Order Is Late', youtubeId: '9bZkp7q19f0' },
+      ],
+    },
+    {
+      category: 'Payments & Wallet',
+      videos: [
+        { title: 'How to Add a Payment Method', youtubeId: 'kffacxfA7G4' },
+        { title: 'Using Your Wallet Balance', youtubeId: 'pRpeEdMmmQ0' },
+        { title: 'Understanding Payment Security', youtubeId: 'oHg5SJYRHA0' },
+      ],
+    },
+    {
+      category: 'Returns & Refunds',
+      videos: [
+        { title: 'How to Return an Item', youtubeId: 'dQw4w9WgXcQ' },
+        { title: 'Refund Policy Explained', youtubeId: 'jNQXAC9IVRw' },
+        { title: 'How Long Do Refunds Take?', youtubeId: '9bZkp7q19f0' },
+      ],
+    },
+    {
+      category: 'Wholesale & Dropshipping',
+      videos: [
+        { title: 'Getting Started with Wholesale', youtubeId: 'kffacxfA7G4' },
+        { title: 'How Dropshipping Works', youtubeId: 'pRpeEdMmmQ0' },
+        { title: 'Managing Wholesale Orders', youtubeId: 'oHg5SJYRHA0' },
+      ],
+    },
+    {
+      category: 'Account & Profile',
+      videos: [
+        { title: 'How to Update Your Profile', youtubeId: 'dQw4w9WgXcQ' },
+        { title: 'Changing Your Password', youtubeId: 'jNQXAC9IVRw' },
+        { title: 'Managing Notification Preferences', youtubeId: '9bZkp7q19f0' },
+      ],
+    },
+    {
+      category: 'Technical Issues',
+      videos: [
+        { title: 'Common App Issues & Fixes', youtubeId: 'kffacxfA7G4' },
+        { title: 'How to Clear Cache & Refresh', youtubeId: 'pRpeEdMmmQ0' },
+        { title: 'How to Report a Bug', youtubeId: 'oHg5SJYRHA0' },
+      ],
+    },
+  ]
+
+  const existingHelpCategories = await prisma.helpCenterCategory.count()
+  if (existingHelpCategories > 0) {
+    console.log('✅ Help Center data already exists.')
+  } else {
+    for (const { category, videos } of helpCenterData) {
+      await prisma.helpCenterCategory.create({ data: { name: category } })
+      await prisma.helpCenterVideo.createMany({
+        data: videos.map((v) => ({ title: v.title, category, youtubeId: v.youtubeId })),
+      })
+    }
+    console.log(`✅ Help Center: ${helpCenterData.length} categories and ${helpCenterData.reduce((s, c) => s + c.videos.length, 0)} videos seeded!`)
+  }
 }
 
 main()
