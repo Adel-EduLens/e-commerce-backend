@@ -21,3 +21,6 @@ Thumbs.db
 tsbuildinfo
 
 /src/generated/prisma
+
+# Uploaded files
+public/
