@@ -45,12 +45,27 @@ export const couponService = {
       throw new AppError("Coupon not found or invalid", 404);
     }
     
+    // Check if active
+    if (!coupon.isActive) {
+      throw new AppError("Coupon is inactive", 400);
+    }
+
     // Check expiration
     if (new Date() > new Date(coupon.validUntil)) {
       throw new AppError("Coupon has expired", 400);
     }
+
+    // Check usage limit
+    if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+      throw new AppError("Coupon usage limit has been reached", 400);
+    }
     
     return coupon;
+  },
+
+  async use(code: string, userId: number) {
+    const coupon = await this.getByCode(code);
+    return couponRepository.incrementUsedCount(coupon.code, userId);
   },
 
   async update(id: string, traderId: number, data: CouponUpdateInput) {
@@ -85,12 +100,6 @@ export const couponService = {
   },
 
   async delete(id: string, traderId: number) {
-    const coupon = await this.getById(id);
-
-    if (coupon.traderId !== traderId) {
-      throw new AppError("You are not authorized to delete this coupon", 403);
-    }
-
-    return couponRepository.delete(id);
+    throw new AppError("Deleting coupons is not permitted. Please deactivate instead.", 403);
   }
 };

@@ -19,6 +19,8 @@ model User {
   reviews              Review[]
   retailNotifyMes      RetailNotifyMe[]
   retailProductRatings RetailProductRating[]
+  couponUsages         CouponUsage[]
+  orders               Order[]
 }
 
 model Trader {
@@ -28,6 +30,7 @@ model Trader {
   password   String
   createdAt  DateTime    @default(now())
   phone      String?
+  address    String?
   products   Product[]
   wholesales Wholesale[]
   coupons    Coupon[]
@@ -84,6 +87,8 @@ model Product {
   description String? @db.LongText
   price       Float
   sizeguide   String?
+  sku         String? @unique
+  stock       Int     @default(0)
 
   rating Float @default(0)
 
@@ -181,6 +186,8 @@ model Wholesale {
   isBestDeal          Boolean @default(false)
   isMostPopular       Boolean @default(false)
   isPremiumCollection Boolean @default(false)
+  sku                 String? @unique
+  stock               Int     @default(0)
 
   brand  String?
   rating Float   @default(0)
@@ -229,6 +236,8 @@ model Coupon {
   code       String   @unique
   discount   Float
   validUntil DateTime
+  usageLimit Int?
+  usedCount  Int      @default(0)
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id], onDelete: Cascade)
@@ -238,6 +247,9 @@ model Coupon {
 
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  usages    CouponUsage[]
+  isActive  Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -329,4 +341,54 @@ model RetailProductRating {
   updatedAt       DateTime      @updatedAt
 
   @@unique([userId, retailProductId])
+}
+
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usedAt    DateTime @default(now())
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String
+  phone         String
+  email         String
+  country       String
+  city          String
+  area          String
+  streetAddress String
+  apartment     String
+  mapAddress    String?
+  latitude      String?
+  longitude     String?
+  subtotal      Float
+  discount      Float
+  shipping      Float
+  total         Float
+  couponCode    String?
+  status        String      @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
+  paymentMethod String      @default("COD")     // COD, CARD
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  title       String
+  price       Float
+  quantity    Int
+  size        String?
+  color       String?
+  imageSrc    String?
 }

@@ -8,6 +8,16 @@ interface LoginData {
   password: string
 }
 export const traderService = {
+  async getMe(id: number) {
+    const trader = await traderRepository.findById(id)
+    if (!trader) throw new AppError('Trader not found', 404)
+    return trader
+  },
+
+  async updateMe(id: number, data: { name?: string; address?: string }) {
+    return traderRepository.updateById(id, data)
+  },
+
   async login(data: LoginData) {
     const trader = await traderRepository.findByEmail(data.email)
     if (!trader) {

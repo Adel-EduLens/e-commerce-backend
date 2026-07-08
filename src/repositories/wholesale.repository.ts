@@ -17,6 +17,8 @@ class WholesaleRepository {
         isPremiumCollection: data.isPremiumCollection ?? false,
         brand: data.brand,
         rating: data.rating ?? 0,
+        sku: data.sku ?? null,
+        stock: data.stock ?? 0,
         trader: {
           connect: { id: data.traderId },
         },
@@ -92,6 +94,8 @@ class WholesaleRepository {
         ...(data.isPremiumCollection !== undefined && { isPremiumCollection: data.isPremiumCollection }),
         ...(data.brand !== undefined && { brand: data.brand }),
         ...(data.rating !== undefined && { rating: data.rating }),
+        ...(data.sku !== undefined && { sku: data.sku }),
+        ...(data.stock !== undefined && { stock: data.stock }),
         ...(data.categoryId && {
           category: { connect: { id: data.categoryId } },
         }),

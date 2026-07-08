@@ -4,6 +4,7 @@ import {
   getCoupons,
   getCoupon,
   getCouponByCode,
+  useCoupon,
   updateCoupon,
   deleteCoupon,
 } from "../controllers/coupon.controller.js";
@@ -18,6 +19,9 @@ const router = Router();
 
 // Validate coupon by its code (e.g. at checkout)
 router.get("/validate/:code", requireAuth, getCouponByCode);
+
+// Use/increment usage count of a coupon (e.g. at checkout completion)
+router.post("/use/:code", requireAuth, useCoupon);
 
 // Protected routes
 router.post(

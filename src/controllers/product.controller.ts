@@ -74,6 +74,17 @@ export const updateProduct = asyncHandler(
   },
 );
 
+export const getTraderProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const traderId = Number(req.user!.id);
+    const result = await productService.getByTraderId(traderId);
+    successResponse(res, {
+      message: "Trader products fetched successfully",
+      data: result,
+    });
+  },
+);
+
 export const deleteProduct = asyncHandler(
   async (req: Request, res: Response) => {
     const id = String(req.params.id);

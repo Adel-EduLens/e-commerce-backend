@@ -1,5 +1,10 @@
 import Joi from "joi";
 
+const wholesaleImageSchema = Joi.object({
+  url: Joi.string().required(),
+  color: Joi.string().allow("", null).optional(),
+});
+
 export const createWholesaleSchema = Joi.object({
   name: Joi.string().trim().required(),
 
@@ -19,10 +24,10 @@ export const createWholesaleSchema = Joi.object({
 
   categoryId: Joi.string().required(),
 
-  images: Joi.array()
-    .items(Joi.string().required())
-    .min(1)
-    .required(),
+  sku: Joi.string().allow("", null),
+  stock: Joi.number().integer().min(0).optional(),
+
+  images: Joi.array().items(wholesaleImageSchema).min(1).required(),
 });
 
 export const updateWholesaleSchema = Joi.object({
@@ -44,5 +49,8 @@ export const updateWholesaleSchema = Joi.object({
 
   categoryId: Joi.string(),
 
-  images: Joi.array().items(Joi.string()),
+  sku: Joi.string().allow("", null),
+  stock: Joi.number().integer().min(0),
+
+  images: Joi.array().items(wholesaleImageSchema),
 });

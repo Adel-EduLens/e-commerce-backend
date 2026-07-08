@@ -55,6 +55,8 @@ class ProductRepository {
         price: data.price,
         rating: data.rating ?? 0,
         sizeguide: data.sizeguide ?? null,
+        sku: data.sku ?? null,
+        stock: data.stock ?? 0,
 
         isMustHave: data.isMustHave ?? false,
         isFlashDeals: data.isFlashDeals ?? false,
@@ -243,6 +245,8 @@ class ProductRepository {
         ...(data.sizeguide !== undefined && { sizeguide: data.sizeguide }),
         ...(data.price !== undefined && { price: data.price }),
         ...(data.rating !== undefined && { rating: data.rating }),
+        ...(data.sku !== undefined && { sku: data.sku }),
+        ...(data.stock !== undefined && { stock: data.stock }),
 
         ...(data.isMustHave !== undefined && { isMustHave: data.isMustHave }),
         ...(data.isFlashDeals !== undefined && {
@@ -299,6 +303,20 @@ class ProductRepository {
         sizes: true,
         colors: true,
       },
+    });
+  }
+
+  findByTraderId(traderId: number) {
+    return prisma.product.findMany({
+      where: { traderId },
+      include: {
+        category: true,
+        brand: true,
+        images: true,
+        sizes: true,
+        colors: true,
+      },
+      orderBy: { createdAt: "desc" },
     });
   }
 
