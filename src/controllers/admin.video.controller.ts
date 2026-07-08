@@ -68,3 +68,41 @@ export const deleteVideo = asyncHandler(
     })
   }
 )
+
+export const addHelpCenterCategory = asyncHandler(
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    const { name } = req.body as { name: string }
+    const result = await adminRepository.addHelpCenterCategory(name)
+
+    successResponse(res, {
+      statusCode: 201,
+      message: 'Category added successfully',
+      data: result,
+    })
+  }
+)
+
+export const getHelpCenterCategories = asyncHandler(
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    const result = await adminRepository.getHelpCenterCategories()
+
+    successResponse(res, {
+      statusCode: 200,
+      message: 'Categories fetched successfully',
+      data: result,
+    })
+  }
+)
+
+export const deleteHelpCenterCategory = asyncHandler(
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    const categoryId = req.params.id as string
+    const result = await adminRepository.deleteHelpCenterCategory(categoryId)
+
+    successResponse(res, {
+      statusCode: 200,
+      message: 'Category deleted successfully',
+      data: result,
+    })
+  }
+)

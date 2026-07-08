@@ -52,3 +52,12 @@ export const videoSchema = Joi.object({
     'any.required': 'Youtube ID is required',
   }),
 });
+
+export const helpCenterCategorySchema = Joi.object({
+  name: Joi.string().trim().min(3).max(100).required().messages({
+    'string.empty': 'Name cannot be empty',
+    'string.min': 'Name must be at least 3 characters',
+    'string.max': 'Name cannot exceed 100 characters',
+    'any.required': 'Name is required',
+  }),
+});

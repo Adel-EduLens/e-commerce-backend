@@ -107,6 +107,24 @@ class AdminRepository {
     if (!exists) throw new AppError('Video not found', 404)
     return prisma.helpCenterVideo.delete({ where: { id } })
   }
+
+  async getHelpCenterCategories() {
+    return prisma.helpCenterCategory.findMany()
+  }
+
+  async addHelpCenterCategory(name: string) {
+    const exists = await prisma.helpCenterCategory.findUnique({ where: { name } })
+    if (exists) throw new AppError('Category already exists', 400)
+    return prisma.helpCenterCategory.create({
+      data: { name }
+    })
+  }
+
+  async deleteHelpCenterCategory(id: string) {
+    const exists = await prisma.helpCenterCategory.findUnique({ where: { id } })
+    if (!exists) throw new AppError('Category not found', 404)
+    return prisma.helpCenterCategory.delete({ where: { id } })
+  }
 }
 
 export const adminRepository = new AdminRepository()

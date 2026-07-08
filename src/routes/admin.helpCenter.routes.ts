@@ -4,10 +4,13 @@ import {
   deleteVideo,
   getVideos,
   updateVideo,
+  addHelpCenterCategory,
+  getHelpCenterCategories,
+  deleteHelpCenterCategory,
 } from '../controllers/admin.video.controller.js'
 import { requireAdminAuth } from '../middlewares/auth.middleware.js'
 import { validateRequest } from '../middlewares/validation.middleware.js'
-import { videoSchema } from '../schemas/admin.auth.schema.js'
+import { videoSchema, helpCenterCategorySchema } from '../schemas/admin.auth.schema.js'
 
 const helpCenterRouter = Router()
 
@@ -25,5 +28,14 @@ helpCenterRouter.put(
   updateVideo
 )
 helpCenterRouter.delete('/video/:id', requireAdminAuth, deleteVideo)
+
+helpCenterRouter.post(
+  '/category',
+  requireAdminAuth,
+  validateRequest(helpCenterCategorySchema),
+  addHelpCenterCategory
+)
+helpCenterRouter.get('/category', requireAdminAuth, getHelpCenterCategories)
+helpCenterRouter.delete('/category/:id', requireAdminAuth, deleteHelpCenterCategory)
 
 export default helpCenterRouter

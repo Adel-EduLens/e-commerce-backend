@@ -28,6 +28,9 @@ class UserRepository {
       },
     })
   }
+  async getHelpCenterCategories() {
+    return prisma.helpCenterCategory.findMany()
+  }
 }
 
 export const userRepository = new UserRepository()

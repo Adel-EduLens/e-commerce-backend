@@ -14,3 +14,13 @@ export const getVideosByCategory = asyncHandler(
     })
   }
 )
+
+export const getHelpCenterCategories = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await authService.getHelpCenterCategories()
+    successResponse(res, {
+      statusCode: 200,
+      data: result,
+    })
+  }
+)

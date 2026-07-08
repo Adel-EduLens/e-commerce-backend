@@ -106,4 +106,8 @@ export const authService = {
     const videos = await userRepository.getVideosByCategorei(id)
     return videos
   },
+
+  async getHelpCenterCategories() {
+    return userRepository.getHelpCenterCategories()
+  },
 }
