@@ -29,6 +29,7 @@ model Trader {
   password   String
   createdAt  DateTime    @default(now())
   phone      String?
+  address    String?
   products   Product[]
   wholesales Wholesale[]
   coupons    Coupon[]
