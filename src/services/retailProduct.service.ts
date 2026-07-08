@@ -6,11 +6,10 @@ import prismaClient from '../utils/prismaClient.js'
 const retailProductRepository = new RetailProductRepository()
 
 async function notifyRetailRestock(productId: number, productName: string, imageUrl?: string) {
-  const subscribers = await prismaClient.retailNotifyMe.findMany({
-    where: { retailProductId: productId, isActive: true },
+  const subscribers = await prismaClient.notifyMeSubscription.findMany({
+    where: { targetType: 'RETAIL_RESTOCK', targetId: String(productId), isActive: true },
   })
   if (subscribers.length === 0) return
-
   await prismaClient.userNotification.createMany({
     data: subscribers.map((s) => ({
       userId: s.userId,
@@ -20,9 +19,8 @@ async function notifyRetailRestock(productId: number, productName: string, image
       imageUrl: imageUrl ?? null,
     })),
   })
-
-  await prismaClient.retailNotifyMe.updateMany({
-    where: { retailProductId: productId, isActive: true },
+  await prismaClient.notifyMeSubscription.updateMany({
+    where: { targetType: 'RETAIL_RESTOCK', targetId: String(productId), isActive: true },
     data: { isActive: false },
   })
 }

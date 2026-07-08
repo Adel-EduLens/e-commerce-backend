@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { asyncHandler } from '../utils/globalErrorHandler.util.js'
-import { successResponse, errorResponse } from '../utils/response.util.js'
+import { successResponse } from '../utils/response.util.js'
 import { RetailNotifyMeService } from '../services/retailNotifyMe.service.js'
 
 const retailNotifyMeService = new RetailNotifyMeService()
@@ -11,7 +11,7 @@ export const getUserNotifications = asyncHandler(async (req: Request, res: Respo
   successResponse(res, {
     statusCode: 200,
     message: 'Notifications fetched successfully',
-    data: notifications
+    data: notifications,
   })
 })
 
@@ -21,25 +21,16 @@ export const createNotification = asyncHandler(async (req: Request, res: Respons
   successResponse(res, {
     statusCode: 201,
     message: 'Notification created successfully',
-    data: notification
+    data: notification,
   })
 })
 
 export const deleteNotification = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params
-  await retailNotifyMeService.deleteNotification(Number(id))
+  const { userId, retailProductId } = req.body
+  await retailNotifyMeService.deleteNotificationByUserAndProduct(Number(userId), Number(retailProductId))
   successResponse(res, {
     statusCode: 200,
-    message: 'Notification deactivated successfully'
-  })
-})
-
-export const deactivateNotification = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params
-  await retailNotifyMeService.deleteNotification(Number(id))
-  successResponse(res, {
-    statusCode: 200,
-    message: 'Notification deactivated successfully'
+    message: 'Notification deactivated successfully',
   })
 })
 
@@ -48,6 +39,6 @@ export const deleteNotificationByProduct = asyncHandler(async (req: Request, res
   await retailNotifyMeService.deleteNotificationByUserAndProduct(Number(userId), Number(retailProductId))
   successResponse(res, {
     statusCode: 200,
-    message: 'Subscription cancelled successfully'
+    message: 'Subscription cancelled successfully',
   })
 })

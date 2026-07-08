@@ -37,7 +37,6 @@ async function main() {
 
   console.log('✅ Seeded default test users (user@example.com / user2@example.com)')
 
-  await prisma.retailNotifyMe.deleteMany()
   await prisma.retailProductImage.deleteMany()
   await prisma.retailProductColor.deleteMany()
   await prisma.retailProductSize.deleteMany()

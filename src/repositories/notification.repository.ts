@@ -1,30 +1,9 @@
 import prisma from '../utils/prismaClient.js'
 
 class NotificationRepository {
-  getSubscriptions(userId: number) {
-    return prisma.categorySubscription.findMany({
-      where: { userId },
-      select: { categoryId: true },
-    })
-  }
-
-  isSubscribed(userId: number, categoryId: string) {
-    return prisma.categorySubscription.findUnique({
-      where: { userId_categoryId: { userId, categoryId } },
-    })
-  }
-
-  subscribe(userId: number, categoryId: string) {
-    return prisma.categorySubscription.create({ data: { userId, categoryId } })
-  }
-
-  unsubscribe(userId: number, categoryId: string) {
-    return prisma.categorySubscription.deleteMany({ where: { userId, categoryId } })
-  }
-
   getSubscribersForCategory(categoryId: string) {
-    return prisma.categorySubscription.findMany({
-      where: { categoryId },
+    return prisma.notifyMeSubscription.findMany({
+      where: { targetType: 'CATEGORY', targetId: categoryId, isActive: true },
       select: { userId: true },
     })
   }

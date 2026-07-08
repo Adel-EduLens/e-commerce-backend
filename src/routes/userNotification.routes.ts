@@ -7,48 +7,6 @@ import AppError from '../utils/AppError.util.js'
 
 const router = express.Router()
 
-// ===== Category Subscriptions =====
-
-router.get(
-  '/subscriptions',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const userId = Number(req.user!.id)
-    const subs = await prisma.categorySubscription.findMany({
-      where: { userId },
-      select: { categoryId: true },
-    })
-    successResponse(res, { data: subs.map((s) => s.categoryId) })
-  })
-)
-
-router.post(
-  '/subscriptions',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const userId = Number(req.user!.id)
-    const { categoryId } = req.body
-    if (!categoryId) throw new AppError('categoryId is required', 400)
-    await prisma.categorySubscription.upsert({
-      where: { userId_categoryId: { userId, categoryId } },
-      update: {},
-      create: { userId, categoryId },
-    })
-    successResponse(res, { statusCode: 201, message: 'Subscribed' })
-  })
-)
-
-router.delete(
-  '/subscriptions/:categoryId',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const userId = Number(req.user!.id)
-    const { categoryId } = req.params
-    await prisma.categorySubscription.deleteMany({ where: { userId, categoryId: String(categoryId) } })
-    successResponse(res, { message: 'Unsubscribed' })
-  })
-)
-
 // ===== User Notifications =====
 
 // Get all notifications for the authenticated user

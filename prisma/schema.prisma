@@ -18,13 +18,11 @@ model User {
   status    String   @default("active")
 
   reviews              Review[]
-  retailNotifyMes      RetailNotifyMe[]
   retailProductRatings RetailProductRating[]
   couponUsages         CouponUsage[]
   orders               Order[]
 
-  productNotifyMes      ProductNotifyMe[]
-  categorySubscriptions CategorySubscription[]
+  notifyMeSubscriptions NotifyMeSubscription[]
 
   notifications UserNotification[]
   wishlists     Wishlist[]
@@ -79,16 +77,16 @@ model FrequentlyAskedQuestion {
   createdAt DateTime @default(now())
 }
 
-model ProductNotifyMe {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+model NotifyMeSubscription {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType String
+  targetId   String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
 
-  @@unique([userId, productId])
+  @@unique([userId, targetType, targetId])
 }
 
 model UserNotification {
@@ -129,14 +127,13 @@ model HelpCenterCategory {
 }
 
 model Category {
-  id            String                 @id @default(cuid())
-  name          String                 @unique
-  products      Product[]
-  wholesales    Wholesale[]
-  coupons       Coupon[]
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  subscriptions CategorySubscription[]
+  id        String     @id @default(cuid())
+  name      String     @unique
+  products  Product[]
+  wholesales Wholesale[]
+  coupons   Coupon[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Product {
@@ -160,9 +157,8 @@ model Product {
   isMustHave   Boolean @default(false)
   isFlashDeals Boolean @default(false)
 
-  reviews   Review[]
-  coupons   Coupon[]
-  notifyMes ProductNotifyMe[]
+  reviews Review[]
+  coupons Coupon[]
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id])
@@ -173,9 +169,8 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  notifications Notification[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Brand {
@@ -344,11 +339,10 @@ model RetailProduct {
   isActive         Boolean               @default(true)
   categoryId       Int
   category         RetailCategory        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  images           RetailProductImage[]
-  colors           RetailProductColor[]
-  sizes            RetailProductSize[]
-  notifyMe         RetailNotifyMe[]
-  ratings          RetailProductRating[]
+  images   RetailProductImage[]
+  colors   RetailProductColor[]
+  sizes    RetailProductSize[]
+  ratings  RetailProductRating[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 }
@@ -376,18 +370,6 @@ model RetailProductSize {
   stock     Int?
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-model RetailNotifyMe {
-  id              Int           @id @default(autoincrement())
-  userId          Int
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  retailProductId Int
-  retailProduct   RetailProduct @relation(fields: [retailProductId], references: [id], onDelete: Cascade)
-  isActive        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-
-  @@unique([userId, retailProductId])
 }
 
 model RetailProductRating {
@@ -451,17 +433,6 @@ model OrderItem {
   size      String?
   color     String?
   imageSrc  String?
-}
-
-model CategorySubscription {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
-
-  @@unique([userId, categoryId])
 }
 
 model Wishlist {
