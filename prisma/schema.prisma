@@ -23,6 +23,7 @@ model User {
   orders               Order[]
   categorySubscriptions CategorySubscription[]
   notifications         Notification[]
+  wishlists             Wishlist[]
 }
 
 model Trader {
@@ -406,6 +407,17 @@ model CategorySubscription {
   createdAt  DateTime @default(now())
 
   @@unique([userId, categoryId])
+}
+
+model Wishlist {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productType String   // RETAIL, WHOLESALE, SHOP
+  productId   String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, productType, productId])
 }
 
 model Notification {
