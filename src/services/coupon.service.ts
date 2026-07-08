@@ -49,8 +49,18 @@ export const couponService = {
     if (new Date() > new Date(coupon.validUntil)) {
       throw new AppError("Coupon has expired", 400);
     }
+
+    // Check usage limit
+    if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+      throw new AppError("Coupon usage limit has been reached", 400);
+    }
     
     return coupon;
+  },
+
+  async use(code: string, userId: number) {
+    const coupon = await this.getByCode(code);
+    return couponRepository.incrementUsedCount(coupon.code, userId);
   },
 
   async update(id: string, traderId: number, data: CouponUpdateInput) {

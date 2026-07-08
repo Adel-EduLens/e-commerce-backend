@@ -59,6 +59,17 @@ export const getCouponByCode = asyncHandler(async (req: Request, res: Response) 
     });
 });
 
+export const useCoupon = asyncHandler(async (req: Request, res: Response) => {
+    const code = String(req.params.code).toUpperCase();
+    const userId = Number(req.user!.id);
+    const result = await couponService.use(code, userId);
+
+    successResponse(res, {
+        message: "Coupon used successfully",
+        data: result,
+    });
+});
+
 export const updateCoupon = asyncHandler(async (req: Request, res: Response) => {
     const id = String(req.params.id);
     const traderId = Number(req.user!.id);

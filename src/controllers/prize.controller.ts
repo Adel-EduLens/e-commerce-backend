@@ -24,11 +24,9 @@ export const addPrize = asyncHandler(async (req: Request, res: Response) => {
 });
 export const deletePrize = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  if (!id) {
-    throw new AppError("Prize id is required");
-  }
 
-  const result = await prizeService.deletePrize(id.toString());
+  const result = await prizeService.deletePrize(id?.toString()||"");
+
   successResponse(res, {
     statusCode: 200,
     message: "Prize Deleted successfully",
