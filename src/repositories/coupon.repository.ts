@@ -7,6 +7,7 @@ export type CouponCreateInput = {
   traderId: number;
   categoryId?: string | null;
   productId?: string | null;
+  usageLimit?: number | null;
 };
 
 export type CouponUpdateInput = Partial<{
@@ -15,6 +16,8 @@ export type CouponUpdateInput = Partial<{
   validUntil: Date;
   categoryId: string | null;
   productId: string | null;
+  usageLimit: number | null;
+  usedCount: number;
 }>;
 
 class CouponRepository {
@@ -24,6 +27,7 @@ class CouponRepository {
         code: data.code,
         discount: data.discount,
         validUntil: data.validUntil,
+        usageLimit: data.usageLimit !== undefined ? data.usageLimit : null,
         trader: {
           connect: { id: data.traderId }
         },
@@ -49,7 +53,14 @@ class CouponRepository {
       ...(filter ? { where: filter } : {}),
       include: {
         category: true,
-        product: true
+        product: true,
+        usages: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, phone: true }
+            }
+          }
+        }
       },
       orderBy: {
         createdAt: "desc"
@@ -65,6 +76,13 @@ class CouponRepository {
         product: true,
         trader: {
           select: { id: true, name: true, email: true }
+        },
+        usages: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, phone: true }
+            }
+          }
         }
       }
     });
@@ -89,10 +107,41 @@ class CouponRepository {
         ...(data.validUntil !== undefined && { validUntil: data.validUntil }),
         ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
         ...(data.productId !== undefined && { productId: data.productId }),
+        ...(data.usageLimit !== undefined && { usageLimit: data.usageLimit }),
+        ...(data.usedCount !== undefined && { usedCount: data.usedCount }),
       },
       include: {
         category: true,
         product: true
+      }
+    });
+  }
+
+  incrementUsedCount(code: string, userId: number) {
+    return prisma.coupon.update({
+      where: { code },
+      data: {
+        usedCount: {
+          increment: 1
+        },
+        usages: {
+          create: {
+            user: {
+              connect: { id: userId }
+            }
+          }
+        }
+      },
+      include: {
+        category: true,
+        product: true,
+        usages: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, phone: true }
+            }
+          }
+        }
       }
     });
   }

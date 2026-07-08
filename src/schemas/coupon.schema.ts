@@ -6,6 +6,7 @@ export const createCouponSchema = Joi.object({
   validUntil: Joi.date().greater('now').required(),
   categoryId: Joi.string().allow("", null).optional(),
   productId: Joi.string().allow("", null).optional(),
+  usageLimit: Joi.number().integer().positive().allow(null, "").optional(),
 });
 
 export const updateCouponSchema = Joi.object({
@@ -14,4 +15,5 @@ export const updateCouponSchema = Joi.object({
   validUntil: Joi.date().greater('now').optional(),
   categoryId: Joi.string().allow("", null).optional(),
   productId: Joi.string().allow("", null).optional(),
+  usageLimit: Joi.number().integer().positive().allow(null, "").optional(),
 });

@@ -19,6 +19,7 @@ model User {
   reviews              Review[]
   retailNotifyMes      RetailNotifyMe[]
   retailProductRatings RetailProductRating[]
+  couponUsages         CouponUsage[]
 }
 
 model Trader {
@@ -229,6 +230,8 @@ model Coupon {
   code       String   @unique
   discount   Float
   validUntil DateTime
+  usageLimit Int?
+  usedCount  Int      @default(0)
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id], onDelete: Cascade)
@@ -238,6 +241,8 @@ model Coupon {
 
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  usages    CouponUsage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -329,4 +334,13 @@ model RetailProductRating {
   updatedAt       DateTime      @updatedAt
 
   @@unique([userId, retailProductId])
+}
+
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usedAt    DateTime @default(now())
 }
