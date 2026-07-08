@@ -21,6 +21,8 @@ model User {
   retailProductRatings RetailProductRating[]
   couponUsages         CouponUsage[]
   orders               Order[]
+  categorySubscriptions CategorySubscription[]
+  notifications         Notification[]
 }
 
 model Trader {
@@ -79,6 +81,7 @@ model Category {
   coupons    Coupon[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+  subscriptions CategorySubscription[]
 }
 
 model Product {
@@ -102,8 +105,9 @@ model Product {
   isMustHave   Boolean @default(false)
   isFlashDeals Boolean @default(false)
 
-  reviews Review[]
-  coupons Coupon[]
+  reviews       Review[]
+  coupons       Coupon[]
+  notifications Notification[]
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id])
@@ -391,4 +395,29 @@ model OrderItem {
   size        String?
   color       String?
   imageSrc    String?
+}
+
+model CategorySubscription {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, categoryId])
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  body       String
+  imageUrl   String?
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  categoryId String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }

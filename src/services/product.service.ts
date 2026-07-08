@@ -7,6 +7,7 @@ import {
   ProductUpdateData,
 } from "../types/product.types.js";
 import { traderProfileRepository } from "../repositories/traderProfile.repository.js";
+import { notificationRepository } from "../repositories/notification.repository.js";
 
 type GetProductsQuery = {
 
@@ -112,7 +113,26 @@ export const productService = {
     delete data.flashDealEndsAt;
   }
 
-  return productRepository.create(data);
+  const product = await productRepository.create(data);
+
+  // Notify subscribers of this category
+  if (data.categoryId) {
+    const subscribers = await notificationRepository.getSubscribersForCategory(data.categoryId)
+    if (subscribers.length > 0) {
+      await notificationRepository.createMany(
+        subscribers.map(s => ({
+          userId: s.userId,
+          title: 'New item in your collection',
+          body: `"${product.name}" was just added to a collection you follow.`,
+          imageUrl: (product as any).images?.[0]?.url ?? undefined,
+          productId: product.id,
+          categoryId: data.categoryId,
+        }))
+      )
+    }
+  }
+
+  return product;
 },
 
   async getAll(query: GetProductsQuery) {
