@@ -175,7 +175,6 @@ model Product {
 
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  notifications Notification[]
 }
 
 model Brand {
