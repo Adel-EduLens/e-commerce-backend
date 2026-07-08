@@ -30,6 +30,7 @@ model Trader {
   password   String
   createdAt  DateTime    @default(now())
   phone      String?
+  address    String?
   products   Product[]
   wholesales Wholesale[]
   coupons    Coupon[]
@@ -86,6 +87,8 @@ model Product {
   description String?
   price       Float
   sizeguide   String?
+  sku         String? @unique
+  stock       Int     @default(0)
 
   rating Float @default(0)
 
@@ -183,6 +186,8 @@ model Wholesale {
   isBestDeal          Boolean @default(false)
   isMostPopular       Boolean @default(false)
   isPremiumCollection Boolean @default(false)
+  sku                 String? @unique
+  stock               Int     @default(0)
 
   brand  String?
   rating Float   @default(0)
