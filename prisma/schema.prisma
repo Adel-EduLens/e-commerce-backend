@@ -81,7 +81,7 @@ model Category {
 model Product {
   id          String  @id @default(cuid())
   name        String
-  description String?
+  description String? @db.LongText
   price       Float
   sizeguide   String?
 
