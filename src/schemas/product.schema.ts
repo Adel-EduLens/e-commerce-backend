@@ -27,6 +27,9 @@ export const createProductSchema = Joi.object({
 
   categoryId: Joi.string().required(),
 
+  sku: Joi.string().allow("", null),
+  stock: Joi.number().integer().min(0).optional(),
+
   images: Joi.array().items(imageSchema).min(1).required(),
 
   sizes: Joi.array().items(Joi.string().required()).min(1).required(),
@@ -54,6 +57,9 @@ export const updateProductSchema = Joi.object({
   flashDealEndsAt: Joi.date().iso().allow(null).optional(),
 
   categoryId: Joi.string(),
+
+  sku: Joi.string().allow("", null),
+  stock: Joi.number().integer().min(0).optional(),
 
   images: Joi.array().items(imageSchema),
 

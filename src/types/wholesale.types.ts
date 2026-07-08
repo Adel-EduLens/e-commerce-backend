@@ -11,6 +11,8 @@ export interface WholesaleCreateData {
   categoryId: string;
   images: { url: string; color?: string }[];
   traderId: number;
+  sku?: string;
+  stock?: number;
 }
 
 export interface WholesaleUpdateData {
@@ -26,4 +28,6 @@ export interface WholesaleUpdateData {
   categoryId?: string;
   images?: { url: string; color?: string }[];
   traderId: number;
+  sku?: string | null;
+  stock?: number;
 }

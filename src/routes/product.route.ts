@@ -7,6 +7,7 @@ import {
   updateProduct,
   deleteProduct,
   getFilters,
+  getTraderProducts,
 } from "../controllers/product.controller.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
@@ -24,6 +25,7 @@ router.post(
 );
 
 router.get("/filters", getFilters);
+router.get("/trader", requireAuth, requireRole("trader"), getTraderProducts);
 router.get("/", getProducts);
 router.get("/:id", getProduct);
 

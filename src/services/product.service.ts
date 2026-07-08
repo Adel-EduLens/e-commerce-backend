@@ -123,6 +123,10 @@ export const productService = {
     return productRepository.getFilters();
   },
 
+  async getByTraderId(traderId: number) {
+    return productRepository.findByTraderId(traderId);
+  },
+
   async getById(id: string) {
     const product = await productRepository.findById(id);
 

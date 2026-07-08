@@ -14,6 +14,8 @@ export interface ProductCreateData {
   isFlashDeals?: boolean;
   flashDealPrice?: number;
   flashDealEndsAt?: string | Date;
+  sku?: string;
+  stock?: number;
 }
 export type ProductImageInput = {
   url: string;
@@ -36,4 +38,6 @@ export interface ProductUpdateData {
   isFlashDeals?: boolean;
   flashDealPrice?: number | null;
   flashDealEndsAt?: string | Date | null;
+  sku?: string | null;
+  stock?: number;
 }
