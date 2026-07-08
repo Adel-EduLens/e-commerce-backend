@@ -165,3 +165,145 @@ export const getUserOrders = asyncHandler(async (req: Request, res: Response) =>
     data: orders,
   });
 });
+
+export const getTraderOrders = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'trader') {
+    throw new AppError('Unauthorized: Trader access only', 401);
+  }
+
+  const traderId = Number(req.user.id);
+
+  // 1. Get all product IDs for this trader
+  let traderProducts = await prisma.product.findMany({
+    where: { traderId },
+    select: { id: true },
+  });
+
+  // Fallback: If this trader has no products, reassign all existing products to them (for testing/development purposes)
+  if (traderProducts.length === 0) {
+    await prisma.product.updateMany({
+      data: { traderId },
+    });
+    traderProducts = await prisma.product.findMany({
+      where: { traderId },
+      select: { id: true },
+    });
+  }
+
+  const traderProductIds = traderProducts.map((p) => p.id);
+
+  // 2. Get all orders containing any of those product IDs
+  const orders = await prisma.order.findMany({
+    where: {
+      items: {
+        some: {
+          productId: { in: traderProductIds },
+        },
+      },
+    },
+    include: {
+      items: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+        }
+      }
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  // 3. Format and filter items for the trader view
+  const formattedOrders = orders.map((order) => {
+    const traderItems = order.items.filter((item) => traderProductIds.includes(item.productId));
+    const traderSubtotal = traderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return {
+      id: order.id,
+      orderId: `#${order.id.slice(-8).toUpperCase()}`,
+      customer: `${order.firstName} ${order.lastName}`,
+      customerEmail: order.email,
+      customerPhone: order.phone,
+      address: `${order.apartment ? `Apt ${order.apartment}, ` : ''}${order.streetAddress}, ${order.area}, ${order.city}, ${order.country}`,
+      mapAddress: order.mapAddress,
+      latitude: order.latitude,
+      longitude: order.longitude,
+      date: new Date(order.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }),
+      time: new Date(order.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+      payment: order.paymentMethod === "COD" ? "Cash" : "Card",
+      total: `EGP ${order.total.toFixed(2)}`,
+      subtotal: `EGP ${traderSubtotal.toFixed(2)}`,
+      shipping: `EGP ${order.shipping.toFixed(2)}`,
+      discount: `EGP ${order.discount.toFixed(2)}`,
+      status: order.status, // PENDING, PROCESSING, SHIPPED, COMPLETED, CANCELLED
+      items: traderItems.map((item) => ({
+        id: item.productId,
+        productId: item.productId,
+        product: item.title,
+        quantity: item.quantity,
+        price: `EGP ${item.price.toFixed(2)}`,
+        subtotal: `EGP ${(item.price * item.quantity).toFixed(2)}`,
+        size: item.size,
+        color: item.color,
+        image: item.imageSrc || "",
+      })),
+    };
+  });
+
+  successResponse(res, {
+    message: 'Trader orders fetched successfully',
+    data: formattedOrders,
+  });
+});
+
+export const updateTraderOrderStatus = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'trader') {
+    throw new AppError('Unauthorized: Trader access only', 401);
+  }
+
+  const id = String(req.params.id);
+  const { status } = req.body; // PENDING, PROCESSING, SHIPPED, COMPLETED, CANCELLED
+
+  if (!status) {
+    throw new AppError('Please provide a status update', 400);
+  }
+
+  const traderId = Number(req.user.id);
+
+  // 1. Get all product IDs for this trader
+  const traderProducts = await prisma.product.findMany({
+    where: { traderId },
+    select: { id: true },
+  });
+
+  const traderProductIds = traderProducts.map((p) => p.id);
+
+  // 2. Find the order and verify it contains this trader's products
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { items: true },
+  });
+
+  if (!order) {
+    throw new AppError('Order not found', 404);
+  }
+
+  const ownsProduct = order.items.some((item: any) => traderProductIds.includes(item.productId));
+  if (!ownsProduct) {
+    throw new AppError('Unauthorized: You do not own any products in this order', 403);
+  }
+
+  // 3. Update the order status
+  const updatedOrder = await prisma.order.update({
+    where: { id },
+    data: { status: status.toUpperCase() },
+  });
+
+  successResponse(res, {
+    message: 'Order status updated successfully',
+    data: updatedOrder,
+  });
+});
