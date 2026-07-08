@@ -229,17 +229,11 @@ export const productService = {
 
   async notifyRestockSubscribers(productId: string, productName: string, images: any[]) {
     const { prisma } = await import('../utils/prismaClient.js');
-
-    // Find all active subscribers for this product
-    const subscribers = await prisma.productNotifyMe.findMany({
-      where: { productId, isActive: true },
+    const subscribers = await prisma.notifyMeSubscription.findMany({
+      where: { targetType: 'SHOP_RESTOCK', targetId: productId, isActive: true },
     });
-
     if (subscribers.length === 0) return;
-
     const imageUrl = images?.[0]?.url || null;
-
-    // Create notifications for each subscriber
     await prisma.userNotification.createMany({
       data: subscribers.map((sub) => ({
         userId: sub.userId,
@@ -250,10 +244,8 @@ export const productService = {
         imageUrl,
       })),
     });
-
-    // Deactivate the notify-me subscriptions
-    await prisma.productNotifyMe.updateMany({
-      where: { productId, isActive: true },
+    await prisma.notifyMeSubscription.updateMany({
+      where: { targetType: 'SHOP_RESTOCK', targetId: productId, isActive: true },
       data: { isActive: false },
     });
   },

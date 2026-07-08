@@ -3,8 +3,11 @@ import prisma from '../utils/prismaClient.js'
 import { asyncHandler } from '../utils/globalErrorHandler.util.js'
 import { successResponse } from '../utils/response.util.js'
 import { requireAuth } from '../middlewares/auth.middleware.js'
+import AppError from '../utils/AppError.util.js'
 
 const router = express.Router()
+
+// ===== User Notifications =====
 
 // Get all notifications for the authenticated user
 router.get(
