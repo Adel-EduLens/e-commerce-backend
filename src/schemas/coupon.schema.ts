@@ -16,4 +16,5 @@ export const updateCouponSchema = Joi.object({
   categoryId: Joi.string().allow("", null).optional(),
   productId: Joi.string().allow("", null).optional(),
   usageLimit: Joi.number().integer().positive().allow(null, "").optional(),
+  isActive: Joi.boolean().optional(),
 });

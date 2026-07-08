@@ -20,6 +20,7 @@ model User {
   retailNotifyMes      RetailNotifyMe[]
   retailProductRatings RetailProductRating[]
   couponUsages         CouponUsage[]
+  orders               Order[]
 }
 
 model Trader {
@@ -243,6 +244,7 @@ model Coupon {
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   usages    CouponUsage[]
+  isActive  Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -343,4 +345,45 @@ model CouponUsage {
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   usedAt    DateTime @default(now())
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String
+  phone         String
+  email         String
+  country       String
+  city          String
+  area          String
+  streetAddress String
+  apartment     String
+  mapAddress    String?
+  latitude      String?
+  longitude     String?
+  subtotal      Float
+  discount      Float
+  shipping      Float
+  total         Float
+  couponCode    String?
+  status        String      @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
+  paymentMethod String      @default("COD")     // COD, CARD
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  title       String
+  price       Float
+  quantity    Int
+  size        String?
+  color       String?
+  imageSrc    String?
 }

@@ -18,6 +18,7 @@ export type CouponUpdateInput = Partial<{
   productId: string | null;
   usageLimit: number | null;
   usedCount: number;
+  isActive: boolean;
 }>;
 
 class CouponRepository {
@@ -109,6 +110,7 @@ class CouponRepository {
         ...(data.productId !== undefined && { productId: data.productId }),
         ...(data.usageLimit !== undefined && { usageLimit: data.usageLimit }),
         ...(data.usedCount !== undefined && { usedCount: data.usedCount }),
+        ...(data.isActive !== undefined && { isActive: data.isActive }),
       },
       include: {
         category: true,
