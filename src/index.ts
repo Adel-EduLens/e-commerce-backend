@@ -27,8 +27,10 @@ import orderRouter from './routes/order.routes.js'
 import cartRouter from './routes/cart.routes.js'
 import notifyMeRouter from './routes/notifyMe.routes.js'
 import userNotificationRouter from './routes/userNotification.routes.js'
+import wishlistRouter from './routes/wishlist.routes.js'
 
 
+import addressRouter from './routes/address.routes.js'
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 dotenv.config({ path: envFile, override: true })
@@ -68,7 +70,11 @@ app.use('/api/orders', orderRouter)
 app.use('/api/cart', cartRouter)
 app.use('/api/notify-me', notifyMeRouter)
 app.use('/api/notifications', userNotificationRouter)
+app.use('/api/wishlist', wishlistRouter)
 
+
+
+app.use('/api/address', addressRouter)
 
 
 app.get('/', (req: Request, res: Response) => {
