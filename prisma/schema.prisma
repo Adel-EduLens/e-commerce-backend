@@ -8,21 +8,26 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  phone     String?
-  role      String   @default("user")
-  status    String   @default("active")
-  reviews              Review[]
-  retailNotifyMes      RetailNotifyMe[]
-  retailProductRatings RetailProductRating[]
-  couponUsages         CouponUsage[]
-  orders               Order[]
-  productNotifyMes     ProductNotifyMe[]
-  notifications        UserNotification[]
+  id                    Int                    @id @default(autoincrement())
+  email                 String                 @unique
+  name                  String?
+  password              String
+  createdAt             DateTime               @default(now())
+  phone                 String?
+  role                  String                 @default("user")
+  status                String                 @default("active")
+  reviews               Review[]
+  retailNotifyMes       RetailNotifyMe[]
+  retailProductRatings  RetailProductRating[]
+  couponUsages          CouponUsage[]
+  orders                Order[]
+  <<<<<<< HEAD
+  productNotifyMes      ProductNotifyMe[]
+  notifications         UserNotification[]
+  =======
+  categorySubscriptions CategorySubscription[]
+  notifications         Notification[]
+  >>>>>>> 24f901c7b21939c2a4590d3caec5b30cb52767df
 }
 
 model Trader {
@@ -99,13 +104,14 @@ model HelpCenterVideo {
 }
 
 model Category {
-  id         String      @id @default(cuid())
-  name       String      @unique
-  products   Product[]
-  wholesales Wholesale[]
-  coupons    Coupon[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id            String                 @id @default(cuid())
+  name          String                 @unique
+  products      Product[]
+  wholesales    Wholesale[]
+  coupons       Coupon[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  subscriptions CategorySubscription[]
 }
 
 model Product {
@@ -276,8 +282,8 @@ model Coupon {
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  usages    CouponUsage[]
-  isActive  Boolean  @default(true)
+  usages   CouponUsage[]
+  isActive Boolean       @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -372,12 +378,12 @@ model RetailProductRating {
 }
 
 model CouponUsage {
-  id        String   @id @default(cuid())
-  couponId  String
-  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  usedAt    DateTime @default(now())
+  id       String   @id @default(cuid())
+  couponId String
+  coupon   Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usedAt   DateTime @default(now())
 }
 
 model Order {
@@ -402,21 +408,46 @@ model Order {
   total         Float
   couponCode    String?
   status        String      @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
-  paymentMethod String      @default("COD")     // COD, CARD
+  paymentMethod String      @default("COD") // COD, CARD
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String
-  title       String
-  price       Float
-  quantity    Int
-  size        String?
-  color       String?
-  imageSrc    String?
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  title     String
+  price     Float
+  quantity  Int
+  size      String?
+  color     String?
+  imageSrc  String?
+}
+
+model CategorySubscription {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, categoryId])
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  body       String
+  imageUrl   String?
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  categoryId String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }
