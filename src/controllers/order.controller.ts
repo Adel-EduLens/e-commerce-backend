@@ -127,6 +127,52 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       data: orderItemsData,
     });
 
+    // 4. Decrement product stock levels
+    for (const item of items) {
+      const pId = String(item.id || item.productId);
+      const qty = parseInt(item.quantity || 1, 10);
+      let updated = false;
+
+      // Try Product (String CUID)
+      const product = await tx.product.findUnique({
+        where: { id: pId },
+      });
+      if (product) {
+        await tx.product.update({
+          where: { id: pId },
+          data: { stock: Math.max(0, (product.stock || 0) - qty) },
+        });
+        updated = true;
+      }
+
+      // Try RetailProduct (Int ID)
+      if (!updated && !isNaN(Number(pId))) {
+        const retailProduct = await tx.retailProduct.findUnique({
+          where: { id: Number(pId) },
+        });
+        if (retailProduct) {
+          await tx.retailProduct.update({
+            where: { id: Number(pId) },
+            data: { stock: Math.max(0, (retailProduct.stock || 0) - qty) },
+          });
+          updated = true;
+        }
+      }
+
+      // Try Wholesale (String ID)
+      if (!updated) {
+        const wholesale = await tx.wholesale.findUnique({
+          where: { id: pId },
+        });
+        if (wholesale) {
+          await tx.wholesale.update({
+            where: { id: pId },
+            data: { stock: Math.max(0, (wholesale.stock || 0) - qty) },
+          });
+        }
+      }
+    }
+
     // Return the created order with its items included
     return tx.order.findUnique({
       where: { id: order.id },
