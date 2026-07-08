@@ -126,27 +126,9 @@ class ProductRepository {
 
   if (search) {
     andConditions.push({
-      OR: [
-        {
-          name: {
-            contains: search,
-          },
-        },
-        {
-          category: {
-            name: {
-              contains: search,
-            },
-          },
-        },
-        {
-          brand: {
-            name: {
-              contains: search,
-            },
-          },
-        },
-      ],
+      name: {
+        contains: search,
+      },
     });
   }
 

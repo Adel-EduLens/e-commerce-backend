@@ -18,11 +18,7 @@ export class RetailProductRepository {
 
     const where: Prisma.RetailProductWhereInput = {
       ...(filters?.search && {
-        OR: [
-          { name: { contains: filters.search } },
-          { description: { contains: filters.search } },
-          { brand: { contains: filters.search } }
-        ]
+        name: { contains: filters.search }
       }),
       ...(filters?.categoryId && { categoryId: filters.categoryId }),
       ...(filters?.minPrice !== undefined || filters?.maxPrice !== undefined) && {
