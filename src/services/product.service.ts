@@ -193,7 +193,49 @@ export const productService = {
       data.flashDealEndsAt = null;
     }
 
-    return productRepository.update(id, data);
+    // Check if stock is being restocked (was 0, now > 0)
+    const oldStock = product.stock ?? 0;
+    const newStock = data.stock !== undefined ? data.stock : oldStock;
+
+    const updatedProduct = await productRepository.update(id, data);
+
+    // If product was out of stock and now restocked, notify subscribers
+    if (oldStock <= 0 && newStock > 0) {
+      await this.notifyRestockSubscribers(id, product.name, product.images);
+    }
+
+    return updatedProduct;
+  },
+
+  async notifyRestockSubscribers(productId: string, productName: string, images: any[]) {
+    const { prisma } = await import('../utils/prismaClient.js');
+
+    // Find all active subscribers for this product
+    const subscribers = await prisma.productNotifyMe.findMany({
+      where: { productId, isActive: true },
+    });
+
+    if (subscribers.length === 0) return;
+
+    const imageUrl = images?.[0]?.url || null;
+
+    // Create notifications for each subscriber
+    await prisma.userNotification.createMany({
+      data: subscribers.map((sub) => ({
+        userId: sub.userId,
+        title: 'Product Back in Stock!',
+        message: `Great news! "${productName}" is now back in stock. Grab it before it's gone!`,
+        type: 'restock',
+        productId,
+        imageUrl,
+      })),
+    });
+
+    // Deactivate the notify-me subscriptions
+    await prisma.productNotifyMe.updateMany({
+      where: { productId, isActive: true },
+      data: { isActive: false },
+    });
   },
 
   async delete(id: string, traderId: number) {

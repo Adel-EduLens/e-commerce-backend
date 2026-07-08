@@ -21,6 +21,8 @@ model User {
   retailProductRatings RetailProductRating[]
   couponUsages         CouponUsage[]
   orders               Order[]
+  productNotifyMes     ProductNotifyMe[]
+  notifications        UserNotification[]
 }
 
 model Trader {
@@ -51,6 +53,31 @@ model FrequentlyAskedQuestion {
   id        Int      @id @default(autoincrement())
   question  String
   answer    String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model ProductNotifyMe {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model UserNotification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String   @db.Text
+  type      String   @default("restock")
+  productId String?
+  imageUrl  String?
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
@@ -102,8 +129,9 @@ model Product {
   isMustHave   Boolean @default(false)
   isFlashDeals Boolean @default(false)
 
-  reviews Review[]
-  coupons Coupon[]
+  reviews   Review[]
+  coupons   Coupon[]
+  notifyMes ProductNotifyMe[]
 
   traderId Int
   trader   Trader @relation(fields: [traderId], references: [id])
