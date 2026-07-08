@@ -1,8 +1,31 @@
 import { RetailProductRepository } from '../repositories/retailProduct.repository.js'
 import AppError from '../utils/AppError.util.js'
 import { Prisma } from '@prisma/client'
+import prismaClient from '../utils/prismaClient.js'
 
 const retailProductRepository = new RetailProductRepository()
+
+async function notifyRetailRestock(productId: number, productName: string, imageUrl?: string) {
+  const subscribers = await prismaClient.retailNotifyMe.findMany({
+    where: { retailProductId: productId, isActive: true },
+  })
+  if (subscribers.length === 0) return
+
+  await prismaClient.userNotification.createMany({
+    data: subscribers.map((s) => ({
+      userId: s.userId,
+      title: 'Product Back in Stock!',
+      message: `Great news! "${productName}" is now back in stock. Grab it before it's gone!`,
+      type: 'restock',
+      imageUrl: imageUrl ?? null,
+    })),
+  })
+
+  await prismaClient.retailNotifyMe.updateMany({
+    where: { retailProductId: productId, isActive: true },
+    data: { isActive: false },
+  })
+}
 
 export class RetailProductService {
   async getAllProducts(filters?: {
@@ -121,7 +144,16 @@ export class RetailProductService {
       }
     }
 
-    return retailProductRepository.update(id, data)
+    const oldStock = product.stock ?? 0
+    const newStock = data.stock !== undefined ? data.stock : oldStock
+    const updated = await retailProductRepository.update(id, data)
+
+    if (oldStock <= 0 && newStock > 0) {
+      const imageUrl = (product as any).images?.[0]?.url
+      await notifyRetailRestock(id, product.name, imageUrl)
+    }
+
+    return updated
   }
 
   async updateProductWithRelations(
@@ -175,7 +207,16 @@ export class RetailProductService {
       }
     }
 
-    return retailProductRepository.updateWithRelations(id, data)
+    const oldStock = product.stock ?? 0
+    const newStock = data.product?.stock !== undefined ? data.product.stock : oldStock
+    const updated = await retailProductRepository.updateWithRelations(id, data)
+
+    if (oldStock <= 0 && newStock > 0) {
+      const imageUrl = (product as any).images?.[0]?.url
+      await notifyRetailRestock(id, product.name, imageUrl)
+    }
+
+    return updated
   }
 
   async deleteProduct(id: number) {

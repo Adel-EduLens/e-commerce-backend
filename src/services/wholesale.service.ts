@@ -3,6 +3,7 @@ import { categoryRepository } from "../repositories/category.repository.js";
 import { wholesaleRepository } from "../repositories/wholesale.repository.js";
 import { WholesaleCreateData, WholesaleUpdateData } from "../types/wholesale.types.js";
 import { traderProfileRepository } from "../repositories/traderProfile.repository.js";
+import { notificationRepository } from "../repositories/notification.repository.js";
 
 export const wholesaleService = {
   async create(data: WholesaleCreateData) {
@@ -16,7 +17,24 @@ export const wholesaleService = {
       throw new AppError("Category not found", 404);
     }
 
-    return wholesaleRepository.create({ ...data });
+    const wholesale = await wholesaleRepository.create({ ...data });
+
+    // Notify category subscribers
+    const subscribers = await notificationRepository.getSubscribersForCategory(data.categoryId);
+    if (subscribers.length > 0) {
+      await notificationRepository.createMany(
+        subscribers.map((s) => ({
+          userId: s.userId,
+          title: 'New wholesale item in your collection',
+          body: `"${wholesale.name}" was just added to a wholesale collection you follow.`,
+          imageUrl: (wholesale as any).images?.[0]?.url ?? undefined,
+          productId: wholesale.id,
+          categoryId: data.categoryId,
+        }))
+      );
+    }
+
+    return wholesale;
   },
 
   async getAll(query: { search?: string | undefined; categoryId?: string | undefined; categoryName?: string | undefined; isBestDeal?: boolean | undefined; isMostPopular?: boolean | undefined; isPremiumCollection?: boolean | undefined }) {
