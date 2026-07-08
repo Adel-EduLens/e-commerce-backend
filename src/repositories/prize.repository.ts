@@ -20,5 +20,12 @@ class PrizeRepository {
       data,
     });
   }
+  async findById(id: string) {
+    return prisma.prize.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
 }
 export const prizeRepository = new PrizeRepository();

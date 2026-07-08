@@ -17,18 +17,18 @@ const router = Router();
 // Create review
 router.post(
   "/",
-  validateRequest(createReviewSchema),
   requireAuth,
   requireRole("user"),
+  validateRequest(createReviewSchema),
   createReview,
 );
 
 // Update review
 router.patch(
   "/:id",
-  validateRequest(updateReviewSchema),
   requireAuth,
   requireRole("user"),
+  validateRequest(updateReviewSchema),
   updateReview,
 );
 

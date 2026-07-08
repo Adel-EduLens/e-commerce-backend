@@ -8,12 +8,16 @@ export const prizeService = {
   },
   async addPrize(prize: Prisma.PrizeCreateInput) {
     const prizeData = await prizeRepository.create({
-        name: prize.name,
-        weight: prize.weight,
+      name: prize.name,
+      weight: prize.weight,
     });
     return prizeData;
   },
   async deletePrize(id: string) {
+    const prize = await prizeRepository.findById(id);
+    if (!prize) {
+      throw new AppError("Prize not  found", 404);
+    }
     const prizeData = await prizeRepository.deleteById(id);
     return prizeData;
   },
@@ -28,6 +32,10 @@ export const prizeService = {
       }
       random -= prize.weight;
     }
-    return null;
+    return prizes[prizes.length - 1];
+  },
+  async findPrizeById(id: string) {
+    const prize = await prizeRepository.findById(id);
+    return prize;
   },
 };
