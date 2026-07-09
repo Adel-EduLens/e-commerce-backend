@@ -27,6 +27,7 @@ model User {
   notifications UserNotification[]
   wishlists     Wishlist[]
   recentlyViewed RecentlyViewedProduct[]
+  recommends    Recommend[]
 
   addresses Address[]
   cart      Cart?
@@ -485,4 +486,17 @@ model CartItem {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Recommend {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  categoryId  String
+  type        String
+  timestamp   DateTime @default(now())
+
+  @@unique([userId, productId, type])
+  @@map("recommend")
 }

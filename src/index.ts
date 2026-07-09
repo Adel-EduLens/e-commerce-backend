@@ -28,6 +28,7 @@ import notifyMeRouter from './routes/notifyMe.routes.js'
 import userNotificationRouter from './routes/userNotification.routes.js'
 import traderHelpCenterRouter from './routes/trader.helpCenter.routes.js'
 import wishlistRouter from './routes/wishlist.routes.js'
+import recommendRouter from './routes/recommend.routes.js'
 import recentlyViewedRouter from './routes/recentlyViewed.routes.js'
 
 
@@ -72,6 +73,7 @@ app.use('/api/notify-me', notifyMeRouter)
 app.use('/api/notifications', userNotificationRouter)
 app.use('/api/trader/help-center', traderHelpCenterRouter)
 app.use('/api/wishlist', wishlistRouter)
+app.use('/api/recommend', recommendRouter)
 app.use('/api/recently-viewed', recentlyViewedRouter)
 
 
