@@ -8,13 +8,15 @@ import {
   deleteProduct,
   getFilters,
   getTraderProducts,
+  getProductRecommendations,
+  getProductReviewsPage,
 } from "../controllers/product.controller.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   createProductSchema,
   updateProductSchema,
 } from "../schemas/product.schema.js";
-import { requireRole, requireAuth } from "../middlewares/auth.middleware.js";
+import { requireRole, requireAuth, optionalAuth } from "../middlewares/auth.middleware.js";
 const router = Router();
 router.post(
   "/",
@@ -27,7 +29,9 @@ router.post(
 router.get("/filters", getFilters);
 router.get("/trader", requireAuth, requireRole("trader"), getTraderProducts);
 router.get("/", getProducts);
-router.get("/:id", getProduct);
+router.get("/:id", optionalAuth, getProduct);
+router.get("/:id/recommended", getProductRecommendations);
+router.get("/:id/reviews", getProductReviewsPage);
 
 router.patch(
   "/:id",

@@ -1,127 +1,434 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const prisma = new PrismaClient();
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const projectRoot = path.resolve(__dirname, '../')
+
+dotenv.config({ path: path.join(projectRoot, '.env.development'), override: true })
+dotenv.config({ path: path.join(projectRoot, '.env'), override: true })
+
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcrypt'
+
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || 'mysql://root@localhost:3306/ecommerce_db'
+    }
+  }
+})
 
 async function main() {
-  console.log('Seeding database...');
+  // ── Admin ──
+  const email = 'admin@example.com'
+  const plainPassword = 'Admin@123'
 
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const existingAdmin = await prisma.admin.findUnique({
+    where: { email },
+  })
 
-  // 1. Create User
-  const user = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
-    update: {},
-    create: {
-      email: 'user@example.com',
-      name: 'Test User',
-      password: hashedPassword,
+  if (existingAdmin) {
+    console.log('✅ Admin already exists.')
+  } else {
+    const hashedPassword = await bcrypt.hash(plainPassword, 10)
+    const admin = await prisma.admin.create({
+      data: {
+        name: 'Super Admin',
+        email,
+        password: hashedPassword,
+        phone: '01000000000',
+      },
+    })
+    console.log('✅ Admin created successfully!')
+    console.log({ email: admin.email, password: plainPassword })
+  }
+
+  // ── Trader ──
+  const traderEmail = 'trader@example.com'
+  let trader = await prisma.trader.findUnique({ where: { email: traderEmail } })
+  if (!trader) {
+    const hashedPassword = await bcrypt.hash('Trader@123', 10)
+    trader = await prisma.trader.create({
+      data: {
+        name: 'Demo Trader',
+        email: traderEmail,
+        password: hashedPassword,
+        phone: '01111111111',
+      },
+    })
+    console.log('✅ Trader created:', { email: traderEmail, password: 'Trader@123' })
+  } else {
+    console.log('✅ Trader already exists.')
+  }
+
+  // ── Categories ──
+  const categoryNames = ['Men', 'Women', 'Kids']
+  const categories = {}
+  for (const name of categoryNames) {
+    let cat = await prisma.category.findUnique({ where: { name } })
+    if (!cat) {
+      cat = await prisma.category.create({ data: { name } })
+    }
+    categories[name] = cat
+  }
+  console.log('✅ Categories ready.')
+
+  // ── Wholesale Products ──
+  const existingWholesales = await prisma.wholesale.count()
+  if (existingWholesales > 0) {
+    console.log('✅ Wholesale products already exist.')
+  } else {
+
+  const wholesaleProducts = [
+    // Men
+    {
+      name: 'Classic White Tee',
+      description: 'Premium cotton crew-neck t-shirt, perfect for bulk retail orders.',
+      price: 8.99,
+      minOrder: 50,
+      isBestDeal: true,
+      isMostPopular: false,
+      isPremiumCollection: false,
+      brand: 'UrbanBasics',
+      rating: 4.5,
+      categoryId: categories['Men'].id,
+      images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500'],
+      sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+      colors: ['White', 'Black', 'Gray'],
     },
-  });
-  console.log(`User created: ${user.email}`);
-
-  // 2. Create Admin
-  const admin = await prisma.admin.upsert({
-    where: { email: 'admin@example.com' },
-    update: {},
-    create: {
-      email: 'admin@example.com',
-      name: 'Test Admin',
-      password: hashedPassword,
+    {
+      name: 'Slim Fit Chinos',
+      description: 'Comfortable stretch chinos available in multiple colors for wholesale.',
+      price: 18.50,
+      minOrder: 30,
+      isBestDeal: true,
+      isMostPopular: true,
+      isPremiumCollection: false,
+      brand: 'UrbanBasics',
+      rating: 4.2,
+      categoryId: categories['Men'].id,
+      images: ['https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=500'],
+      sizes: ['28', '30', '32', '34', '36'],
+      colors: ['Khaki', 'Navy', 'Olive', 'Black'],
     },
-  });
-  console.log(`Admin created: ${admin.email}`);
-
-  // 3. Create Trader
-  const trader = await prisma.trader.upsert({
-    where: { email: 'trader@example.com' },
-    update: {},
-    create: {
-      email: 'trader@example.com',
-      name: 'Test Trader',
-      password: hashedPassword,
+    {
+      name: 'Hooded Sweatshirt',
+      description: 'Fleece-lined hoodie with front pocket, great for winter wholesale.',
+      price: 22.00,
+      minOrder: 25,
+      isBestDeal: false,
+      isMostPopular: true,
+      isPremiumCollection: false,
+      brand: 'ComfortWear',
+      rating: 4.7,
+      categoryId: categories['Men'].id,
+      images: ['https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500'],
+      sizes: ['S', 'M', 'L', 'XL'],
+      colors: ['Gray', 'Black', 'Navy', 'Burgundy'],
     },
-  });
-  console.log(`Trader created: ${trader.email}`);
-
-  // 4. Create Categories
-  const category1 = await prisma.category.upsert({
-    where: { name: 'Electronics' },
-    update: {},
-    create: {
-      name: 'Electronics',
+    {
+      name: 'Bomber Jacket',
+      description: 'Lightweight bomber jacket with ribbed cuffs.',
+      price: 25.00,
+      minOrder: 20,
+      isBestDeal: false,
+      isMostPopular: false,
+      isPremiumCollection: true,
+      brand: 'StreetEdge',
+      rating: 4.3,
+      categoryId: categories['Men'].id,
+      images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500'],
+      sizes: ['S', 'M', 'L', 'XL'],
+      colors: ['Black', 'Navy', 'Olive'],
     },
-  });
-
-  const category2 = await prisma.category.upsert({
-    where: { name: 'Clothing' },
-    update: {},
-    create: {
-      name: 'Clothing',
+    // Women
+    {
+      name: 'Floral Summer Dress',
+      description: 'Lightweight floral print dress, ideal for summer retail collections.',
+      price: 14.99,
+      minOrder: 40,
+      isBestDeal: true,
+      isMostPopular: false,
+      isPremiumCollection: false,
+      brand: 'BlossomStyle',
+      rating: 4.6,
+      categoryId: categories['Women'].id,
+      images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500'],
+      sizes: ['XS', 'S', 'M', 'L', 'XL'],
+      colors: ['Pink', 'Blue', 'Yellow'],
     },
-  });
-  console.log(`Categories created`);
-
-  // 5. Create Brand
-  const brand1 = await prisma.brand.upsert({
-    where: { name: 'TechBrand' },
-    update: {},
-    create: {
-      name: 'TechBrand',
+    {
+      name: 'High-Waist Leggings',
+      description: 'Squat-proof high-waist leggings with moisture-wicking fabric.',
+      price: 12.00,
+      minOrder: 60,
+      isBestDeal: false,
+      isMostPopular: true,
+      isPremiumCollection: false,
+      brand: 'ActiveFlex',
+      rating: 4.8,
+      categoryId: categories['Women'].id,
+      images: ['https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=500'],
+      sizes: ['XS', 'S', 'M', 'L', 'XL'],
+      colors: ['Black', 'Gray', 'Navy', 'Wine'],
     },
-  });
-  console.log(`Brand created`);
-
-  // 6. Create Product
-  const product1 = await prisma.product.upsert({
-    where: { sku: 'PROD-ELEC-001' },
-    update: {},
-    create: {
-      name: 'Smartphone X',
-      description: 'The latest and greatest smartphone.',
-      price: 999.99,
-      sku: 'PROD-ELEC-001',
-      stock: 50,
-      categoryId: category1.id,
-      brandId: brand1.id,
-      traderId: trader.id,
+    {
+      name: 'Denim Jacket',
+      description: 'Classic denim jacket with button closure, a wardrobe essential.',
+      price: 28.00,
+      minOrder: 20,
+      isBestDeal: false,
+      isMostPopular: false,
+      isPremiumCollection: true,
+      brand: 'StreetEdge',
+      rating: 4.4,
+      categoryId: categories['Women'].id,
+      images: ['https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=500'],
+      sizes: ['S', 'M', 'L', 'XL'],
+      colors: ['Light Blue', 'Dark Blue', 'Black'],
     },
-  });
-  console.log(`Product created: ${product1.name}`);
-
-  // 7. Create Retail Category
-  const retailCat = await prisma.retailCategory.upsert({
-    where: { slug: 'home-appliances' },
-    update: {},
-    create: {
-      name: 'Home Appliances',
-      slug: 'home-appliances',
+    // Kids
+    {
+      name: 'Kids Graphic Tee Pack',
+      description: 'Fun graphic print t-shirts for kids, sold in packs of 3.',
+      price: 15.00,
+      minOrder: 50,
+      isBestDeal: false,
+      isMostPopular: false,
+      isPremiumCollection: true,
+      brand: 'LittleStars',
+      rating: 4.3,
+      categoryId: categories['Kids'].id,
+      images: ['https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500'],
+      sizes: ['3-4Y', '5-6Y', '7-8Y', '9-10Y'],
+      colors: ['Multi'],
     },
-  });
-
-  // 8. Create Retail Product
-  const retailProduct = await prisma.retailProduct.upsert({
-    where: { slug: 'smart-coffee-maker' },
-    update: {},
-    create: {
-      name: 'Smart Coffee Maker',
-      slug: 'smart-coffee-maker',
-      price: 150.00,
-      stock: 30,
-      sku: 'RET-COFF-001',
-      categoryId: retailCat.id,
+    {
+      name: 'Kids Jogger Pants',
+      description: 'Soft cotton joggers with elastic waistband for active kids.',
+      price: 10.50,
+      minOrder: 40,
+      isBestDeal: true,
+      isMostPopular: true,
+      isPremiumCollection: false,
+      brand: 'LittleStars',
+      rating: 4.1,
+      categoryId: categories['Kids'].id,
+      images: ['https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?w=500'],
+      sizes: ['3-4Y', '5-6Y', '7-8Y', '9-10Y', '11-12Y'],
+      colors: ['Gray', 'Navy', 'Black'],
     },
-  });
-  console.log(`Retail Product created: ${retailProduct.name}`);
+    {
+      name: 'Kids Hoodie Set',
+      description: 'Matching hoodie and pants set for kids, cozy fleece material.',
+      price: 19.99,
+      minOrder: 30,
+      isBestDeal: false,
+      isMostPopular: true,
+      isPremiumCollection: true,
+      brand: 'LittleStars',
+      rating: 4.5,
+      categoryId: categories['Kids'].id,
+      images: ['https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=500'],
+      sizes: ['3-4Y', '5-6Y', '7-8Y', '9-10Y'],
+      colors: ['Pink', 'Blue', 'Gray'],
+    },
+  ]
 
-  console.log('Database seeded successfully!');
+  for (const product of wholesaleProducts) {
+    await prisma.wholesale.create({
+      data: {
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        minOrder: product.minOrder,
+        isBestDeal: product.isBestDeal,
+        isMostPopular: product.isMostPopular,
+        isPremiumCollection: product.isPremiumCollection,
+        brand: product.brand,
+        rating: product.rating,
+        trader: { connect: { id: trader.id } },
+        category: { connect: { id: product.categoryId } },
+        images: { create: product.images.map((url) => ({ url })) },
+      },
+    })
+  }
+  console.log(`✅ ${wholesaleProducts.length} wholesale products seeded!`)
+  }
+
+  // ── Brands ──
+  const brandNames = ['Nike', 'Adidas', 'Zara', 'H&M', 'Puma']
+  const brands = {}
+  for (const name of brandNames) {
+    let brand = await prisma.brand.findUnique({ where: { name } })
+    if (!brand) {
+      brand = await prisma.brand.create({ data: { name } })
+    }
+    brands[name] = brand
+  }
+  console.log('✅ Brands ready.')
+
+  // ── Retail Products ──
+  const existingProducts = await prisma.product.count()
+  if (existingProducts > 0) {
+    console.log('✅ Retail products already exist.')
+  } else {
+    const retailProducts = [
+      {
+        name: 'Nike Air Max Sneaker',
+        description: 'Iconic sneaker with maximum cushioning and comfort for daily wear.',
+        price: 129.99,
+        sizeguide: 'Standard sneaker sizing',
+        rating: 4.8,
+        brandId: brands['Nike'].id,
+        categoryId: categories['Men'].id,
+        images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500'],
+        sizes: ['8', '9', '10', '11'],
+        colors: ['Red', 'Black'],
+      },
+      {
+        name: 'Adidas Trefoil Hoodie',
+        description: 'Classic hoodie featuring the iconic Trefoil logo on the chest.',
+        price: 65.00,
+        sizeguide: 'Regular fit',
+        rating: 4.6,
+        brandId: brands['Adidas'].id,
+        categoryId: categories['Men'].id,
+        images: ['https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500'],
+        sizes: ['S', 'M', 'L', 'XL'],
+        colors: ['Blue', 'Black'],
+      },
+      {
+        name: 'Zara Summer Dress',
+        description: 'Flowy patterned midi dress with puff sleeves and adjustable belt.',
+        price: 59.90,
+        sizeguide: 'Loose fit',
+        rating: 4.5,
+        brandId: brands['Zara'].id,
+        categoryId: categories['Women'].id,
+        images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500'],
+        sizes: ['XS', 'S', 'M', 'L'],
+        colors: ['Floral', 'White'],
+      },
+      {
+        name: 'H&M Knit Sweater',
+        description: 'Soft knit sweater in a wool blend with raglan sleeves.',
+        price: 34.99,
+        sizeguide: 'Relaxed fit',
+        rating: 4.2,
+        brandId: brands['H&M'].id,
+        categoryId: categories['Women'].id,
+        images: ['https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500'],
+        sizes: ['S', 'M', 'L'],
+        colors: ['Beige', 'Gray'],
+      },
+      {
+        name: 'Kids Puma Active Shorts',
+        description: 'Breathable training shorts with dryCELL technology for active kids.',
+        price: 24.99,
+        sizeguide: 'Fits true to size',
+        rating: 4.4,
+        brandId: brands['Puma'].id,
+        categoryId: categories['Kids'].id,
+        images: ['https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500'],
+        sizes: ['S (6-7)', 'M (8-9)', 'L (10-12)'],
+        colors: ['Navy', 'Black'],
+      }
+    ]
+
+    for (const product of retailProducts) {
+      await prisma.product.create({
+        data: {
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          sizeguide: product.sizeguide,
+          rating: product.rating,
+          trader: { connect: { id: trader.id } },
+          category: { connect: { id: product.categoryId } },
+          brand: { connect: { id: product.brandId } },
+          images: { create: product.images.map((url) => ({ url, color: product.colors[0] })) },
+          sizes: { create: product.sizes.map((size) => ({ size })) },
+          colors: { create: product.colors.map((color) => ({ color })) },
+        },
+      })
+    }
+    console.log(`✅ ${retailProducts.length} retail products seeded!`)
+  }
+
+  // ── Help Center Categories & Videos ──
+  const helpCenterData = [
+    {
+      category: 'Orders & Shipping',
+      videos: [
+        { title: 'How to Track Your Order', youtubeId: 'dQw4w9WgXcQ' },
+        { title: 'Understanding Shipping Options', youtubeId: 'jNQXAC9IVRw' },
+        { title: 'What to Do If Your Order Is Late', youtubeId: '9bZkp7q19f0' },
+      ],
+    },
+    {
+      category: 'Payments & Wallet',
+      videos: [
+        { title: 'How to Add a Payment Method', youtubeId: 'kffacxfA7G4' },
+        { title: 'Using Your Wallet Balance', youtubeId: 'pRpeEdMmmQ0' },
+        { title: 'Understanding Payment Security', youtubeId: 'oHg5SJYRHA0' },
+      ],
+    },
+    {
+      category: 'Returns & Refunds',
+      videos: [
+        { title: 'How to Return an Item', youtubeId: 'dQw4w9WgXcQ' },
+        { title: 'Refund Policy Explained', youtubeId: 'jNQXAC9IVRw' },
+        { title: 'How Long Do Refunds Take?', youtubeId: '9bZkp7q19f0' },
+      ],
+    },
+    {
+      category: 'Wholesale & Dropshipping',
+      videos: [
+        { title: 'Getting Started with Wholesale', youtubeId: 'kffacxfA7G4' },
+        { title: 'How Dropshipping Works', youtubeId: 'pRpeEdMmmQ0' },
+        { title: 'Managing Wholesale Orders', youtubeId: 'oHg5SJYRHA0' },
+      ],
+    },
+    {
+      category: 'Account & Profile',
+      videos: [
+        { title: 'How to Update Your Profile', youtubeId: 'dQw4w9WgXcQ' },
+        { title: 'Changing Your Password', youtubeId: 'jNQXAC9IVRw' },
+        { title: 'Managing Notification Preferences', youtubeId: '9bZkp7q19f0' },
+      ],
+    },
+    {
+      category: 'Technical Issues',
+      videos: [
+        { title: 'Common App Issues & Fixes', youtubeId: 'kffacxfA7G4' },
+        { title: 'How to Clear Cache & Refresh', youtubeId: 'pRpeEdMmmQ0' },
+        { title: 'How to Report a Bug', youtubeId: 'oHg5SJYRHA0' },
+      ],
+    },
+  ]
+
+  const existingHelpCategories = await prisma.helpCenterCategory.count()
+  if (existingHelpCategories > 0) {
+    console.log('✅ Help Center data already exists.')
+  } else {
+    for (const { category, videos } of helpCenterData) {
+      await prisma.helpCenterCategory.create({ data: { name: category } })
+      await prisma.helpCenterVideo.createMany({
+        data: videos.map((v) => ({ title: v.title, category, youtubeId: v.youtubeId })),
+      })
+    }
+    console.log(`✅ Help Center: ${helpCenterData.length} categories and ${helpCenterData.reduce((s, c) => s + c.videos.length, 0)} videos seeded!`)
+  }
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
+  .catch((error) => {
+    console.error(error)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })

@@ -2,6 +2,7 @@ import prisma from "../utils/prismaClient.js";
 import {
   ProductCreateData,
   ProductUpdateData,
+  TraderProductCreateData,
 } from "../types/product.types.js";
 
 type GetProductsQuery = {
@@ -47,13 +48,58 @@ class ProductRepository {
     }
   };
 
-  create(data: ProductCreateData) {
+  create(data: TraderProductCreateData | ProductCreateData) {
+    let colorsData: any[];
+
+    if (data.colors && data.colors.length > 0 && typeof data.colors[0] === "string") {
+      const oldData = data as ProductCreateData;
+      colorsData = oldData.colors.map((colorName) => {
+        const colorImages = oldData.images.filter((img) => img.color === colorName);
+        return {
+          colorName,
+          colorCode: null,
+          images: {
+            create: colorImages.map((img) => ({
+              imageUrl: img.url,
+              isPrimary: false,
+            })),
+          },
+          variants: {
+            create: oldData.sizes.map((size) => ({
+              size,
+              quantity: oldData.stock ? Math.ceil(oldData.stock / oldData.sizes.length) : 0,
+              sku: oldData.sku ?? null,
+            })),
+          },
+        };
+      });
+    } else {
+      const newData = data as TraderProductCreateData;
+      colorsData = newData.colors.map((color) => ({
+        colorName: color.colorName,
+        colorCode: color.colorCode ?? null,
+        images: {
+          create: color.images.map((img) => ({
+            imageUrl: img.imageUrl,
+            isPrimary: img.isPrimary ?? false,
+          })),
+        },
+        variants: {
+          create: color.variants.map((v) => ({
+            size: v.size,
+            quantity: v.quantity,
+            sku: v.sku ?? null,
+          })),
+        },
+      }));
+    }
+
     return prisma.product.create({
       data: {
         name: data.name,
         description: data.description ?? null,
         price: data.price,
-        rating: data.rating ?? 0,
+        rating: 0,
         sizeguide: data.sizeguide ?? null,
         sku: data.sku ?? null,
         stock: data.stock ?? 0,
@@ -72,31 +118,24 @@ class ProductRepository {
           brand: { connect: { id: data.brandId } },
         }),
 
-        images: {
-          create: data.images.map((image) => ({
-            url: image.url,
-            color: image.color,
-          })),
-        },
-
-        sizes: {
-          create: data.sizes.map((size) => ({ size })),
-        },
-
         colors: {
-          create: data.colors.map((color) => ({ color })),
+          create: colorsData,
         },
       },
 
       include: {
         category: true,
         brand: true,
-        images: true,
-        sizes: true,
-        colors: true,
+        colors: {
+          include: {
+            images: true,
+            variants: true,
+          },
+        },
       },
     });
   }
+
 
   async findAll({
   search,
@@ -146,8 +185,8 @@ class ProductRepository {
     ...(brandId && { brandId }),
     ...(traderId && { traderId }),
     ...(filter && FILTER_MAP[filter]),
-    ...(size && { sizes: { some: { size } } }),
-    ...(color && { colors: { some: { color } } }),
+    ...(size && { colors: { some: { variants: { some: { size } } } } }),
+    ...(color && { colors: { some: { colorName: color } } }),
     ...(andConditions.length > 0 && { AND: andConditions }),
   };
 
@@ -158,9 +197,12 @@ class ProductRepository {
     include: {
       category: true,
       brand: true,
-      images: true,
-      sizes: true,
-      colors: true,
+      colors: {
+        include: {
+          images: true,
+          variants: true,
+        },
+      },
     },
     orderBy: this.getOrderBy(sortBy, sortOrder),
     skip: (page - 1) * limit,
@@ -182,21 +224,21 @@ class ProductRepository {
     const categories = await prisma.category.findMany({ select: { name: true } });
     const brands = await prisma.brand.findMany({ select: { name: true } });
     
-    const sizes = await prisma.productSize.findMany({ 
+    const sizes = await prisma.productVariant.findMany({ 
       select: { size: true },
       distinct: ['size'] 
     });
     
     const colors = await prisma.productColor.findMany({
-      select: { color: true },
-      distinct: ['color']
+      select: { colorName: true },
+      distinct: ['colorName']
     });
 
     return {
       categories: categories.map((c) => c.name),
       brands: brands.map((b) => b.name),
       sizes: sizes.map((s) => s.size),
-      colors: colors.map((c) => c.color)
+      colors: colors.map((c) => c.colorName)
     };
   }
 
@@ -209,14 +251,17 @@ class ProductRepository {
       include: {
         category: true,
         brand: true,
-        images: true,
-        sizes: true,
-        colors: true,
+        colors: {
+          include: {
+            images: true,
+            variants: true,
+          },
+        },
       },
     });
   }
 
-  update(id: string, data: ProductUpdateData) {
+  update(id: string, data: Partial<ProductUpdateData>) {
     return prisma.product.update({
       where: { id },
       data: {
@@ -252,38 +297,17 @@ class ProductRepository {
             ? { connect: { id: data.brandId } }
             : { disconnect: true },
         }),
-
-        ...(data.images && {
-          images: {
-            deleteMany: {},
-            create: data.images.map((image) => ({
-              url: image.url,
-              color: image.color,
-            })),
-          },
-        }),
-
-        ...(data.sizes && {
-          sizes: {
-            deleteMany: {},
-            create: data.sizes.map((size) => ({ size })),
-          },
-        }),
-
-        ...(data.colors && {
-          colors: {
-            deleteMany: {},
-            create: data.colors.map((color) => ({ color })),
-          },
-        }),
       },
 
       include: {
         category: true,
         brand: true,
-        images: true,
-        sizes: true,
-        colors: true,
+        colors: {
+          include: {
+            images: true,
+            variants: true,
+          },
+        },
       },
     });
   }
@@ -294,9 +318,12 @@ class ProductRepository {
       include: {
         category: true,
         brand: true,
-        images: true,
-        sizes: true,
-        colors: true,
+        colors: {
+          include: {
+            images: true,
+            variants: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -318,6 +345,77 @@ class ProductRepository {
 
       data: {
         rating,
+      },
+    });
+  }
+
+  async findDetailsById(id: string, userId?: number) {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        brand: true,
+        category: true,
+        colors: {
+          include: {
+            images: true,
+            variants: true,
+          },
+        },
+        reviews: {
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+            images: true,
+          },
+        },
+      },
+    });
+
+    if (!product) return null;
+
+    let isFavorite = false;
+    if (userId) {
+      const fav = await prisma.wishlistItem.findFirst({
+        where: {
+          userId,
+          shopProductId: id,
+        },
+      });
+      isFavorite = !!fav;
+    }
+
+    return {
+      product,
+      isFavorite,
+    };
+  }
+
+  async findRecommended(productId: string, categoryId: string, limit: number = 8) {
+    return prisma.product.findMany({
+      where: {
+        categoryId,
+        id: { not: productId },
+      },
+      take: limit,
+      include: {
+        brand: true,
+        category: true,
+        colors: {
+          include: {
+            images: true,
+            variants: true,
+          },
+        },
+      },
+      orderBy: {
+        rating: "desc",
       },
     });
   }

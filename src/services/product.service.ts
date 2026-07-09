@@ -1,4 +1,5 @@
 import AppError from "../utils/AppError.util.js";
+import prisma from "../utils/prismaClient.js";
 import { categoryRepository } from "../repositories/category.repository.js";
 import { brandRepository } from "../repositories/brand.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
@@ -79,61 +80,61 @@ function validateFlashDeal({
 
 export const productService = {
   async create(data: ProductCreateData) {
-  const trader = await traderProfileRepository.findById(data.traderId);
+    const trader = await traderProfileRepository.findById(data.traderId);
 
-  if (!trader) {
-    throw new AppError("Trader not found", 404);
-  }
-
-  const category = await categoryRepository.findById(data.categoryId);
-
-  if (!category) {
-    throw new AppError("Category not found", 404);
-  }
-
-  if (data.brandId) {
-    const brand = await brandRepository.findById(data.brandId);
-
-    if (!brand) {
-      throw new AppError("Brand not found", 404);
+    if (!trader) {
+      throw new AppError("Trader not found", 404);
     }
-  }
 
-  validateFlashDeal({
-    isFlashDeals: !!data.isFlashDeals,
-    price: data.price,
-    flashDealPrice: data.flashDealPrice,
-    flashDealEndsAt: data.flashDealEndsAt
-      ? new Date(data.flashDealEndsAt)
-      : null,
-  });
+    const category = await categoryRepository.findById(data.categoryId);
 
-  if (!data.isFlashDeals) {
-    delete data.flashDealPrice;
-    delete data.flashDealEndsAt;
-  }
-
-  const product = await productRepository.create(data);
-
-  // Notify subscribers of this category
-  if (data.categoryId) {
-    const subscribers = await notificationRepository.getSubscribersForCategory(data.categoryId)
-    if (subscribers.length > 0) {
-      await notificationRepository.createMany(
-        subscribers.map(s => ({
-          userId: s.userId,
-          title: 'New item in your collection',
-          body: `"${product.name}" was just added to a collection you follow.`,
-          imageUrl: (product as any).images?.[0]?.url ?? undefined,
-          productId: product.id,
-          categoryId: data.categoryId,
-        }))
-      )
+    if (!category) {
+      throw new AppError("Category not found", 404);
     }
-  }
 
-  return product;
-},
+    if (data.brandId) {
+      const brand = await brandRepository.findById(data.brandId);
+
+      if (!brand) {
+        throw new AppError("Brand not found", 404);
+      }
+    }
+
+    validateFlashDeal({
+      isFlashDeals: !!data.isFlashDeals,
+      price: data.price,
+      flashDealPrice: data.flashDealPrice,
+      flashDealEndsAt: data.flashDealEndsAt
+        ? new Date(data.flashDealEndsAt)
+        : null,
+    });
+
+    if (!data.isFlashDeals) {
+      delete data.flashDealPrice;
+      delete data.flashDealEndsAt;
+    }
+
+    const product = await productRepository.create(data);
+
+    // Notify subscribers of this category
+    if (data.categoryId) {
+      const subscribers = await notificationRepository.getSubscribersForCategory(data.categoryId)
+      if (subscribers.length > 0) {
+        await notificationRepository.createMany(
+          subscribers.map(s => ({
+            userId: s.userId,
+            title: 'New item in your collection',
+            body: `"${product.name}" was just added to a collection you follow.`,
+            imageUrl: (product as any).images?.[0]?.url ?? undefined,
+            productId: product.id,
+            categoryId: data.categoryId,
+          }))
+        )
+      }
+    }
+
+    return product;
+  },
 
   async getAll(query: GetProductsQuery) {
     return productRepository.findAll(query);
@@ -207,7 +208,7 @@ export const productService = {
       flashDealEndsAt: finalFlashDealEndsAt,
     });
 
- 
+
     if (finalIsFlashDeals === false) {
       data.flashDealPrice = null;
       data.flashDealEndsAt = null;
@@ -221,7 +222,7 @@ export const productService = {
 
     // If product was out of stock and now restocked, notify subscribers
     if (oldStock <= 0 && newStock > 0) {
-      await this.notifyRestockSubscribers(id, product.name, product.images);
+      await this.notifyRestockSubscribers(id, product.name, product.colors?.[0]?.images || []);
     }
 
     return updatedProduct;
@@ -239,9 +240,6 @@ export const productService = {
         userId: sub.userId,
         title: 'Product Back in Stock!',
         message: `Great news! "${productName}" is now back in stock. Grab it before it's gone!`,
-        type: 'restock',
-        productId,
-        imageUrl,
       })),
     });
     await prisma.notifyMeSubscription.updateMany({
@@ -261,5 +259,227 @@ export const productService = {
     }
 
     return productRepository.delete(id);
+  },
+
+  async getProductDetails(id: string, userId?: number) {
+    const details = await productRepository.findDetailsById(id, userId);
+
+    if (!details) {
+      throw new AppError("Product not found", 404);
+    }
+
+    const { product, isFavorite } = details;
+
+    // Calculate rating details
+    const totalReviews = await prisma.review.count({ where: { productId: id } });
+    const averageRatingAgg = await prisma.review.aggregate({
+      where: { productId: id },
+      _avg: { rating: true }
+    });
+    const averageRating = averageRatingAgg._avg.rating ? Number(averageRatingAgg._avg.rating.toFixed(1)) : 0;
+
+    // Calculate prices & discount (Flash Deals logic)
+    let currentPrice = product.price;
+    let oldPrice: number | null = null;
+    let discountPercentage = 0;
+
+    const now = new Date();
+    if (product.isFlashDeals && product.flashDealPrice !== null && product.flashDealEndsAt && product.flashDealEndsAt > now) {
+      currentPrice = product.flashDealPrice;
+      oldPrice = product.price;
+      discountPercentage = Math.round(((oldPrice - currentPrice) / oldPrice) * 100);
+    }
+
+    // Calculate total stock & addToCart state
+    const totalStock = (product.colors || []).reduce(
+      (sum: number, c: any) => sum + (c.variants || []).reduce((vSum: number, v: any) => vSum + v.quantity, 0),
+      0
+    );
+    const canAddToCart = totalStock > 0;
+
+    // Extract colors, variants, images
+    const colorsData = (product.colors || []).map((c: any) => {
+      return {
+        id: c.id,
+        name: c.colorName,
+        colorName: c.colorName,
+        hex: c.colorCode || "#000000",
+        images: (c.images || []).map((img: any) => ({
+          id: img.id,
+          imageUrl: img.imageUrl,
+        })),
+        variants: (c.variants || []).map((v: any) => ({
+          id: v.id,
+          size: v.size,
+          quantity: v.quantity,
+        })),
+      };
+    });
+
+    const images = (product.colors || []).flatMap((c: any) =>
+      (c.images || []).map((img: any) => ({
+        id: img.id,
+        url: img.imageUrl,
+        color: c.colorName,
+      }))
+    );
+
+    const availableSizes = Array.from(
+      new Set((product.colors || []).flatMap((c: any) => (c.variants || []).map((v: any) => v.size)))
+    );
+
+    // Get recommended products
+    const recommendedRaw = await productRepository.findRecommended(id, product.categoryId, 8);
+    const recommendedProducts = recommendedRaw.map((p: any) => {
+      let rPrice = p.price;
+      let rOldPrice: number | null = null;
+      let rDiscountPercentage = 0;
+      if (p.isFlashDeals && p.flashDealPrice !== null && p.flashDealEndsAt && p.flashDealEndsAt > now) {
+        rPrice = p.flashDealPrice;
+        const originalPrice = p.price;
+        rOldPrice = originalPrice;
+        rDiscountPercentage = Math.round(((originalPrice - rPrice) / originalPrice) * 100);
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        shortDescription: p.shortDescription,
+        price: rPrice,
+        oldPrice: rOldPrice,
+        discountPercentage: rDiscountPercentage,
+        averageRating: p.rating,
+        images: (p.colors || []).flatMap((c: any) =>
+          (c.images || []).map((img: any) => ({
+            id: img.id,
+            url: img.imageUrl,
+            color: c.colorName,
+          }))
+        ),
+      };
+    });
+
+    // Mapped reviews
+    const mappedReviews = (product.reviews || []).map((rev: any) => ({
+      id: rev.id,
+      user: {
+        id: rev.user.id,
+        name: rev.user.name,
+        avatar: rev.user.avatar,
+      },
+      rating: rev.rating,
+      comment: rev.comment,
+      images: (rev.images || []).map((img: any) => img.url),
+      createdAt: rev.createdAt,
+      helpfulCount: rev.helpfulCount,
+    }));
+
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      shortDescription: product.shortDescription,
+      price: currentPrice,
+      rating: product.rating,
+      oldPrice,
+      discountPercentage,
+      averageRating,
+      totalReviews,
+      totalStock,
+      canAddToCart,
+      brand: product.brand
+        ? {
+          id: product.brand.id,
+          name: product.brand.name,
+          logo: (product.brand as any).logo || null,
+        }
+        : null,
+      category: product.category
+        ? {
+          id: product.category.id,
+          name: product.category.name,
+        }
+        : null,
+      isFavorite,
+      images,
+      colors: colorsData,
+      availableSizes,
+      shipping: {
+        freeReturns: true,
+        estimatedDelivery: "Tomorrow",
+      },
+      reviews: {
+        average: averageRating,
+        total: totalReviews,
+        list: mappedReviews,
+      },
+      recommendedProducts,
+    };
+  },
+
+  async getProductRecommended(id: string) {
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) throw new AppError("Product not found", 404);
+
+    const now = new Date();
+    const recommendedRaw = await productRepository.findRecommended(id, product.categoryId, 8);
+    return recommendedRaw.map((p: any) => {
+      let rPrice = p.price;
+      let rOldPrice: number | null = null;
+      let rDiscountPercentage = 0;
+      if (p.isFlashDeals && p.flashDealPrice !== null && p.flashDealEndsAt && p.flashDealEndsAt > now) {
+        rPrice = p.flashDealPrice;
+        const originalPrice = p.price;
+        rOldPrice = originalPrice;
+        rDiscountPercentage = Math.round(((originalPrice - rPrice) / originalPrice) * 100);
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        shortDescription: p.shortDescription,
+        price: rPrice,
+        oldPrice: rOldPrice,
+        discountPercentage: rDiscountPercentage,
+        averageRating: p.rating,
+        images: (p.colors || []).flatMap((c: any) =>
+          (c.images || []).map((img: any) => ({
+            id: img.id,
+            url: img.imageUrl,
+            color: c.colorName,
+          }))
+        ),
+      };
+    });
+  },
+
+  async getProductReviews(id: string, query: { page?: number; limit?: number; rating?: number; sort?: string }) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const rating = query.rating !== undefined ? Number(query.rating) : undefined;
+    const sort = query.sort || "latest";
+
+    const { reviewRepository } = await import("../repositories/review.repository.js");
+    const queryObj: any = { page, limit };
+    if (rating !== undefined) queryObj.rating = rating;
+    if (sort !== undefined) queryObj.sort = sort;
+    const result = await reviewRepository.findPaginatedReviews(id, queryObj);
+
+    return {
+      reviews: result.reviews.map((rev: any) => ({
+        id: rev.id,
+        user: {
+          id: rev.user.id,
+          name: rev.user.name,
+          avatar: rev.user.avatar,
+        },
+        rating: rev.rating,
+        comment: rev.comment,
+        images: (rev.images || []).map((img: any) => img.url),
+        createdAt: rev.createdAt,
+        helpfulCount: rev.helpfulCount,
+      })),
+      pagination: result.pagination,
+    };
   },
 };

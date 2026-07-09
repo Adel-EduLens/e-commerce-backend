@@ -1,3 +1,27 @@
+export interface ProductColorInput {
+  colorName: string;
+  colorCode?: string;
+  images: { imageUrl: string; isPrimary?: boolean }[];
+  variants: { size: string; quantity: number; sku?: string }[];
+}
+
+export interface TraderProductCreateData {
+  name: string;
+  description?: string;
+  price: number;
+  brandId?: string;
+  categoryId: string;
+  traderId: number;
+  sizeguide?: string;
+  isMustHave?: boolean;
+  isFlashDeals?: boolean;
+  flashDealPrice?: number;
+  flashDealEndsAt?: string | Date;
+  sku?: string;
+  stock?: number;
+  colors: ProductColorInput[];
+}
+
 export interface ProductCreateData {
   name: string;
   description: string;
@@ -41,3 +65,4 @@ export interface ProductUpdateData {
   sku?: string | null;
   stock?: number;
 }
+

@@ -33,13 +33,20 @@ import recentlyViewedRouter from './routes/recentlyViewed.routes.js'
 
 
 import addressRouter from './routes/address.routes.js'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const projectRoot = path.resolve(__dirname, '../')
+
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
-dotenv.config({ path: envFile, override: true })
+dotenv.config({ path: path.join(projectRoot, envFile), override: true })
+dotenv.config({ path: path.join(projectRoot, '.env'), override: true })
 
 const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
-  PORT: parseInt(process.env.PORT || '3000', 10),
+  PORT: parseInt(process.env.PORT || '5000', 10),
 }
 
 const app = express()
