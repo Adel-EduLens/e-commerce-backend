@@ -26,6 +26,7 @@ model User {
 
   notifications UserNotification[]
   wishlists     Wishlist[]
+  recentlyViewed RecentlyViewedProduct[]
 
   addresses Address[]
 }
@@ -442,6 +443,17 @@ model Wishlist {
   productType String // RETAIL, WHOLESALE, SHOP
   productId   String
   createdAt   DateTime @default(now())
+
+  @@unique([userId, productType, productId])
+}
+
+model RecentlyViewedProduct {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productType String // RETAIL, WHOLESALE, SHOP
+  productId   String
+  viewedAt    DateTime @default(now())
 
   @@unique([userId, productType, productId])
 }
