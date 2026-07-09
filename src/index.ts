@@ -19,6 +19,7 @@ import path from 'path'
 import traderRouter from './routes/trader.auth.routes.js'
 
 
+import traderProductRouter from './routes/trader.product.routes.js'
 import brandRouter from './routes/brand.route.js'
 import couponRouter from './routes/coupon.route.js'
 import retailRouter from './routes/retail.routes.js'
@@ -64,6 +65,7 @@ app.use('/api/products', productRouter)
 app.use('/api/categories', categoryRouter)
 app.use('/api/reviews', reviewRouter)
 app.use('/api/wholesales', wholesaleRouter)
+app.use('/api/trader/products', traderProductRouter)
 app.use('/api/brands', brandRouter)
 app.use('/api/coupons', couponRouter)
 app.use('/api/retail', retailRouter)
