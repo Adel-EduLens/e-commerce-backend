@@ -1,12 +1,20 @@
 import { categoryRepository } from "../repositories/category.repository.js";
 import AppError from "../utils/AppError.util.js";
 
-interface CategoryData {
+interface CreateCategoryData {
   name: string;
+  image: string;
+  appearOnHome?: boolean;
+}
+
+interface UpdateCategoryData {
+  name?: string;
+  image?: string;
+  appearOnHome?: boolean;
 }
 
 export const categoryService = {
-  async create(data: CategoryData) {
+  async create(data: CreateCategoryData) {
     const exist = await categoryRepository.findByName(data.name);
 
     if (exist) {
@@ -30,7 +38,7 @@ export const categoryService = {
     return category;
   },
 
-  async update(id: string, data: CategoryData) {
+  async update(id: string, data: UpdateCategoryData) {
     await this.getById(id);
 
     if (data.name) {
@@ -47,15 +55,18 @@ export const categoryService = {
   async delete(id: string) {
     await this.getById(id);
 
-    const productsCount = await categoryRepository.hasProducts(id);
+    const usage = await categoryRepository.getCategoryUsage(id);
 
-    if (productsCount > 0) {
+    if (usage.products > 0 || usage.wholesales > 0 || usage.coupons > 0) {
       throw new AppError(
-        "Cannot delete category that contains products",
-        400
+        `Cannot delete category. It is used by ${
+          usage.products > 0 ? `${usage.products} products, ` : ""
+        }${usage.wholesales > 0 ? `${usage.wholesales} wholesales, ` : ""}${
+          usage.coupons > 0 ? `${usage.coupons} coupons` : ""
+        }`,
+        400,
       );
     }
-
     return categoryRepository.delete(id);
-  }
+  },
 };

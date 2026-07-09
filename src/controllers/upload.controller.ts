@@ -3,6 +3,18 @@ import { successResponse } from '../utils/response.util.js'
 import { asyncHandler } from '../utils/globalErrorHandler.util.js'
 import { uploadService } from '../services/upload.service.js'
 
+export const uploadCategoryImage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'Image is required' })
+  }
+  const url = `${req.protocol}://${req.get('host')}/uploads/categories/${req.file.filename}`
+  successResponse(res, {
+    statusCode: 200,
+    message: 'Image uploaded successfully',
+    data: { url },
+  })
+})
+
 export const uploadProductImage = asyncHandler(async (req: Request, res: Response) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'Image is required' })
