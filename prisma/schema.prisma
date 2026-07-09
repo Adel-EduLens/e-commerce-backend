@@ -29,6 +29,7 @@ model User {
   recentlyViewed RecentlyViewedProduct[]
 
   addresses Address[]
+  cart      Cart?
 }
 
 model Address {
@@ -456,4 +457,32 @@ model RecentlyViewedProduct {
   viewedAt    DateTime @default(now())
 
   @@unique([userId, productType, productId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    Int?       @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id          String   @id @default(cuid())
+  cartId      String
+  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  
+  productId   String
+  productType String   @default("RETAIL")
+  
+  title       String
+  price       Float
+  quantity    Int      @default(1)
+  size        String?
+  color       String?
+  imageSrc    String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
