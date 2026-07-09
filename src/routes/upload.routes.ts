@@ -4,6 +4,7 @@ import { multerMiddleware } from '../middlewares/middleware.js'
 import {
   deleteImage,
   getImages,
+  uploadCategoryImage,
   uploadImage,
   uploadProductImage,
   vote,
@@ -18,7 +19,17 @@ const uploadVoteImage = multerMiddleware({
 const uploadProductImg = multerMiddleware({
   getPath: (req) => ['products'],
 })
+const uploadCategoryImg = multerMiddleware({
+  getPath: (req) => ['categories'],
+})
 
+uploadRouter.post(
+  '/category-image',
+  requireAuth,
+  requireRole('trader'),
+  uploadCategoryImg.single('image'),
+  uploadCategoryImage,
+)
 uploadRouter.post(
   '/product-image',
   requireAuth,

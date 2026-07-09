@@ -2,9 +2,9 @@ import prisma from "../utils/prismaClient.js";
 import type { Prisma } from "@prisma/client";
 
 class CategoryRepository {
-  async create(data:Prisma.CategoryCreateInput) {
+  async create(data: Prisma.CategoryCreateInput) {
     return prisma.category.create({
-      data, 
+      data,
     });
   }
 
@@ -43,6 +43,33 @@ class CategoryRepository {
       },
     });
   }
+  async getCategoryUsage(id: string) {
+    const [products, wholesales, coupons] = await Promise.all([
+      prisma.product.count({
+        where: {
+          categoryId: id,
+        },
+      }),
+
+      prisma.wholesale.count({
+        where: {
+          categoryId: id,
+        },
+      }),
+
+      prisma.coupon.count({
+        where: {
+          categoryId: id,
+        },
+      }),
+    ]);
+
+    return {
+      products,
+      wholesales,
+      coupons,
+    };
+  }
 
   async findByName(name: string) {
     return prisma.category.findUnique({
@@ -50,7 +77,7 @@ class CategoryRepository {
     });
   }
 
-  async update(id: string, data : Prisma.CategoryUpdateInput) {
+  async update(id: string, data: Prisma.CategoryUpdateInput) {
     return prisma.category.update({
       where: { id },
       data,
