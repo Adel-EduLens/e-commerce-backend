@@ -7,7 +7,6 @@ import authRouter from './routes/auth.routes.js'
 import adminAuthRouter from './routes/admin.auth.routes.js'
 import prizeRouter from './routes/prize.route.js'
 import FAQRouter from './routes/admin.FAQ.routes.js'
-import helpCenterRouter from './routes/admin.helpCenter.routes.js'
 import adminUserRouter from './routes/admin.user.routes.js'
 import categoryRouter from './routes/category.route.js'
 import productRouter from './routes/product.route.js'
@@ -27,6 +26,7 @@ import orderRouter from './routes/order.routes.js'
 import cartRouter from './routes/cart.routes.js'
 import notifyMeRouter from './routes/notifyMe.routes.js'
 import userNotificationRouter from './routes/userNotification.routes.js'
+import traderHelpCenterRouter from './routes/trader.helpCenter.routes.js'
 import wishlistRouter from './routes/wishlist.routes.js'
 import recentlyViewedRouter from './routes/recentlyViewed.routes.js'
 
@@ -51,7 +51,6 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')))
 
 // App routes
 
-app.use('/api/admin/help-center', helpCenterRouter)
 app.use('/api/user', userRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/trader', traderRouter)
@@ -71,6 +70,7 @@ app.use('/api/orders', orderRouter)
 app.use('/api/cart', cartRouter)
 app.use('/api/notify-me', notifyMeRouter)
 app.use('/api/notifications', userNotificationRouter)
+app.use('/api/trader/help-center', traderHelpCenterRouter)
 app.use('/api/wishlist', wishlistRouter)
 app.use('/api/recently-viewed', recentlyViewedRouter)
 
