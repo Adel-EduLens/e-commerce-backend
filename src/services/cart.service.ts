@@ -26,6 +26,9 @@ export const cartService = {
     let imageSrc = '';
     let productType = isRetail ? 'RETAIL' : 'STANDARD';
 
+    let sizeVal = itemData.size || itemData.retailSizeId || itemData.sizeId || null;
+    let colorVal = itemData.color || itemData.retailColorId || itemData.colorId || null;
+
     if (isRetail && !isNaN(Number(finalProductId))) {
       const retailProduct = await prisma.retailProduct.findUnique({
         where: { id: Number(finalProductId) },
@@ -34,6 +37,25 @@ export const cartService = {
       if (retailProduct) {
         title = retailProduct.name;
         price = retailProduct.discountPrice || retailProduct.price;
+
+        // Resolve default/missing values
+        if (!colorVal || colorVal === 'Default') {
+          const firstColor = await prisma.retailProductColor.findFirst({
+            where: { productId: retailProduct.id }
+          });
+          if (firstColor) {
+            colorVal = firstColor.name;
+          }
+        }
+        if (!sizeVal || sizeVal === 'Default' || sizeVal.includes('XS - XXL')) {
+          const firstSize = await prisma.retailProductSize.findFirst({
+            where: { productId: retailProduct.id }
+          });
+          if (firstSize) {
+            sizeVal = firstSize.name;
+          }
+        }
+
         imageSrc = retailProduct.images?.[0]?.url || '';
         
         await prisma.retailProduct.update({
@@ -50,14 +72,66 @@ export const cartService = {
       });
       if (product) {
         title = product.name;
-        price = product.price;
-        imageSrc = product.images?.[0]?.url || '';
+        
+        // Handle flash deal price if active
+        const hasFlashDeal = product.isFlashDeals && 
+                             product.flashDealPrice && 
+                             product.flashDealEndsAt && 
+                             new Date(product.flashDealEndsAt) > new Date();
+        price = (hasFlashDeal && product.flashDealPrice) ? product.flashDealPrice : product.price;
+
+        // Resolve default/missing values
+        if (!colorVal || colorVal === 'Default') {
+          const firstColor = await prisma.productColor.findFirst({
+            where: { productId: product.id }
+          });
+          if (firstColor) {
+            colorVal = firstColor.color;
+          }
+        }
+        if (!sizeVal || sizeVal === 'Default' || sizeVal.includes('XS - XXL')) {
+          let firstSize = await prisma.productSize.findFirst({
+            where: { productId: product.id, color: colorVal }
+          });
+          if (!firstSize) {
+            firstSize = await prisma.productSize.findFirst({
+              where: { productId: product.id }
+            });
+          }
+          if (firstSize) {
+            sizeVal = firstSize.size;
+          }
+        }
+
+        // Use the matching image for the selected color
+        const colorImage = product.images.find(
+          img => img.color && img.color.toLowerCase() === (colorVal || '').toLowerCase()
+        );
+        imageSrc = colorImage ? colorImage.url : (product.images?.[0]?.url || '');
         productType = 'STANDARD';
         
+        // Decrement global stock
         await prisma.product.update({
           where: { id: product.id },
           data: { stock: Math.max(0, (product.stock || 0) - quantity) }
         });
+
+        // Decrement size-specific stock
+        if (sizeVal) {
+          const sizeRecord = await prisma.productSize.findFirst({
+            where: {
+              productId: product.id,
+              size: sizeVal,
+              color: colorVal,
+            }
+          });
+          if (sizeRecord) {
+            await prisma.productSize.update({
+              where: { id: sizeRecord.id },
+              data: { quantity: Math.max(0, (sizeRecord.quantity || 0) - quantity) }
+            });
+          }
+        }
       } else {
         const wholesale = await prisma.wholesale.findUnique({
           where: { id: String(finalProductId) },
@@ -80,8 +154,8 @@ export const cartService = {
     const existingItem = await cartRepository.findCartItem(
       cart.id,
       String(finalProductId),
-      itemData.size || itemData.retailSizeId || itemData.sizeId || null,
-      itemData.color || itemData.retailColorId || itemData.colorId || null
+      sizeVal,
+      colorVal
     );
 
     if (existingItem) {
@@ -97,8 +171,8 @@ export const cartService = {
         title,
         price,
         quantity,
-        size: itemData.size || itemData.retailSizeId || itemData.sizeId || null,
-        color: itemData.color || itemData.retailColorId || itemData.colorId || null,
+        size: sizeVal,
+        color: colorVal,
         imageSrc,
       });
     }
@@ -146,6 +220,23 @@ export const cartService = {
               where: { id: String(cartItem.productId) },
               data: { stock: (product.stock || 0) + qty },
             });
+
+            // Restore size variant stock if applicable
+            if (cartItem.size) {
+              const sizeRecord = await prisma.productSize.findFirst({
+                where: {
+                  productId: product.id,
+                  size: cartItem.size,
+                  color: cartItem.color || null,
+                }
+              });
+              if (sizeRecord) {
+                await prisma.productSize.update({
+                  where: { id: sizeRecord.id },
+                  data: { quantity: (sizeRecord.quantity || 0) + qty },
+                });
+              }
+            }
           }
         }
       } catch (e) {
