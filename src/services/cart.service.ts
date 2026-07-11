@@ -80,8 +80,8 @@ export const cartService = {
     const existingItem = await cartRepository.findCartItem(
       cart.id,
       String(finalProductId),
-      itemData.size || itemData.retailSizeId || null,
-      itemData.color || itemData.retailColorId || null
+      itemData.size || itemData.retailSizeId || itemData.sizeId || null,
+      itemData.color || itemData.retailColorId || itemData.colorId || null
     );
 
     if (existingItem) {
@@ -97,8 +97,8 @@ export const cartService = {
         title,
         price,
         quantity,
-        size: itemData.size || itemData.retailSizeId || null,
-        color: itemData.color || itemData.retailColorId || null,
+        size: itemData.size || itemData.retailSizeId || itemData.sizeId || null,
+        color: itemData.color || itemData.retailColorId || itemData.colorId || null,
         imageSrc,
       });
     }
