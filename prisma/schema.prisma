@@ -197,8 +197,10 @@ model ProductImage {
 }
 
 model ProductSize {
-  id   String @id @default(cuid())
-  size String
+  id       String  @id @default(cuid())
+  size     String
+  quantity Int     @default(0)
+  color    String?
 
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)

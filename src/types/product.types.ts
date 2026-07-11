@@ -7,7 +7,7 @@ export interface ProductCreateData {
   categoryId: string;
   images: ProductImageInput[];
   sizeguide?: string;
-  sizes: string[];
+  sizes: (string | { size: string; quantity: number; color?: string })[];
   colors: string[];
   traderId: number;
   isMustHave?: boolean;
@@ -31,7 +31,7 @@ export interface ProductUpdateData {
   categoryId?: string;
   sizeguide?: string;
   images?: ProductImageInput[];
-  sizes?: string[];
+  sizes?: (string | { size: string; quantity: number; color?: string })[];
   colors?: string[];
   traderId: number;
   isMustHave?: boolean;

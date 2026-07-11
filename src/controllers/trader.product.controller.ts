@@ -39,16 +39,16 @@ export const createTraderProduct = asyncHandler(
     }
 
     // Build sizes and colors arrays from parsed colors
-    const sizes: string[] = []
     const colors: string[] = []
+    const sizes: { size: string; quantity: number; color: string }[] = []
     for (const c of parsedColors) {
       const colorName = c.name || c.color
       if (colorName && !colors.includes(colorName)) {
         colors.push(colorName)
       }
       for (const s of c.sizes || []) {
-        if (s.size && !sizes.includes(s.size)) {
-          sizes.push(s.size)
+        if (s.size) {
+          sizes.push({ size: String(s.size), quantity: Number(s.quantity || 0), color: String(colorName) })
         }
       }
     }
@@ -110,10 +110,20 @@ export const addProductColor = asyncHandler(
       const variants = typeof req.body.variants === 'string' ? JSON.parse(req.body.variants) : req.body.variants
       for (const v of variants) {
         await prisma.productSize.create({
-          data: { size: String(v.size), productId },
+          data: { size: String(v.size), productId, quantity: Number(v.quantity || 0), color: color },
         })
       }
     }
+
+    const allSizes = await prisma.productSize.findMany({
+      where: { productId }
+    })
+    const totalStock = allSizes.reduce((sum, s) => sum + (s.quantity || 0), 0)
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: { stock: totalStock }
+    })
 
     const updated = await prisma.product.findUnique({
       where: { id: productId },
@@ -240,9 +250,19 @@ export const updateProductVariant = asyncHandler(
     if (!variant) throw new AppError('Variant not found', 404)
     await getProductAndVerifyOwner(variant.productId, traderId)
 
+    await prisma.productSize.update({
+      where: { id: variantId },
+      data: { quantity: Number(quantity) },
+    })
+
+    const allSizes = await prisma.productSize.findMany({
+      where: { productId: variant.productId }
+    })
+    const totalStock = allSizes.reduce((sum, s) => sum + (s.quantity || 0), 0)
+
     const updated = await prisma.product.update({
       where: { id: variant.productId },
-      data: { stock: Number(quantity) },
+      data: { stock: totalStock },
       include: { sizes: true, colors: true, images: true, category: true, brand: true },
     })
 
@@ -264,15 +284,18 @@ export const addProductSize = asyncHandler(
     await getProductAndVerifyOwner(color.productId, traderId)
 
     await prisma.productSize.create({
-      data: { size: String(size), productId: color.productId },
+      data: { size: String(size), productId: color.productId, quantity: Number(quantity || 0), color: color.color },
     })
 
-    if (quantity !== undefined) {
-      await prisma.product.update({
-        where: { id: color.productId },
-        data: { stock: { increment: Number(quantity) } },
-      })
-    }
+    const allSizes = await prisma.productSize.findMany({
+      where: { productId: color.productId }
+    })
+    const totalStock = allSizes.reduce((sum, s) => sum + (s.quantity || 0), 0)
+
+    await prisma.product.update({
+      where: { id: color.productId },
+      data: { stock: totalStock },
+    })
 
     const updated = await prisma.product.findUnique({
       where: { id: color.productId },
@@ -297,6 +320,16 @@ export const deleteProductVariant = asyncHandler(
     await getProductAndVerifyOwner(variant.productId, traderId)
 
     await prisma.productSize.delete({ where: { id: variantId } })
+
+    const allSizes = await prisma.productSize.findMany({
+      where: { productId: variant.productId }
+    })
+    const totalStock = allSizes.reduce((sum, s) => sum + (s.quantity || 0), 0)
+
+    await prisma.product.update({
+      where: { id: variant.productId },
+      data: { stock: totalStock }
+    })
 
     successResponse(res, { message: 'Variant deleted successfully' })
   }

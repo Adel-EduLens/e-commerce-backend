@@ -80,7 +80,7 @@ class ProductRepository {
         },
 
         sizes: {
-          create: data.sizes.map((size) => ({ size })),
+          create: data.sizes.map((s: any) => typeof s === 'string' ? { size: s, quantity: 0 } : { size: s.size, quantity: s.quantity, color: s.color }),
         },
 
         colors: {
@@ -266,7 +266,7 @@ class ProductRepository {
         ...(data.sizes && {
           sizes: {
             deleteMany: {},
-            create: data.sizes.map((size) => ({ size })),
+            create: data.sizes.map((s: any) => typeof s === 'string' ? { size: s, quantity: 0 } : { size: s.size, quantity: s.quantity, color: s.color }),
           },
         }),
 
