@@ -504,3 +504,18 @@ model Recommend {
   @@unique([userId, productId, type])
   @@map("recommend")
 }
+
+model ShopBanner {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  buttonText      String?
+  buttonLink      String?
+  image           String
+  backgroundColor String   @default("#C1121F")
+  isActive        Boolean  @default(true)
+  order           Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
