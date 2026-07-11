@@ -31,7 +31,7 @@ import traderHelpCenterRouter from './routes/trader.helpCenter.routes.js'
 import wishlistRouter from './routes/wishlist.routes.js'
 import recommendRouter from './routes/recommend.routes.js'
 import recentlyViewedRouter from './routes/recentlyViewed.routes.js'
-
+import shopBannerRouter from './routes/shopBanner.route.js'
 
 import addressRouter from './routes/address.routes.js'
 const envFile =
@@ -77,7 +77,7 @@ app.use('/api/trader/help-center', traderHelpCenterRouter)
 app.use('/api/wishlist', wishlistRouter)
 app.use('/api/recommend', recommendRouter)
 app.use('/api/recently-viewed', recentlyViewedRouter)
-
+app.use('/api/shop-banners', shopBannerRouter)
 
 app.use('/api/address', addressRouter)
 
