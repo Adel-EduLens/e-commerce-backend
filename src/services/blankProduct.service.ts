@@ -1,0 +1,43 @@
+import AppError from "../utils/AppError.util.js";
+
+import { blankProductRepository } from "../repositories/blankProduct.repository.js";
+
+export const blankProductService = {
+  async create(data: any) {
+    return blankProductRepository.create(data);
+  },
+
+  async getAll() {
+    return blankProductRepository.findAll();
+  },
+
+  async getOne(id: string) {
+    const blankProduct = await blankProductRepository.findById(id);
+
+    if (!blankProduct) {
+      throw new AppError("Blank product not found", 404);
+    }
+
+    return blankProduct;
+  },
+
+  async update(id: string, data: any) {
+    const blankProduct = await blankProductRepository.findById(id);
+
+    if (!blankProduct) {
+      throw new AppError("Blank product not found", 404);
+    }
+
+    return blankProductRepository.update(id, data);
+  },
+
+  async delete(id: string) {
+    const blankProduct = await blankProductRepository.findById(id);
+
+    if (!blankProduct) {
+      throw new AppError("Blank product not found", 404);
+    }
+
+    return blankProductRepository.delete(id);
+  },
+};

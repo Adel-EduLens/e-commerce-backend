@@ -519,3 +519,47 @@ model ShopBanner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model BlankProduct {
+  id String @id @default(cuid())
+
+  name String // T-Shirt, Hoodie, Pants
+
+  description String? @db.LongText
+
+  material String // Cotton, Polyester
+
+  pattern String // Plain, Stripes, Printed
+
+  price Float?
+
+  isActive Boolean @default(true)
+
+  colors BlankProductColor[]
+  images BlankProductImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlankProductColor {
+  id String @id @default(cuid())
+
+  color String
+
+  blankProductId String
+  blankProduct BlankProduct @relation( fields: [blankProductId], references: [id], onDelete: Cascade )
+
+  createdAt DateTime @default(now())
+}
+
+model BlankProductImage {
+  id String @id @default(cuid())
+
+  url String
+
+  color String 
+
+  blankProductId String
+  blankProduct BlankProduct @relation( fields: [blankProductId], references: [id], onDelete: Cascade )
+}
