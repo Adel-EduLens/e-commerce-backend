@@ -2,13 +2,47 @@ import { cartRepository } from '../repositories/cart.repository.js';
 import AppError from '../utils/AppError.util.js';
 import prisma from '../utils/prismaClient.js';
 
+async function populateCartCategories(cart: any) {
+  if (!cart || !cart.items) return cart;
+  const itemsWithCategory = await Promise.all(
+    cart.items.map(async (item: any) => {
+      let categoryId: string | null = null;
+      try {
+        if (item.productType === 'RETAIL') {
+          const prod = await prisma.retailProduct.findUnique({
+            where: { id: Number(item.productId) },
+            select: { categoryId: true }
+          });
+          if (prod) categoryId = String(prod.categoryId);
+        } else {
+          const prod = await prisma.product.findUnique({
+            where: { id: item.productId },
+            select: { categoryId: true }
+          });
+          if (prod) categoryId = String(prod.categoryId);
+        }
+      } catch (err) {
+        console.error(`Failed to fetch category for product ${item.productId}:`, err);
+      }
+      return {
+        ...item.toJSON ? item.toJSON() : item,
+        categoryId
+      };
+    })
+  );
+  return {
+    ...cart.toJSON ? cart.toJSON() : cart,
+    items: itemsWithCategory
+  };
+}
+
 export const cartService = {
   getCart: async (userId: number) => {
     let cart = await cartRepository.findCartByUserId(userId);
     if (!cart) {
       cart = await cartRepository.createCartForUser(userId);
     }
-    return cart;
+    return populateCartCategories(cart);
   },
 
   addItem: async (userId: number, itemData: any) => {
@@ -144,7 +178,7 @@ export const cartService = {
       });
     }
 
-    return cartRepository.findCartByUserId(userId);
+    return populateCartCategories(await cartRepository.findCartByUserId(userId));
   },
 
   updateItem: async (userId: number, itemId: string, quantity: number) => {
@@ -152,7 +186,7 @@ export const cartService = {
     if (!cart) throw new AppError('Cart not found', 404);
 
     await cartRepository.updateCartItemQuantity(itemId, parseInt(quantity as any, 10));
-    return cartRepository.findCartByUserId(userId);
+    return populateCartCategories(await cartRepository.findCartByUserId(userId));
   },
 
   removeItem: async (userId: number, itemId: string) => {
@@ -160,7 +194,7 @@ export const cartService = {
     if (!cart) throw new AppError('Cart not found', 404);
 
     await cartRepository.removeCartItem(itemId);
-    return cartRepository.findCartByUserId(userId);
+    return populateCartCategories(await cartRepository.findCartByUserId(userId));
   },
 
   clearCart: async (userId: number) => {
