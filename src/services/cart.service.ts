@@ -57,11 +57,6 @@ export const cartService = {
         }
 
         imageSrc = retailProduct.images?.[0]?.url || '';
-        
-        await prisma.retailProduct.update({
-          where: { id: retailProduct.id },
-          data: { stock: Math.max(0, (retailProduct.stock || 0) - quantity) }
-        });
       } else {
         throw new AppError('Retail product not found', 404);
       }
@@ -109,29 +104,6 @@ export const cartService = {
         );
         imageSrc = colorImage ? colorImage.url : (product.images?.[0]?.url || '');
         productType = 'STANDARD';
-        
-        // Decrement global stock
-        await prisma.product.update({
-          where: { id: product.id },
-          data: { stock: Math.max(0, (product.stock || 0) - quantity) }
-        });
-
-        // Decrement size-specific stock
-        if (sizeVal) {
-          const sizeRecord = await prisma.productSize.findFirst({
-            where: {
-              productId: product.id,
-              size: sizeVal,
-              color: colorVal,
-            }
-          });
-          if (sizeRecord) {
-            await prisma.productSize.update({
-              where: { id: sizeRecord.id },
-              data: { quantity: Math.max(0, (sizeRecord.quantity || 0) - quantity) }
-            });
-          }
-        }
       } else {
         const wholesale = await prisma.wholesale.findUnique({
           where: { id: String(finalProductId) },
@@ -142,11 +114,6 @@ export const cartService = {
           price = wholesale.price;
           imageSrc = wholesale.images?.[0]?.url || '';
           productType = 'WHOLESALE';
-          
-          await prisma.wholesale.update({
-            where: { id: wholesale.id },
-            data: { stock: Math.max(0, (wholesale.stock || 0) - quantity) }
-          });
         }
       }
     }
@@ -191,58 +158,6 @@ export const cartService = {
   removeItem: async (userId: number, itemId: string) => {
     const cart = await cartRepository.findCartByUserId(userId);
     if (!cart) throw new AppError('Cart not found', 404);
-
-    // Get item first to restore stock
-    const cartItem = cart.items.find(i => i.id === itemId);
-    if (cartItem) {
-      const qty = cartItem.quantity;
-      try {
-        if (cartItem.productType === 'RETAIL' && !isNaN(Number(cartItem.productId))) {
-          const retailProduct = await prisma.retailProduct.findUnique({ where: { id: Number(cartItem.productId) } });
-          if (retailProduct) {
-            await prisma.retailProduct.update({
-              where: { id: Number(cartItem.productId) },
-              data: { stock: (retailProduct.stock || 0) + qty },
-            });
-          }
-        } else if (cartItem.productType === 'WHOLESALE') {
-          const wholesale = await prisma.wholesale.findUnique({ where: { id: String(cartItem.productId) } });
-          if (wholesale) {
-            await prisma.wholesale.update({
-              where: { id: String(cartItem.productId) },
-              data: { stock: (wholesale.stock || 0) + qty },
-            });
-          }
-        } else {
-          const product = await prisma.product.findUnique({ where: { id: String(cartItem.productId) } });
-          if (product) {
-            await prisma.product.update({
-              where: { id: String(cartItem.productId) },
-              data: { stock: (product.stock || 0) + qty },
-            });
-
-            // Restore size variant stock if applicable
-            if (cartItem.size) {
-              const sizeRecord = await prisma.productSize.findFirst({
-                where: {
-                  productId: product.id,
-                  size: cartItem.size,
-                  color: cartItem.color || null,
-                }
-              });
-              if (sizeRecord) {
-                await prisma.productSize.update({
-                  where: { id: sizeRecord.id },
-                  data: { quantity: (sizeRecord.quantity || 0) + qty },
-                });
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Failed to restore stock:', e);
-      }
-    }
 
     await cartRepository.removeCartItem(itemId);
     return cartRepository.findCartByUserId(userId);

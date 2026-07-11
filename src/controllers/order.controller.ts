@@ -138,10 +138,28 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
         where: { id: pId },
       });
       if (product) {
+        // Decrement global stock
         await tx.product.update({
           where: { id: pId },
           data: { stock: Math.max(0, (product.stock || 0) - qty) },
         });
+
+        // Decrement size-specific variant stock if applicable
+        if (item.size) {
+          const sizeRecord = await tx.productSize.findFirst({
+            where: {
+              productId: pId,
+              size: item.size,
+              color: item.color || null,
+            }
+          });
+          if (sizeRecord) {
+            await tx.productSize.update({
+              where: { id: sizeRecord.id },
+              data: { quantity: Math.max(0, (sizeRecord.quantity || 0) - qty) },
+            });
+          }
+        }
         updated = true;
       }
 
@@ -151,10 +169,27 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
           where: { id: Number(pId) },
         });
         if (retailProduct) {
+          // Decrement global retail stock
           await tx.retailProduct.update({
             where: { id: Number(pId) },
             data: { stock: Math.max(0, (retailProduct.stock || 0) - qty) },
           });
+
+          // Decrement retail size-specific stock if applicable
+          if (item.size) {
+            const retailSize = await tx.retailProductSize.findFirst({
+              where: {
+                productId: Number(pId),
+                name: item.size,
+              }
+            });
+            if (retailSize) {
+              await tx.retailProductSize.update({
+                where: { id: retailSize.id },
+                data: { stock: Math.max(0, (retailSize.stock || 0) - qty) }
+              });
+            }
+          }
           updated = true;
         }
       }
