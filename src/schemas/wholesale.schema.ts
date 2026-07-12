@@ -28,6 +28,8 @@ export const createWholesaleSchema = Joi.object({
   stock: Joi.number().integer().min(0).optional(),
 
   images: Joi.array().items(wholesaleImageSchema).min(1).required(),
+  colors: Joi.array().items(Joi.string()).optional(),
+  sizes: Joi.array().items(Joi.string()).optional(),
 });
 
 export const updateWholesaleSchema = Joi.object({
@@ -53,4 +55,6 @@ export const updateWholesaleSchema = Joi.object({
   stock: Joi.number().integer().min(0),
 
   images: Joi.array().items(wholesaleImageSchema),
+  colors: Joi.array().items(Joi.string()).optional(),
+  sizes: Joi.array().items(Joi.string()).optional(),
 });

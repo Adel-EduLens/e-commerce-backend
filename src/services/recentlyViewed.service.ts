@@ -10,8 +10,11 @@ const RETAIL_INCLUDE = {
 
 const WHOLESALE_INCLUDE = {
   images: true,
-  wholesaleColors: true,
-  wholesaleSizes: true,
+  wholesaleColors: {
+    include: {
+      sizes: true,
+    },
+  },
   category: true,
 }
 

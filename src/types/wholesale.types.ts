@@ -13,6 +13,8 @@ export interface WholesaleCreateData {
   traderId: number;
   sku?: string;
   stock?: number;
+  colors?: string[];
+  sizes?: string[];
 }
 
 export interface WholesaleUpdateData {
@@ -30,4 +32,6 @@ export interface WholesaleUpdateData {
   traderId: number;
   sku?: string | null;
   stock?: number;
+  colors?: string[];
+  sizes?: string[];
 }

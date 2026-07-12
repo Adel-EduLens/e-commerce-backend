@@ -28,10 +28,23 @@ class WholesaleRepository {
         images: {
           create: data.images.map((img) => ({ url: img.url, color: img.color ?? null })),
         },
+        wholesaleColors: {
+          create: data.colors?.map((col) => ({
+            color: col,
+            sizes: {
+              create: data.sizes?.map((sz) => ({ size: sz })) || [],
+            },
+          })) || [],
+        },
       },
       include: {
         category: true,
         images: true,
+        wholesaleColors: {
+          include: {
+            sizes: true,
+          },
+        },
       },
     });
   }
@@ -51,6 +64,11 @@ class WholesaleRepository {
       include: {
         category: true,
         images: true,
+        wholesaleColors: {
+          include: {
+            sizes: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -64,6 +82,11 @@ class WholesaleRepository {
       include: {
         category: true,
         images: true,
+        wholesaleColors: {
+          include: {
+            sizes: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -77,6 +100,11 @@ class WholesaleRepository {
       include: {
         category: true,
         images: true,
+        wholesaleColors: {
+          include: {
+            sizes: true,
+          },
+        },
       },
     });
   }
@@ -105,10 +133,26 @@ class WholesaleRepository {
             create: data.images.map((img) => ({ url: img.url, color: img.color ?? null })),
           },
         }),
+        ...((data.colors !== undefined || data.sizes !== undefined) && {
+          wholesaleColors: {
+            deleteMany: {},
+            create: (data.colors || []).map((col) => ({
+              color: col,
+              sizes: {
+                create: (data.sizes || []).map((sz) => ({ size: sz })),
+              },
+            })),
+          },
+        }),
       },
       include: {
         category: true,
         images: true,
+        wholesaleColors: {
+          include: {
+            sizes: true,
+          },
+        },
       },
     });
   }

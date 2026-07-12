@@ -264,7 +264,6 @@ model Wholesale {
 
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  wholesaleSizes  WholesaleSize[]
   wholesaleColors WholesaleColor[]
 }
 
@@ -281,8 +280,8 @@ model WholesaleSize {
   id   String @id @default(cuid())
   size String
 
-  wholesaleId String
-  wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
+  wholesaleColorId String
+  wholesaleColor   WholesaleColor @relation(fields: [wholesaleColorId], references: [id], onDelete: Cascade)
 }
 
 model WholesaleColor {
@@ -291,6 +290,8 @@ model WholesaleColor {
 
   wholesaleId String
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
+
+  sizes WholesaleSize[]
 }
 
 model Coupon {
