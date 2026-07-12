@@ -31,6 +31,7 @@ model User {
 
   addresses Address[]
   cart      Cart?
+  retailOrders RetailOrder[]
 }
 
 model Address {
@@ -353,6 +354,13 @@ model RetailProduct {
   ratings          RetailProductRating[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+
+  depositAmount       Float
+  securityDeposit     Float  
+  termsAndConditions  String? @db.Text
+  privacyPolicy       String? @db.Text
+
+  retailOrders RetailOrder[]
 }
 
 model RetailProductImage {
@@ -563,4 +571,38 @@ model BlankProductImage {
 
   blankProductId String
   blankProduct BlankProduct @relation( fields: [blankProductId], references: [id], onDelete: Cascade )
+}
+
+model RetailOrder {
+  id String @id @default(cuid())
+
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  productPrice Float
+  depositAmount Float
+  securityDeposit Float
+
+  depositPaid Boolean @default(false)
+  paymentId String?
+
+  idCardImage String
+  idVerified Boolean @default(false)
+
+  startDate DateTime?
+  endDate DateTime?
+  returnDate DateTime?
+
+  status String @default("PENDING")
+  // PENDING
+  // APPROVED
+  // ACTIVE
+  // COMPLETED
+  // CANCELLED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
