@@ -35,6 +35,7 @@ import shopBannerRouter from './routes/shopBanner.route.js'
 
 import addressRouter from './routes/address.routes.js'
 import blankProductRouter from './routes/blankProduct.routes.js'
+import retailOrderRouter from './routes/retailOrder.route.js'
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 dotenv.config({ path: envFile, override: true })
@@ -82,7 +83,7 @@ app.use('/api/shop-banners', shopBannerRouter)
 
 app.use('/api/address', addressRouter)
 app.use('/api/blank-products', blankProductRouter)
-
+app.use('/api/retail-orders', retailOrderRouter)
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with Prisma!')
 })
