@@ -1,8 +1,23 @@
 import { addressRepository } from "../repositories/address.repository.js";
 import AppError from "../utils/AppError.util.js";
 
+interface CreateAddressData {
+  country: string;
+  city: string;
+  area: string;
+  streetAddress: string;
+  apartment?: string | null;
+}
+interface UpdateAddressData {
+  country?: string;
+  city?: string;
+  area?: string;
+  streetAddress?: string;
+  apartment?: string | null;
+}
+
 export const addressService = {
-  async addAddress(userId: number, data: any) {
+  async addAddress(userId: number, data: CreateAddressData) {
     return addressRepository.create(userId, data);
   },
 
@@ -10,11 +25,19 @@ export const addressService = {
     return addressRepository.findByUserId(userId);
   },
 
-  async updateAddress(userId: number, addressId: string, data: any) {
+  async updateAddress(
+    userId: number,
+    addressId: string,
+    data: UpdateAddressData,
+  ) {
     const address = await addressRepository.findById(addressId);
 
-    if (!address || address.userId !== userId) {
+    if (!address) {
       throw new AppError("Address not found", 404);
+    }
+
+    if (address.userId !== userId) {
+      throw new AppError("You are not allowed to update this address", 403);
     }
 
     return addressRepository.update(addressId, data);

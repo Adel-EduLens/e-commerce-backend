@@ -64,7 +64,7 @@ export const categoryService = {
         }${usage.wholesales > 0 ? `${usage.wholesales} wholesales, ` : ""}${
           usage.coupons > 0 ? `${usage.coupons} coupons` : ""
         }`,
-        400,
+        400
       );
     }
     return categoryRepository.delete(id);

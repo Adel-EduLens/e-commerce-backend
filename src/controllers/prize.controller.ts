@@ -17,7 +17,7 @@ export const getPrizes = asyncHandler(async (req: Request, res: Response) => {
 export const addPrize = asyncHandler(async (req: Request, res: Response) => {
   const result = await prizeService.addPrize(req.body);
   successResponse(res, {
-    statusCode: 200,
+    statusCode: 201,
     message: "Prize Added successfully",
     data: result,
   });
@@ -37,7 +37,7 @@ export const deletePrize = asyncHandler(async (req: Request, res: Response) => {
 export const spinPrize = asyncHandler(async (req: Request, res: Response) => {
   const result = await prizeService.spinPrize();
   successResponse(res, {
-    statusCode: 200,
+    statusCode: 201,
     message: "Prize Spin successfully",
     data: result,
   });

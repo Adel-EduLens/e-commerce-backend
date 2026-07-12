@@ -48,11 +48,8 @@ export const createBlankProductSchema = Joi.object({
 
 });
 
-
 export const updateBlankProductSchema = Joi.object({
-
-  name: Joi.string()
-    .min(2),
+  name: Joi.string().min(2),
 
   description: Joi.string()
     .allow("", null),
@@ -67,14 +64,12 @@ export const updateBlankProductSchema = Joi.object({
 
   isActive: Joi.boolean(),
 
-
   colors: Joi.array()
     .items(colorSchema)
     .min(1),
-
 
   images: Joi.array()
     .items(imageSchema)
     .min(1),
 
-});
+}).min(1);

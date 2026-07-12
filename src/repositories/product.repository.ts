@@ -3,26 +3,10 @@ import {
   ProductCreateData,
   ProductUpdateData,
 } from "../types/product.types.js";
+import { Prisma } from "@prisma/client";
+type Transaction = Prisma.TransactionClient;
+import {type GetProductsQuery} from "../types/product.types.js"
 
-type GetProductsQuery = {
-
-  search?: string | undefined;
-  categoryId?: string | undefined;
-  brandId?: string | undefined;
-  traderId?: number | undefined;
-  filter?: string;
-  size?: string;
-  color?: string;
-  priceMin?: number | undefined;
-  priceMax?: number | undefined;
-
-
-  sortBy?: string | undefined;
-  sortOrder?: "asc" | "desc" | undefined;
-
-  page?: number | undefined;
-  limit?: number | undefined;
-};
 const FILTER_MAP: Record<
   string,
   { isMustHave?: boolean; isFlashDeals?: boolean }
@@ -403,8 +387,8 @@ class ProductRepository {
     });
   }
 
-  updateRating(id: string, rating: number) {
-    return prisma.product.update({
+  updateRating(id: string, rating: number ,tx: Transaction = prisma) {
+    return tx.product.update({
       where: {
         id,
       },

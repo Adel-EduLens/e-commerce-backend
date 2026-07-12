@@ -1,12 +1,11 @@
 import prisma from "../utils/prismaClient.js";
-import {
-  ReviewCreateData,
-  ReviewUpdateData,
-} from "../types/review.types.js";
+import { ReviewCreateData, ReviewUpdateData } from "../types/review.types.js";
+import { Prisma } from "@prisma/client";
+type Transaction = Prisma.TransactionClient;
 
 export const reviewRepository = {
-  async create(data : ReviewCreateData) {
-    return prisma.review.create({
+  async create(data: ReviewCreateData, tx: Transaction = prisma) {
+    return tx.review.create({
       data,
       include: {
         user: {
@@ -19,7 +18,7 @@ export const reviewRepository = {
     });
   },
 
-  async findAllByProduct(productId : string) {
+  async findAllByProduct(productId: string) {
     return prisma.review.findMany({
       where: {
         productId,
@@ -57,8 +56,8 @@ export const reviewRepository = {
     });
   },
 
-  async update(id: string, data : ReviewUpdateData) {
-    return prisma.review.update({
+  async update(id: string, data: ReviewUpdateData, tx: Transaction = prisma) {
+    return tx.review.update({
       where: {
         id,
       },
@@ -74,16 +73,16 @@ export const reviewRepository = {
     });
   },
 
-  async delete(id: string) {
-    return prisma.review.delete({
+  async delete(id: string, tx: Transaction = prisma) {
+    return tx.review.delete({
       where: {
         id,
       },
     });
   },
 
-  async getAverageRating(productId: string) {
-    const result = await prisma.review.aggregate({
+  async getAverageRating(productId: string, tx: Transaction = prisma) {
+    const result = await tx.review.aggregate({
       where: {
         productId,
       },
