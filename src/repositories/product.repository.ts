@@ -178,6 +178,99 @@ class ProductRepository {
   };
 }
 
+  async findRecommendations({
+    categories,
+    limit = 4,
+    excludeId,
+    categoryId,
+    size,
+    color,
+    sortBy,
+    sortOrder = "desc",
+  }: {
+    categories?: string[] | undefined;
+    limit?: number | undefined;
+    excludeId?: string | undefined;
+    categoryId?: string | undefined;
+    size?: string | undefined;
+    color?: string | undefined;
+    sortBy?: string | undefined;
+    sortOrder?: "asc" | "desc" | undefined;
+  }) {
+    const where: any = {};
+
+    if (excludeId) {
+      where.id = { not: excludeId };
+    }
+
+    if (categoryId) {
+      where.categoryId = categoryId;
+    } else if (categories && categories.length > 0) {
+      where.categoryId = { in: categories };
+    }
+
+    if (size) {
+      where.sizes = { some: { size } };
+    }
+
+    if (color) {
+      where.colors = { some: { color } };
+    }
+
+    const orderBy = this.getOrderBy(sortBy || "rating", sortOrder);
+
+    const products = await prisma.product.findMany({
+      where,
+      include: {
+        category: true,
+        brand: true,
+        images: true,
+        sizes: true,
+        colors: true,
+      },
+      orderBy,
+      take: limit,
+    });
+
+    if (
+      products.length < limit &&
+      !categoryId &&
+      !size &&
+      !color &&
+      categories &&
+      categories.length > 0
+    ) {
+      const existingIds = products.map((p) => p.id);
+      if (excludeId) existingIds.push(excludeId);
+      const remainingLimit = limit - products.length;
+      const fallbackProducts = await prisma.product.findMany({
+        where: {
+          id: { notIn: existingIds },
+        },
+        include: {
+          category: true,
+          brand: true,
+          images: true,
+          sizes: true,
+          colors: true,
+        },
+        orderBy,
+        take: remainingLimit,
+      });
+      products.push(...fallbackProducts);
+    }
+
+    return {
+      products,
+      pagination: {
+        page: 1,
+        limit,
+        total: products.length,
+        totalPages: 1,
+      },
+    };
+  }
+
   async getFilters() {
     const categories = await prisma.category.findMany({ select: { name: true } });
     const brands = await prisma.brand.findMany({ select: { name: true } });

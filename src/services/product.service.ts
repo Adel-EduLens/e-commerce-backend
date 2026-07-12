@@ -139,6 +139,19 @@ export const productService = {
     return productRepository.findAll(query);
   },
 
+  async getRecommendations(query: {
+    categories?: string[] | undefined;
+    limit?: number | undefined;
+    excludeId?: string | undefined;
+    categoryId?: string | undefined;
+    size?: string | undefined;
+    color?: string | undefined;
+    sortBy?: string | undefined;
+    sortOrder?: "asc" | "desc" | undefined;
+  }) {
+    return productRepository.findRecommendations(query);
+  },
+
   async getFilters() {
     return productRepository.getFilters();
   },

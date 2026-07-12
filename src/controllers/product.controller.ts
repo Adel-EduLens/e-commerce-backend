@@ -49,6 +49,49 @@ export const getFilters = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+export const getRecommendations = asyncHandler(
+  async (req: Request, res: Response) => {
+    let categories: string[] | undefined;
+    if (typeof req.query.categories === "string" && req.query.categories.trim() !== "") {
+      categories = req.query.categories
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+    } else if (Array.isArray(req.query.categories)) {
+      categories = (req.query.categories as string[])
+        .map((c) => String(c).trim())
+        .filter(Boolean);
+    }
+
+    const limit = Number(req.query.limit) || 4;
+    const excludeId = typeof req.query.excludeId === "string" ? req.query.excludeId : undefined;
+    const categoryId = typeof req.query.categoryId === "string" ? req.query.categoryId : undefined;
+    const size = typeof req.query.size === "string" ? req.query.size : undefined;
+    const color = typeof req.query.color === "string" ? req.query.color : undefined;
+    const sortBy = typeof req.query.sortBy === "string" ? req.query.sortBy : undefined;
+    const sortOrder =
+      req.query.sortOrder === "asc" || req.query.sortOrder === "desc"
+        ? req.query.sortOrder
+        : undefined;
+
+    const result = await productService.getRecommendations({
+      categories,
+      limit,
+      excludeId,
+      categoryId,
+      size,
+      color,
+      sortBy,
+      sortOrder,
+    });
+
+    successResponse(res, {
+      message: "Recommendations fetched successfully",
+      data: result,
+    });
+  },
+);
+
 export const getProduct = asyncHandler(async (req: Request, res: Response) => {
   const id = String(req.params.id);
   const result = await productService.getById(id);
