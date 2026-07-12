@@ -62,67 +62,47 @@ class BlankProductRepository {
   }
 
   async update(id: string, data: any) {
-  return prisma.$transaction(async (tx) => {
+    const updateData = {
+      ...(data.name !== undefined && {
+        name: data.name,
+      }),
 
-    if (data.colors) {
-      await tx.blankProductColor.deleteMany({
-        where: {
-          blankProductId: id,
-        },
-      });
-    }
+      ...(data.description !== undefined && {
+        description: data.description,
+      }),
 
+      ...(data.material !== undefined && {
+        material: data.material,
+      }),
 
-    if (data.images) {
-      await tx.blankProductImage.deleteMany({
-        where: {
-          blankProductId: id,
-        },
-      });
-    }
+      ...(data.pattern !== undefined && {
+        pattern: data.pattern,
+      }),
 
+      ...(data.price !== undefined && {
+        price: data.price,
+      }),
 
-    const updateData: any = {
-      name: data.name,
-      description: data.description,
-      material: data.material,
-      pattern: data.pattern,
-      price: data.price,
-      isActive: data.isActive,
+      ...(data.isActive !== undefined && {
+        isActive: data.isActive,
+      }),
+
+      ...(data.colors !== undefined && {
+        colors: data.colors,
+      }),
+
+      ...(data.images !== undefined && {
+        images: data.images,
+      }),
     };
 
-
-    if (data.colors) {
-      updateData.colors = {
-        create: data.colors,
-      };
-    }
-
-
-    if (data.images) {
-      updateData.images = {
-        create: data.images,
-      };
-    }
-
-
-    return tx.blankProduct.update({
-
+    return prisma.blankProduct.update({
       where: {
         id,
       },
-
       data: updateData,
-
-      include: {
-        colors: true,
-        images: true,
-      },
-
     });
-
-  });
-}
+  }
 
   delete(id: string) {
     return prisma.blankProduct.delete({

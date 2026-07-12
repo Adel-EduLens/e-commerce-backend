@@ -19,9 +19,9 @@ import { requireRole, requireAuth } from "../middlewares/auth.middleware.js";
 const router = Router();
 router.post(
   "/",
-  validateRequest(createProductSchema),
   requireAuth,
   requireRole("trader"),
+  validateRequest(createProductSchema),
   createProduct,
 );
 
@@ -33,9 +33,9 @@ router.get("/:id", getProduct);
 
 router.patch(
   "/:id",
-  validateRequest(updateProductSchema),
   requireAuth,
   requireRole("trader"),
+  validateRequest(updateProductSchema),
   updateProduct,
 );
 

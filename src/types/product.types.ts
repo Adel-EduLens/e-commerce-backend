@@ -41,3 +41,23 @@ export interface ProductUpdateData {
   sku?: string | null;
   stock?: number;
 }
+
+export type GetProductsQuery = {
+
+  search?: string | undefined;
+  categoryId?: string | undefined;
+  brandId?: string | undefined;
+  traderId?: number | undefined;
+  filter?: string;
+  size?: string;
+  color?: string;
+  priceMin?: number | undefined;
+  priceMax?: number | undefined;
+
+
+  sortBy?: string | undefined;
+  sortOrder?: "asc" | "desc" | undefined;
+
+  page?: number | undefined;
+  limit?: number | undefined;
+};

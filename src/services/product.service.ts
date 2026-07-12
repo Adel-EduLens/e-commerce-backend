@@ -9,25 +9,7 @@ import {
 import { traderProfileRepository } from "../repositories/traderProfile.repository.js";
 import { notificationRepository } from "../repositories/notification.repository.js";
 
-type GetProductsQuery = {
-
-  search?: string | undefined;
-  categoryId?: string | undefined;
-  brandId?: string | undefined;
-  traderId?: number | undefined;
-  filter?: string;
-  size?: string;
-  color?: string;
-  priceMin?: number | undefined;
-  priceMax?: number | undefined;
-
-  sortBy?: string | undefined;
-  sortOrder?: "asc" | "desc" | undefined;
-
-  page?: number | undefined;
-  limit?: number | undefined;
-};
-
+import {type GetProductsQuery} from "../types/product.types.js"
 function validateFlashDeal({
   isFlashDeals,
   price,

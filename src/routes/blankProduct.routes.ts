@@ -7,7 +7,7 @@ import {
   updateBlankProduct,
   deleteBlankProduct,
 } from "../controllers/blankProduct.controller.js";
-
+import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 
 import {
@@ -20,6 +20,8 @@ const router = Router();
 // Create Blank Product
 router.post(
   "/",
+  requireAuth,
+  requireRole("trader"),
   validateRequest(createBlankProductSchema),
   createBlankProduct,
 );
@@ -33,11 +35,13 @@ router.get("/:id", getBlankProductById);
 // Update Blank Product
 router.patch(
   "/:id",
+  requireAuth,
+  requireRole("trader"),
   validateRequest(updateBlankProductSchema),
   updateBlankProduct,
 );
 
 // Delete Blank Product
-router.delete("/:id", deleteBlankProduct);
+router.delete("/:id", requireAuth, requireRole("trader"), deleteBlankProduct);
 
 export default router;
