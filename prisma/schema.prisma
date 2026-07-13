@@ -277,17 +277,21 @@ model WholesaleImage {
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
 }
 
+
+
 model WholesaleSize {
-  id   String @id @default(cuid())
-  size String
+  id       String @id @default(cuid())
+  size     String
 
   wholesaleColorId String
   wholesaleColor   WholesaleColor @relation(fields: [wholesaleColorId], references: [id], onDelete: Cascade)
 }
 
 model WholesaleColor {
-  id    String @id @default(cuid())
-  color String
+  id       String @id @default(cuid())
+  color    String
+  minOrder Int    @default(1)
+  stock    Int    @default(0)
 
   wholesaleId String
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)

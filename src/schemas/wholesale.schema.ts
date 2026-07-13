@@ -5,6 +5,17 @@ const wholesaleImageSchema = Joi.object({
   color: Joi.string().allow("", null).optional(),
 });
 
+const wholesaleColorSchema = Joi.object({
+  color: Joi.string().required(),
+  minOrder: Joi.number().integer().min(1).required(),
+  stock: Joi.number().integer().min(0).required(),
+  sizes: Joi.array().items(
+    Joi.object({
+      size: Joi.string().required(),
+    })
+  ).required(),
+});
+
 export const createWholesaleSchema = Joi.object({
   name: Joi.string().trim().required(),
 
@@ -28,7 +39,7 @@ export const createWholesaleSchema = Joi.object({
   stock: Joi.number().integer().min(0).optional(),
 
   images: Joi.array().items(wholesaleImageSchema).min(1).required(),
-  colors: Joi.array().items(Joi.string()).optional(),
+  colors: Joi.array().items(wholesaleColorSchema).optional(),
   sizes: Joi.array().items(Joi.string()).optional(),
 });
 
@@ -55,6 +66,6 @@ export const updateWholesaleSchema = Joi.object({
   stock: Joi.number().integer().min(0),
 
   images: Joi.array().items(wholesaleImageSchema),
-  colors: Joi.array().items(Joi.string()).optional(),
+  colors: Joi.array().items(wholesaleColorSchema).optional(),
   sizes: Joi.array().items(Joi.string()).optional(),
 });

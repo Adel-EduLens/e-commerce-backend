@@ -1,3 +1,10 @@
+export interface WholesaleColorInput {
+  color: string;
+  minOrder: number;
+  stock: number;
+  sizes: { size: string }[];
+}
+
 export interface WholesaleCreateData {
   name: string;
   description: string;
@@ -13,7 +20,7 @@ export interface WholesaleCreateData {
   traderId: number;
   sku?: string;
   stock?: number;
-  colors?: string[];
+  colors?: WholesaleColorInput[];
   sizes?: string[];
 }
 
@@ -32,6 +39,6 @@ export interface WholesaleUpdateData {
   traderId: number;
   sku?: string | null;
   stock?: number;
-  colors?: string[];
+  colors?: WholesaleColorInput[];
   sizes?: string[];
 }

@@ -30,9 +30,11 @@ class WholesaleRepository {
         },
         wholesaleColors: {
           create: data.colors?.map((col) => ({
-            color: col,
+            color: col.color,
+            minOrder: col.minOrder ?? 1,
+            stock: col.stock ?? 0,
             sizes: {
-              create: data.sizes?.map((sz) => ({ size: sz })) || [],
+              create: col.sizes?.map((sz) => ({ size: sz.size })) || [],
             },
           })) || [],
         },
@@ -133,13 +135,15 @@ class WholesaleRepository {
             create: data.images.map((img) => ({ url: img.url, color: img.color ?? null })),
           },
         }),
-        ...((data.colors !== undefined || data.sizes !== undefined) && {
+        ...(data.colors !== undefined && {
           wholesaleColors: {
             deleteMany: {},
-            create: (data.colors || []).map((col) => ({
-              color: col,
+            create: data.colors.map((col) => ({
+              color: col.color,
+              minOrder: col.minOrder,
+              stock: col.stock,
               sizes: {
-                create: (data.sizes || []).map((sz) => ({ size: sz })),
+                create: col.sizes?.map((sz) => ({ size: sz.size })) || [],
               },
             })),
           },

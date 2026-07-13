@@ -200,9 +200,32 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
           where: { id: pId },
         });
         if (wholesale) {
+          // Decrement stock for the ordered color
+          if (item.color) {
+            const colorRecord = await tx.wholesaleColor.findFirst({
+              where: {
+                wholesaleId: pId,
+                color: { equals: item.color }
+              }
+            });
+            if (colorRecord) {
+              const newColorStock = Math.max(0, colorRecord.stock - qty);
+              await tx.wholesaleColor.update({
+                where: { id: colorRecord.id },
+                data: { stock: newColorStock }
+              });
+            }
+          }
+
+          // Recalculate global stock for the wholesale product
+          const allColors = await tx.wholesaleColor.findMany({
+            where: { wholesaleId: pId }
+          });
+          const newGlobalStock = allColors.reduce((sum, c) => sum + c.stock, 0);
+
           await tx.wholesale.update({
             where: { id: pId },
-            data: { stock: Math.max(0, (wholesale.stock || 0) - qty) },
+            data: { stock: newGlobalStock },
           });
         }
       }

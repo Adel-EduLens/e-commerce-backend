@@ -84,6 +84,8 @@ async function main() {
       isFeatured: true,
       isActive: true,
       categoryId: clothing.id,
+      depositAmount: 0,
+      securityDeposit: 0,
       images: {
         createMany: {
           data: [
@@ -130,6 +132,8 @@ async function main() {
       isFeatured: true,
       isActive: true,
       categoryId: shoes.id,
+      depositAmount: 0,
+      securityDeposit: 0,
       images: {
         createMany: {
           data: [
@@ -176,6 +180,8 @@ async function main() {
       isFeatured: false,
       isActive: true,
       categoryId: accessories.id,
+      depositAmount: 0,
+      securityDeposit: 0,
       images: {
         createMany: {
           data: [

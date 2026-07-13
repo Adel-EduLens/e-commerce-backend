@@ -146,7 +146,12 @@ export const cartService = {
         if (wholesale) {
           title = wholesale.name;
           price = wholesale.price;
-          imageSrc = wholesale.images?.[0]?.url || '';
+          
+          // Use matching image for the selected color if available
+          const colorImage = wholesale.images.find(
+            img => img.color && img.color.toLowerCase() === (colorVal || '').toLowerCase()
+          );
+          imageSrc = colorImage ? colorImage.url : (wholesale.images?.[0]?.url || '');
           productType = 'WHOLESALE';
         }
       }
