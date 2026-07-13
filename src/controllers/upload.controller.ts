@@ -17,6 +17,32 @@ export const uploadCategoryImage = asyncHandler(
     });
   },
 );
+export const uploadRetailProductImage = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.file) {
+      throw new AppError("Image is required", 400);
+    }
+    const url = `${req.protocol}://${req.get("host")}/uploads/retail-products/${req.file.filename}`;
+    successResponse(res, {
+      statusCode: 200,
+      message: "Image uploaded successfully",
+      data: { url },
+    });
+  },
+);
+export const uploadRetailCategoryImage = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.file) {
+      throw new AppError("Image is required", 400);
+    }
+    const url = `${req.protocol}://${req.get("host")}/uploads/retail-categories/${req.file.filename}`;
+    successResponse(res, {
+      statusCode: 200,
+      message: "Image uploaded successfully",
+      data: { url },
+    });
+  },
+);
 
 export const uploadProductImage = asyncHandler(
   async (req: Request, res: Response) => {
