@@ -1,20 +1,27 @@
 import prisma from "../utils/prismaClient.js";
-
+import type {
+  CreateBlankProductInput,
+  UpdateBlankProductInput,
+} from "../types/blankProduct.type.js";
 class BlankProductRepository {
-  create(data: any) {
+  create(data: CreateBlankProductInput) {
     return prisma.blankProduct.create({
       data: {
         name: data.name,
-
-        description: data.description,
-
         material: data.material,
-
         pattern: data.pattern,
 
-        price: data.price,
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
 
-        isActive: data.isActive,
+        ...(data.price !== undefined && {
+          price: data.price,
+        }),
+
+        ...(data.isActive !== undefined && {
+          isActive: data.isActive,
+        }),
 
         colors: {
           create: data.colors,
@@ -27,7 +34,6 @@ class BlankProductRepository {
 
       include: {
         colors: true,
-
         images: true,
       },
     });
@@ -61,7 +67,7 @@ class BlankProductRepository {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: UpdateBlankProductInput) {
     const updateData = {
       ...(data.name !== undefined && {
         name: data.name,
@@ -88,11 +94,17 @@ class BlankProductRepository {
       }),
 
       ...(data.colors !== undefined && {
-        colors: data.colors,
+        colors: {
+          deleteMany: {},
+          create: data.colors,
+        },
       }),
 
       ...(data.images !== undefined && {
-        images: data.images,
+        images: {
+          deleteMany: {},
+          create: data.images,
+        },
       }),
     };
 
@@ -101,9 +113,12 @@ class BlankProductRepository {
         id,
       },
       data: updateData,
+      include: {
+        colors: true,
+        images: true,
+      },
     });
   }
-
   delete(id: string) {
     return prisma.blankProduct.delete({
       where: {

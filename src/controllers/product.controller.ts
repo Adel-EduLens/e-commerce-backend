@@ -1,7 +1,10 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { asyncHandler } from "../utils/globalErrorHandler.util.js";
 import { successResponse } from "../utils/response.util.js";
 import { productService } from "../services/product.service.js";
+
+const DEFAULT_PAGE_LIMIT = 16;
+const DEFAULT_RECOMMENTATION_LIMIT = 4;
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
@@ -30,7 +33,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
     sortBy: req.query.sortBy as string,
     sortOrder: req.query.sortOrder as "asc" | "desc",
     page: Number(req.query.page) || 1,
-    limit: Number(req.query.limit) || 16,
+    limit: Number(req.query.limit) || DEFAULT_PAGE_LIMIT,
     traderId: req.query.traderId ? Number(req.query.traderId) : undefined,
   });
 
@@ -63,7 +66,7 @@ export const getRecommendations = asyncHandler(
         .filter(Boolean);
     }
 
-    const limit = Number(req.query.limit) || 4;
+    const limit = Number(req.query.limit) || DEFAULT_RECOMMENTATION_LIMIT;
     const excludeId = typeof req.query.excludeId === "string" ? req.query.excludeId : undefined;
     const categoryId = typeof req.query.categoryId === "string" ? req.query.categoryId : undefined;
     const size = typeof req.query.size === "string" ? req.query.size : undefined;

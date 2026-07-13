@@ -43,7 +43,6 @@ export interface ProductUpdateData {
 }
 
 export type GetProductsQuery = {
-
   search?: string | undefined;
   categoryId?: string | undefined;
   brandId?: string | undefined;
@@ -54,10 +53,16 @@ export type GetProductsQuery = {
   priceMin?: number | undefined;
   priceMax?: number | undefined;
 
-
   sortBy?: string | undefined;
   sortOrder?: "asc" | "desc" | undefined;
 
   page?: number | undefined;
   limit?: number | undefined;
 };
+export type ProductSizeInput =
+  | string
+  | {
+      size: string;
+      quantity: number;
+      color?: string;
+    };

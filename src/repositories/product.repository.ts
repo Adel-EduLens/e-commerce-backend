@@ -2,6 +2,7 @@ import prisma from "../utils/prismaClient.js";
 import {
   ProductCreateData,
   ProductUpdateData,
+  ProductSizeInput,
 } from "../types/product.types.js";
 import { Prisma } from "@prisma/client";
 type Transaction = Prisma.TransactionClient;
@@ -64,7 +65,7 @@ class ProductRepository {
         },
 
         sizes: {
-          create: data.sizes.map((s: any) => typeof s === 'string' ? { size: s, quantity: 0 } : { size: s.size, quantity: s.quantity, color: s.color }),
+          create: data.sizes.map((s: ProductSizeInput) => typeof s === 'string' ? { size: s, quantity: 0 } : { size: s.size, quantity: s.quantity, color: s.color ?? null }),
         },
 
         colors: {
@@ -106,7 +107,7 @@ class ProductRepository {
       : null;
 
 
-  const andConditions: any[] = [];
+  const andConditions: Prisma.ProductWhereInput[] = [];
 
   if (search) {
     andConditions.push({
@@ -343,7 +344,7 @@ class ProductRepository {
         ...(data.sizes && {
           sizes: {
             deleteMany: {},
-            create: data.sizes.map((s: any) => typeof s === 'string' ? { size: s, quantity: 0 } : { size: s.size, quantity: s.quantity, color: s.color }),
+            create: data.sizes.map((s: ProductSizeInput) => typeof s === 'string' ? { size: s, quantity: 0 } : { size: s.size, quantity: s.quantity, color: s.color ?? null }),
           },
         }),
 

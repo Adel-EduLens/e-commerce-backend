@@ -16,7 +16,7 @@ export const prizeService = {
   async deletePrize(id: string) {
     const prize = await prizeRepository.findById(id);
     if (!prize) {
-      throw new AppError("Prize not  found", 404);
+      throw new AppError("Prize not found", 404);
     }
     const prizeData = await prizeRepository.deleteById(id);
     return prizeData;

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { asyncHandler } from "../utils/globalErrorHandler.util.js";
 import { successResponse } from "../utils/response.util.js";
 import { reviewService } from "../services/review.service.js";

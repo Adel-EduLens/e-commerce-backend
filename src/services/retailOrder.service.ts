@@ -1,8 +1,22 @@
 import AppError from "../utils/AppError.util.js";
 import { retailOrderRepository } from "../repositories/retailOrder.repository.js";
 
+type RetailOrderStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "ACTIVE"
+  | "COMPLETED"
+  | "CANCELLED";
 
- class RetailOrderService {
+const allowedStatuses: RetailOrderStatus[] = [
+  "PENDING",
+  "APPROVED",
+  "ACTIVE",
+  "COMPLETED",
+  "CANCELLED",
+];
+
+class RetailOrderService {
   async createOrder(
     userId: number,
     data: {
@@ -82,10 +96,13 @@ import { retailOrderRepository } from "../repositories/retailOrder.repository.js
     });
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(id: string, status: RetailOrderStatus) {
+    if (!allowedStatuses.includes(status)) {
+      throw new AppError("Invalid order status", 400);
+    }
     return retailOrderRepository.update(id, {
       status,
     });
   }
 }
-export const retailOrderService = new RetailOrderService()
+export const retailOrderService = new RetailOrderService();

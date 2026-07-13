@@ -1,9 +1,12 @@
 import AppError from "../utils/AppError.util.js";
 
 import { blankProductRepository } from "../repositories/blankProduct.repository.js";
-
+import type {
+  CreateBlankProductInput,
+  UpdateBlankProductInput,
+} from "../types/blankProduct.type.js";
 export const blankProductService = {
-  async create(data: any) {
+  async create(data: CreateBlankProductInput) {
     return blankProductRepository.create(data);
   },
 
@@ -21,7 +24,7 @@ export const blankProductService = {
     return blankProduct;
   },
 
-  async update(id: string, data: any) {
+  async update(id: string, data: UpdateBlankProductInput) {
     const blankProduct = await blankProductRepository.findById(id);
 
     if (!blankProduct) {

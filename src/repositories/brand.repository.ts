@@ -1,5 +1,5 @@
 import prisma from "../utils/prismaClient.js";
-
+import type { CreateBrandData } from "../types/brand.type.js";
 class BrandRepository {
   async findAll() {
     return  prisma.brand.findMany();
@@ -12,7 +12,7 @@ class BrandRepository {
       },
     });
   }
-  async create(data: any) {
+  async create(data: CreateBrandData) {
     return  prisma.brand.create({
       data,
     });

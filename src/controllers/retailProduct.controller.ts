@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/globalErrorHandler.util.js";
-import { successResponse, errorResponse } from "../utils/response.util.js";
+import { successResponse } from "../utils/response.util.js";
 import { RetailProductService } from "../services/retailProduct.service.js";
-
+import type { RetailProductFilters } from "../types/retailProduct.type.js";
 const retailProductService = new RetailProductService();
 
 export const getAllProducts = asyncHandler(
@@ -18,14 +18,14 @@ export const getAllProducts = asyncHandler(
       page,
       limit,
     } = req.query;
-
-    const filters: any = {
-      search: search ? String(search) : undefined,
-      categoryId: categoryId ? Number(categoryId) : undefined,
-      minPrice: minPrice ? Number(minPrice) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-      sort: (sort as any) || "latest",
-      featured: featured ? featured === "true" : undefined,
+    
+    const filters: RetailProductFilters = {
+      ...(search && { search: String(search) }),
+      ...(categoryId && { categoryId: Number(categoryId) }),
+      ...(minPrice && { minPrice: Number(minPrice) }),
+      ...(maxPrice && { maxPrice: Number(maxPrice) }),
+      ...(sort && { sort: sort as NonNullable<RetailProductFilters["sort"]> }),
+      ...(featured !== undefined && { featured: featured === "true" }),
       isActive: isActive !== undefined ? isActive === "true" : true,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 10,
