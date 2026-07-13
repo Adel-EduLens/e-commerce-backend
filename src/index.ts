@@ -32,6 +32,8 @@ import wishlistRouter from './routes/wishlist.routes.js'
 import recommendRouter from './routes/recommend.routes.js'
 import recentlyViewedRouter from './routes/recentlyViewed.routes.js'
 import shopBannerRouter from './routes/shopBanner.route.js'
+import homeBannerRouter from './routes/homeBanner.route.js'
+
 
 import addressRouter from './routes/address.routes.js'
 import blankProductRouter from './routes/blankProduct.routes.js'
@@ -80,6 +82,8 @@ app.use('/api/wishlist', wishlistRouter)
 app.use('/api/recommend', recommendRouter)
 app.use('/api/recently-viewed', recentlyViewedRouter)
 app.use('/api/shop-banners', shopBannerRouter)
+app.use('/api/home-banners', homeBannerRouter)
+
 
 app.use('/api/address', addressRouter)
 app.use('/api/blank-products', blankProductRouter)
