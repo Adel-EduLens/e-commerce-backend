@@ -138,6 +138,7 @@ model Category {
   coupons    Coupon[]
   image      String?
   appearOnHome   Boolean     @default(false)
+  isWholesale    Boolean     @default(false)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }

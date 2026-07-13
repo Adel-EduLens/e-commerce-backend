@@ -7,6 +7,7 @@ async function populateCartCategories(cart: any) {
   const itemsWithCategory = await Promise.all(
     cart.items.map(async (item: any) => {
       let categoryId: string | null = null;
+      let minOrder: number | null = null;
       try {
         if (item.productType === 'RETAIL') {
           const prod = await prisma.retailProduct.findUnique({
@@ -14,6 +15,15 @@ async function populateCartCategories(cart: any) {
             select: { categoryId: true }
           });
           if (prod) categoryId = String(prod.categoryId);
+        } else if (item.productType === 'WHOLESALE') {
+          const prod = await prisma.wholesale.findUnique({
+            where: { id: item.productId },
+            select: { categoryId: true, minOrder: true }
+          });
+          if (prod) {
+            categoryId = String(prod.categoryId);
+            minOrder = prod.minOrder;
+          }
         } else {
           const prod = await prisma.product.findUnique({
             where: { id: item.productId },
@@ -26,7 +36,8 @@ async function populateCartCategories(cart: any) {
       }
       return {
         ...item.toJSON ? item.toJSON() : item,
-        categoryId
+        categoryId,
+        minOrder
       };
     })
   );

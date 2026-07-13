@@ -12,6 +12,7 @@ export const createCategorySchema = Joi.object({
   }),
 
   appearOnHome: Joi.boolean().optional().default(false),
+  isWholesale: Joi.boolean().optional().default(false),
 });
 
 export const updateCategorySchema = Joi.object({
@@ -19,7 +20,8 @@ export const updateCategorySchema = Joi.object({
     "string.min": "Category name must be at least 2 characters",
   }),
 
-  image: Joi.string().trim().optional(),
+  image: Joi.string().trim().optional().allow("", null),
 
   appearOnHome: Joi.boolean().optional(),
+  isWholesale: Joi.boolean().optional(),
 });

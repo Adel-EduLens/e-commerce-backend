@@ -8,8 +8,11 @@ class CategoryRepository {
     });
   }
 
-  async findAll() {
+  async findAll(isWholesale?: boolean) {
     return prisma.category.findMany({
+      where: {
+        ...(isWholesale !== undefined && { isWholesale }),
+      },
       orderBy: {
         createdAt: "desc",
       },

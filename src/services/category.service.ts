@@ -3,14 +3,16 @@ import AppError from "../utils/AppError.util.js";
 
 interface CreateCategoryData {
   name: string;
-  image: string;
+  image?: string;
   appearOnHome?: boolean;
+  isWholesale?: boolean;
 }
 
 interface UpdateCategoryData {
   name?: string;
   image?: string;
   appearOnHome?: boolean;
+  isWholesale?: boolean;
 }
 
 export const categoryService = {
@@ -24,8 +26,8 @@ export const categoryService = {
     return categoryRepository.create(data);
   },
 
-  async getAll() {
-    return categoryRepository.findAll();
+  async getAll(isWholesale?: boolean) {
+    return categoryRepository.findAll(isWholesale);
   },
 
   async getById(id: string) {
