@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Starting retail seed...')
+  console.info('🌱 Starting retail seed...')
 
   // Clean up and seed default test users
   await prisma.user.deleteMany()
@@ -35,7 +35,7 @@ async function main() {
     }
   })
 
-  console.log('✅ Seeded default test users (user@example.com / user2@example.com)')
+  console.info('✅ Seeded default test users (user@example.com / user2@example.com)')
 
   await prisma.retailProductImage.deleteMany()
   await prisma.retailProductColor.deleteMany()
@@ -213,7 +213,7 @@ async function main() {
     }
   })
 
-  console.log('✅ Retail seed completed successfully!')
+  console.info('✅ Retail seed completed successfully!')
 }
 
 main()

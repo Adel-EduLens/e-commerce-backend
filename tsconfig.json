@@ -43,5 +43,5 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
   },
-  "exclude": ["src/db"]
+  "exclude": ["src/db", "dist"]
 }
