@@ -25,6 +25,12 @@ export const createShopBannerSchema = Joi.object({
     .integer()
     .optional()
     .default(0),
+
+  type: Joi.string()
+    .trim()
+    .valid("shop", "home")
+    .optional()
+    .default("shop"),
 });
 
 
@@ -45,5 +51,7 @@ export const updateShopBannerSchema = Joi.object({
   isActive: Joi.boolean().optional(),
 
   order: Joi.number().integer().optional(),
+
+  type: Joi.string().trim().valid("shop", "home").optional(),
 
 });

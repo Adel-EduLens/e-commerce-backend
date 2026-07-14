@@ -17,8 +17,9 @@ export const createShopBanner = asyncHandler(
   },
 );
 
-export const getShopBanners = asyncHandler(async (_req, res) => {
-  const result = await shopBannerService.getAll();
+export const getShopBanners = asyncHandler(async (req, res) => {
+  const type = req.query.type ? String(req.query.type) : undefined;
+  const result = await shopBannerService.getAll(type);
 
   successResponse(res, {
     message: "Shop banners fetched successfully",
@@ -27,8 +28,9 @@ export const getShopBanners = asyncHandler(async (_req, res) => {
   });
 });
 
-export const getActiveShopBanners = asyncHandler(async (_req, res) => {
-  const result = await shopBannerService.getActive();
+export const getActiveShopBanners = asyncHandler(async (req, res) => {
+  const type = req.query.type ? String(req.query.type) : undefined;
+  const result = await shopBannerService.getActive(type);
 
   successResponse(res, {
     message: "Active shop banners fetched successfully",

@@ -10,6 +10,7 @@ interface CreateBannerData {
   backgroundColor?: string;
   isActive?: boolean;
   order?: number;
+  type?: string;
 }
 
 interface UpdateBannerData {
@@ -21,6 +22,7 @@ interface UpdateBannerData {
   backgroundColor?: string;
   isActive?: boolean;
   order?: number;
+  type?: string;
 }
 
 export const shopBannerService = {
@@ -28,12 +30,12 @@ export const shopBannerService = {
     return shopBannerRepository.create(data);
   },
 
-  async getAll() {
-    return shopBannerRepository.findAll();
+  async getAll(type?: string) {
+    return shopBannerRepository.findAll(type);
   },
 
-  async getActive() {
-    return shopBannerRepository.findActive();
+  async getActive(type?: string) {
+    return shopBannerRepository.findActive(type);
   },
 
   async getById(id: string) {

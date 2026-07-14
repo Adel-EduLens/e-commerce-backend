@@ -8,18 +8,20 @@ class ShopBannerRepository {
     });
   }
 
-  async findAll() {
+  async findAll(type?: string) {
     return prisma.shopBanner.findMany({
+      ...(type ? { where: { type } } : {}),
       orderBy: {
         order: "asc",
       },
     });
   }
 
-  async findActive() {
+  async findActive(type?: string) {
     return prisma.shopBanner.findMany({
       where: {
         isActive: true,
+        ...(type ? { type } : {}),
       },
 
       orderBy: {
