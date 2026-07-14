@@ -7,6 +7,8 @@ import {
   uploadCategoryImage,
   uploadImage,
   uploadProductImage,
+  uploadRetailCategoryImage,
+  uploadRetailProductImage,
   vote,
 } from '../controllers/upload.controller.js'
 
@@ -22,6 +24,12 @@ const uploadProductImg = multerMiddleware({
 const uploadCategoryImg = multerMiddleware({
   getPath: (req) => ['categories'],
 })
+const uploadRetailCategoryImg = multerMiddleware({
+  getPath: (req) => ['retail-categories'],
+})
+const uploadRetailProductImg = multerMiddleware({
+  getPath: (req) => ['retail-products'],
+})
 
 uploadRouter.post(
   '/category-image',
@@ -29,6 +37,20 @@ uploadRouter.post(
   requireRole('trader'),
   uploadCategoryImg.single('image'),
   uploadCategoryImage,
+)
+uploadRouter.post(
+  '/retail-category-image',
+  requireAuth,
+  requireRole('trader'),
+  uploadRetailCategoryImg.single('image'),
+  uploadRetailCategoryImage,
+)
+uploadRouter.post(
+  '/retail-product-image',
+  requireAuth,
+  requireRole('trader'),
+  uploadRetailProductImg.single('image'),
+  uploadRetailProductImage,
 )
 uploadRouter.post(
   '/product-image',
