@@ -44,14 +44,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const getFilters = asyncHandler(async (req: Request, res: Response) => {
-  const result = await productService.getFilters();
 
-  successResponse(res, {
-    message: "Filters fetched successfully",
-    data: result,
-  });
-});
 
 export const getRecommendations = asyncHandler(
   async (req: Request, res: Response) => {

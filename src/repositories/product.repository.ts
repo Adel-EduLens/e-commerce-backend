@@ -258,27 +258,7 @@ class ProductRepository {
     };
   }
 
-  async getFilters() {
-    const categories = await prisma.category.findMany({ select: { name: true } });
-    const brands = await prisma.brand.findMany({ select: { name: true } });
-    
-    const sizes = await prisma.productSize.findMany({ 
-      select: { size: true },
-      distinct: ['size'] 
-    });
-    
-    const colors = await prisma.productColor.findMany({
-      select: { color: true },
-      distinct: ['color']
-    });
 
-    return {
-      categories: categories.map((c) => c.name),
-      brands: brands.map((b) => b.name),
-      sizes: sizes.map((s) => s.size),
-      colors: colors.map((c) => c.color)
-    };
-  }
 
   findById(id: string) {
     return prisma.product.findUnique({

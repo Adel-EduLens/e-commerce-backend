@@ -18,7 +18,43 @@ router.get(
       where: { userId, isActive: true },
       orderBy: { createdAt: 'desc' },
     })
-    successResponse(res, { data: subs })
+
+    const populatedSubs = await Promise.all(
+      subs.map(async (sub) => {
+        let product: any = null;
+        try {
+          if (sub.targetType === 'SHOP_RESTOCK') {
+            product = await prisma.product.findUnique({
+              where: { id: sub.targetId },
+              include: { images: true },
+            });
+          } else if (sub.targetType === 'RETAIL_RESTOCK') {
+            product = await prisma.retailProduct.findUnique({
+              where: { id: Number(sub.targetId) },
+              include: { images: true },
+            });
+          } else if (sub.targetType === 'WHOLESALE_RESTOCK') {
+            product = await prisma.wholesale.findUnique({
+              where: { id: sub.targetId },
+              include: { images: true },
+            });
+          } else if (sub.targetType === 'CATEGORY') {
+            const category = await prisma.category.findUnique({
+              where: { id: sub.targetId },
+            });
+            product = category ? { name: category.name, price: 0, stock: 1, images: category.image ? [{ url: category.image }] : [] } : null;
+          }
+        } catch (error) {
+          console.error(`Failed to fetch product for subscription ${sub.id}:`, error);
+        }
+        return {
+          ...sub,
+          product,
+        };
+      })
+    );
+
+    successResponse(res, { data: populatedSubs })
   })
 )
 

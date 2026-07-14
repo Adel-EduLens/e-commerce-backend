@@ -67,7 +67,38 @@ export const wholesaleService = {
       }
     }
 
-    return wholesaleRepository.update(id, data);
+    const oldStock = wholesale.stock;
+    const updatedWholesale = await wholesaleRepository.update(id, data);
+    const newStock = updatedWholesale.stock;
+
+    if (oldStock <= 0 && newStock > 0) {
+      await this.notifyRestockSubscribers(id, updatedWholesale.name, (updatedWholesale as any).images);
+    }
+
+    return updatedWholesale;
+  },
+
+  async notifyRestockSubscribers(productId: string, productName: string, images: any[]) {
+    const prismaClient = (await import('../utils/prismaClient.js')).default;
+    const subscribers = await prismaClient.notifyMeSubscription.findMany({
+      where: { targetType: 'WHOLESALE_RESTOCK', targetId: productId, isActive: true },
+    });
+    if (subscribers.length === 0) return;
+    const imageUrl = images?.[0]?.url || null;
+    await prismaClient.userNotification.createMany({
+      data: subscribers.map((sub) => ({
+        userId: sub.userId,
+        title: 'Wholesale Product Back in Stock!',
+        message: `Great news! Wholesale item "${productName}" is now back in stock. Check it out!`,
+        type: 'restock',
+        productId,
+        imageUrl,
+      })),
+    });
+    await prismaClient.notifyMeSubscription.updateMany({
+      where: { targetType: 'WHOLESALE_RESTOCK', targetId: productId, isActive: true },
+      data: { isActive: false },
+    });
   },
 
   async delete(id: string, traderId: number) {
