@@ -6,7 +6,6 @@ import {
   getProduct,
   updateProduct,
   deleteProduct,
-  getFilters,
   getTraderProducts,
   getRecommendations,
 } from "../controllers/product.controller.js";
@@ -25,7 +24,7 @@ router.post(
   createProduct,
 );
 
-router.get("/filters", getFilters);
+
 router.get("/trader", requireAuth, requireRole("trader"), getTraderProducts);
 router.get("/recommendations", getRecommendations);
 router.get("/", getProducts);

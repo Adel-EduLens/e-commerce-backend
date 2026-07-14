@@ -134,9 +134,7 @@ export const productService = {
     return productRepository.findRecommendations(query);
   },
 
-  async getFilters() {
-    return productRepository.getFilters();
-  },
+
 
   async getByTraderId(traderId: number) {
     return productRepository.findByTraderId(traderId);
