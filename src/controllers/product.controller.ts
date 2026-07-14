@@ -21,7 +21,7 @@ export const createProduct = asyncHandler(
 );
 
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
- const result = await productService.getAll({
+  const result = await productService.getAll({
     search: req.query.search as string,
     categoryId: req.query.categoryId as string,
     brandId: req.query.brandId as string,
@@ -35,6 +35,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
     page: Number(req.query.page) || 1,
     limit: Number(req.query.limit) || DEFAULT_PAGE_LIMIT,
     traderId: req.query.traderId ? Number(req.query.traderId) : undefined,
+    collectionId: req.query.collectionId as string,
   });
 
   successResponse(res, {

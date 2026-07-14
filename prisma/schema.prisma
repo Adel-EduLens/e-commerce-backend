@@ -143,6 +143,18 @@ model Category {
   updatedAt  DateTime    @updatedAt
 }
 
+model Collection {
+  id           String      @id @default(cuid())
+  name         String      @unique
+  description  String?     @db.Text
+  image        String
+  appearOnHome Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  products     Product[]
+}
+
 model Product {
   id          String  @id @default(cuid())
   name        String
@@ -175,6 +187,8 @@ model Product {
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
+
+  collections Collection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -58,6 +58,7 @@ export type GetProductsQuery = {
 
   page?: number | undefined;
   limit?: number | undefined;
+  collectionId?: string | undefined;
 };
 export type ProductSizeInput =
   | string

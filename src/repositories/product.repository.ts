@@ -97,6 +97,7 @@ class ProductRepository {
   sortOrder = "asc",
   page = 1,
   limit = 16,
+  collectionId,
 }: GetProductsQuery) {
   const priceRangeFilter =
     priceMin !== undefined || priceMax !== undefined
@@ -133,6 +134,7 @@ class ProductRepository {
     ...(filter && FILTER_MAP[filter]),
     ...(size && { sizes: { some: { size } } }),
     ...(color && { colors: { some: { color } } }),
+    ...(collectionId && { collections: { some: { id: collectionId } } }),
     ...(andConditions.length > 0 && { AND: andConditions }),
   };
 
