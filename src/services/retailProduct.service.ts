@@ -21,9 +21,10 @@ async function notifyRetailRestock(
   await prismaClient.userNotification.createMany({
     data: subscribers.map((s) => ({
       userId: s.userId,
-      title: "Product Back in Stock!",
+      title: "Retail Product Back in Stock!",
       message: `Great news! "${productName}" is now back in stock. Grab it before it's gone!`,
       type: "restock",
+      productId: String(productId),
       imageUrl: imageUrl ?? null,
     })),
   });
