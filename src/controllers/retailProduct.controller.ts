@@ -1,216 +1,164 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
+
 import { asyncHandler } from "../utils/globalErrorHandler.util.js";
 import { successResponse } from "../utils/response.util.js";
-import { RetailProductService } from "../services/retailProduct.service.js";
-import type { RetailProductFilters } from "../types/retailProduct.type.js";
-const retailProductService = new RetailProductService();
 
-export const getAllProducts = asyncHandler(
+import { retailProductService } from "../services/retailProduct.service.js";
+
+const DEFAULT_PAGE_LIMIT = 16;
+const DEFAULT_RECOMMENDATION_LIMIT = 4;
+
+export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const {
-      search,
-      categoryId,
-      minPrice,
-      maxPrice,
-      sort,
-      featured,
-      isActive,
-      page,
-      limit,
-    } = req.query;
-    
-    const filters: RetailProductFilters = {
-      ...(search && { search: String(search) }),
-      ...(categoryId && { categoryId: Number(categoryId) }),
-      ...(minPrice && { minPrice: Number(minPrice) }),
-      ...(maxPrice && { maxPrice: Number(maxPrice) }),
-      ...(sort && { sort: sort as NonNullable<RetailProductFilters["sort"]> }),
-      ...(featured !== undefined && { featured: featured === "true" }),
-      isActive: isActive !== undefined ? isActive === "true" : true,
-      page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 10,
-    };
+    const result = await retailProductService.create({
+      ...req.body,
+      traderId: Number(req.user!.id),
+    });
 
-    const result = await retailProductService.getAllProducts(filters);
     successResponse(res, {
-      statusCode: 200,
-      message: "Products fetched successfully",
+      statusCode: 201,
+      message: "Retail product created successfully",
       data: result,
     });
   },
 );
 
-export const getProductById = asyncHandler(
+export const getProducts = asyncHandler(async (req: Request, res: Response) => {
+  const result = await retailProductService.getAll({
+    search: typeof req.query.search === "string" ? req.query.search : undefined,
+
+    categoryId: req.query.categoryId ? Number(req.query.categoryId) : undefined,
+
+    brandId:
+      typeof req.query.brandId === "string" ? req.query.brandId : undefined,
+
+    filter: typeof req.query.filter === "string" ? req.query.filter : undefined,
+
+    size: typeof req.query.size === "string" ? req.query.size : undefined,
+
+    color: typeof req.query.color === "string" ? req.query.color : undefined,
+
+    priceMin: req.query.priceMin ? Number(req.query.priceMin) : undefined,
+
+    priceMax: req.query.priceMax ? Number(req.query.priceMax) : undefined,
+
+    sortBy: typeof req.query.sortBy === "string" ? req.query.sortBy : undefined,
+
+    sortOrder:
+      req.query.sortOrder === "asc" || req.query.sortOrder === "desc"
+        ? req.query.sortOrder
+        : undefined,
+
+    page: Number(req.query.page) || 1,
+
+    limit: Number(req.query.limit) || DEFAULT_PAGE_LIMIT,
+
+    traderId: req.query.traderId ? Number(req.query.traderId) : undefined,
+  });
+  successResponse(res, {
+    message: "Retail products fetched successfully",
+    data: result,
+  });
+});
+
+export const getRecommendations = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const product = await retailProductService.getProductById(Number(id));
+    let categories: number[] | undefined;
+
+    if (typeof req.query.categories === "string") {
+      categories = req.query.categories
+        .split(",")
+        .map(Number)
+        .filter((id) => !Number.isNaN(id));
+    } else if (Array.isArray(req.query.categories)) {
+      categories = (req.query.categories as string[])
+        .map(Number)
+        .filter((id) => !Number.isNaN(id));
+    }
+
+    const result = await retailProductService.getRecommendations({
+      categories,
+
+      limit: Number(req.query.limit) || DEFAULT_RECOMMENDATION_LIMIT,
+
+      excludeId:
+        typeof req.query.excludeId === "string"
+          ? Number(req.query.excludeId)
+          : undefined,
+
+      categoryId:
+        typeof req.query.categoryId === "string"
+          ? Number(req.query.categoryId)
+          : undefined,
+
+      size: typeof req.query.size === "string" ? req.query.size : undefined,
+
+      color: typeof req.query.color === "string" ? req.query.color : undefined,
+
+      sortBy:
+        typeof req.query.sortBy === "string" ? req.query.sortBy : undefined,
+
+      sortOrder:
+        req.query.sortOrder === "asc" || req.query.sortOrder === "desc"
+          ? req.query.sortOrder
+          : undefined,
+    });
+
     successResponse(res, {
-      statusCode: 200,
-      message: "Product fetched successfully",
-      data: product,
+      message: "Recommendations fetched successfully",
+      data: result,
     });
   },
 );
 
-export const getProductBySlug = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { slug } = req.params as { slug: string };
-    const product = await retailProductService.getProductBySlug(slug);
-    successResponse(res, {
-      statusCode: 200,
-      message: "Product fetched successfully",
-      data: product,
-    });
-  },
-);
+export const getProduct = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
 
-export const createProduct = asyncHandler(
-  async (req: Request, res: Response) => {
-    const {
-      name,
-      slug,
-      description,
-      shortDescription,
-      price,
-      discountPrice,
-      stock,
-      sku,
-      brand,
-      isFeatured,
-      isActive,
-      categoryId,
-      images,
-      colors,
-      sizes,
-      depositAmount,
-      securityDeposit,
-      termsAndConditions,
-      privacyPolicy,
-    } = req.body;
+  const result = await retailProductService.getById(id);
 
-    const product = await retailProductService.createProduct({
-      name,
-      slug,
-      description,
-      shortDescription,
-      price,
-      discountPrice,
-      stock,
-      sku,
-      brand,
-      isFeatured,
-      isActive,
-      categoryId,
-      images,
-      colors,
-      sizes,
-      depositAmount,
-      securityDeposit,
-      termsAndConditions,
-      privacyPolicy,
-    });
-
-    successResponse(res, {
-      statusCode: 201,
-      message: "Product created successfully",
-      data: product,
-    });
-  },
-);
+  successResponse(res, {
+    message: "Retail product fetched successfully",
+    data: result,
+  });
+});
 
 export const updateProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const {
-      name,
-      slug,
-      description,
-      shortDescription,
-      price,
-      discountPrice,
-      stock,
-      sku,
-      brand,
-      isFeatured,
-      isActive,
-      categoryId,
-      images,
-      colors,
-      sizes,
-      depositAmount,
-      securityDeposit,
-      termsAndConditions,
-      privacyPolicy,
-    } = req.body;
+    const id = Number(req.params.id);
 
-    if (images || colors || sizes) {
-      const product = await retailProductService.updateProductWithRelations(
-        Number(id),
-        {
-          product: {
-            name,
-            slug,
-            description,
-            shortDescription,
-            price,
-            discountPrice,
-            stock,
-            sku,
-            brand,
-            isFeatured,
-            isActive,
-            categoryId,
-            depositAmount,
-            securityDeposit,
-            termsAndConditions,
-            privacyPolicy,
-          },
-          images,
-          colors,
-          sizes,
-        },
-      );
-      return successResponse(res, {
-        statusCode: 200,
-        message: "Product updated successfully",
-        data: product,
-      });
-    }
-
-    const product = await retailProductService.updateProduct(Number(id), {
-      name,
-      slug,
-      description,
-      shortDescription,
-      price,
-      discountPrice,
-      stock,
-      sku,
-      brand,
-      isFeatured,
-      isActive,
-      categoryId,
-      depositAmount,
-      securityDeposit,
-      termsAndConditions,
-      privacyPolicy,
+    const result = await retailProductService.update(id, {
+      ...req.body,
+      traderId: Number(req.user!.id),
     });
 
     successResponse(res, {
-      statusCode: 200,
-      message: "Product updated successfully",
-      data: product,
+      message: "Retail product updated successfully",
+      data: result,
+    });
+  },
+);
+
+export const getTraderProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const traderId = Number(req.user!.id);
+
+    const result = await retailProductService.getByTraderId(traderId);
+
+    successResponse(res, {
+      message: "Trader products fetched successfully",
+      data: result,
     });
   },
 );
 
 export const deleteProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    await retailProductService.deleteProduct(Number(id));
+    const id = Number(req.params.id);
+
+    await retailProductService.delete(id, Number(req.user!.id));
+
     successResponse(res, {
-      statusCode: 200,
-      message: "Product deleted successfully",
+      message: "Retail product deleted successfully",
     });
   },
 );

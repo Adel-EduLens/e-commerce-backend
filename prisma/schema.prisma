@@ -18,7 +18,7 @@ model User {
   status    String   @default("active")
 
   reviews              Review[]
-  retailProductRatings RetailProductRating[]
+  retailProductReviews   RetailProductReview[]
   couponUsages         CouponUsage[]
   orders               Order[]
 
@@ -61,6 +61,7 @@ model Trader {
   products   Product[]
   wholesales Wholesale[]
   coupons    Coupon[]
+  retailProducts  RetailProduct[] 
   role       String      @default("trader")
 }
 
@@ -341,84 +342,115 @@ model Coupon {
 // ============ Retail Products ============
 
 model RetailCategory {
-  id          Int             @id @default(autoincrement())
-  name        String          @unique
-  slug        String          @unique
-  description String?         @db.Text
-  imageUrl    String?
-  isActive    Boolean         @default(true)
-  products    RetailProduct[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-}
+  id   Int @id @default(autoincrement())
 
+  name String @unique
+
+  retailProducts RetailProduct[]
+
+  image        String?
+  appearOnHome Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 model RetailProduct {
-  id               Int                   @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   name             String
-  slug             String                @unique
-  description      String?               @db.Text
-  shortDescription String?
+  description      String?  @db.Text
   price            Float
-  discountPrice    Float?
-  stock            Int                   @default(0)
-  sku              String?               @unique
-  brand            String?
-  isFeatured       Boolean               @default(false)
-  isActive         Boolean               @default(true)
-  categoryId       Int
-  category         RetailCategory        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  stock            Int      @default(0)
+  sku              String?  @unique
+
   images           RetailProductImage[]
   colors           RetailProductColor[]
   sizes            RetailProductSize[]
-  ratings          RetailProductRating[]
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+
+  categoryId       Int
+  category         RetailCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  rating           Float @default(0)
+  reviews          RetailProductReview[]
+
+  traderId         Int
+  trader           Trader @relation(fields: [traderId], references: [id])
+
+  brandId          String?
+  brand            RetailBrand? @relation(fields: [brandId], references: [id])
+
+  isFeatured       Boolean @default(false)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   depositAmount       Float
-  securityDeposit     Float  
+  securityDeposit     Float
   termsAndConditions  String? @db.Text
   privacyPolicy       String? @db.Text
 
-  retailOrders RetailOrder[]
+  retailOrders     RetailOrder[]
 }
 
 model RetailProductImage {
-  id        Int           @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   url       String
-  alt       String?
-  isMain    Boolean       @default(false)
+  color     String?
+
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
+
+
 model RetailProductColor {
-  id        Int           @id @default(autoincrement())
-  name      String
-  hexCode   String?
+  id        Int @id @default(autoincrement())
+  color     String
+
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model RetailProductSize {
-  id        Int           @id @default(autoincrement())
-  name      String
-  stock     Int?
+  id        Int @id @default(autoincrement())
+  size      String
+  quantity  Int @default(0)
+  color     String?
+
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-model RetailProductRating {
-  id              Int           @id @default(autoincrement())
-  userId          Int
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+model RetailProductReview {
+  id      String @id @default(cuid())
+
+  rating  Int
+  comment String? @db.Text
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   retailProductId Int
   retailProduct   RetailProduct @relation(fields: [retailProductId], references: [id], onDelete: Cascade)
-  rating          Int
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, retailProductId])
 }
+
+model RetailBrand {
+  id   String @id @default(cuid())
+  name String @unique
+
+  retailProducts RetailProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
 
 model CouponUsage {
   id       String   @id @default(cuid())

@@ -22,7 +22,7 @@ import traderRouter from './routes/trader.auth.routes.js'
 import traderProductRouter from './routes/trader.product.routes.js'
 import brandRouter from './routes/brand.route.js'
 import couponRouter from './routes/coupon.route.js'
-import retailRouter from './routes/retail.routes.js'
+import retailProductRouter from './routes/retail.routes.js'
 import orderRouter from './routes/order.routes.js'
 import cartRouter from './routes/cart.routes.js'
 import notifyMeRouter from './routes/notifyMe.routes.js'
@@ -36,7 +36,13 @@ import shopBannerRouter from './routes/shopBanner.route.js'
 import addressRouter from './routes/address.routes.js'
 import blankProductRouter from './routes/blankProduct.routes.js'
 import retailOrderRouter from './routes/retailOrder.route.js'
+
 import collectionRouter from './routes/collection.routes.js'
+
+import retailCategoryRouter from './routes/retailCategory.routes.js'
+import retailBrandRouter from './routes/retailBrand.route.js'
+import retailReviewRouter from "./routes/retailReview.route.js";
+
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 dotenv.config({ path: envFile, override: true })
@@ -71,7 +77,6 @@ app.use('/api/wholesales', wholesaleRouter)
 app.use('/api/trader/products', traderProductRouter)
 app.use('/api/brands', brandRouter)
 app.use('/api/coupons', couponRouter)
-app.use('/api/retail', retailRouter)
 app.use('/api/orders', orderRouter)
 app.use('/api/cart', cartRouter)
 app.use('/api/notify-me', notifyMeRouter)
@@ -83,9 +88,15 @@ app.use('/api/recently-viewed', recentlyViewedRouter)
 app.use('/api/shop-banners', shopBannerRouter)
 
 app.use('/api/address', addressRouter)
+
 app.use('/api/blank-products', blankProductRouter)
+app.use('/api/retail-products', retailProductRouter)
 app.use('/api/retail-orders', retailOrderRouter)
 app.use('/api/collections', collectionRouter)
+app.use("/api/retail-category", retailCategoryRouter)
+app.use("/api/retail-brand", retailBrandRouter)
+app.use("/api/retail-reviews", retailReviewRouter);
+
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with Prisma!')
 })

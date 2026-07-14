@@ -1,10 +1,10 @@
 import { RetailNotifyMeRepository } from '../repositories/retailNotifyMe.repository.js'
-import { RetailProductRepository } from '../repositories/retailProduct.repository.js'
+import { retailProductRepository } from '../repositories/retailProduct.repository.js'
 import { userRepository } from '../repositories/user.repository.js'
 import AppError from '../utils/AppError.util.js'
 
 const retailNotifyMeRepository = new RetailNotifyMeRepository()
-const retailProductRepository = new RetailProductRepository()
+
 
 export class RetailNotifyMeService {
   async getUserNotifications(userId: number) {

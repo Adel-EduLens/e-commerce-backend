@@ -1,9 +1,8 @@
-import { RetailProductRepository } from "../repositories/retailProduct.repository.js";
+import { retailProductRepository } from "../repositories/retailProduct.repository.js";
 import AppError from "../utils/AppError.util.js";
-import { Prisma } from "@prisma/client";
 import prismaClient from "../utils/prismaClient.js";
 
-const retailProductRepository = new RetailProductRepository();
+import { traderProfileRepository } from "../repositories/traderProfile.repository.js";
 
 async function notifyRetailRestock(
   productId: number,
@@ -17,7 +16,9 @@ async function notifyRetailRestock(
       isActive: true,
     },
   });
+
   if (subscribers.length === 0) return;
+
   await prismaClient.userNotification.createMany({
     data: subscribers.map((s) => ({
       userId: s.userId,
@@ -26,247 +27,121 @@ async function notifyRetailRestock(
       type: "restock",
       productId: String(productId),
       imageUrl: imageUrl ?? null,
+      productId: String(productId),
     })),
   });
+
   await prismaClient.notifyMeSubscription.updateMany({
     where: {
       targetType: "RETAIL_RESTOCK",
       targetId: String(productId),
       isActive: true,
     },
-    data: { isActive: false },
+
+    data: {
+      isActive: false,
+    },
   });
 }
 
-export class RetailProductService {
-  async getAllProducts(filters?: {
-    search?: string;
-    categoryId?: number;
-    minPrice?: number;
-    maxPrice?: number;
-    sort?: "latest" | "price_asc" | "price_desc";
-    featured?: boolean;
-    isActive?: boolean;
-    page?: number;
-    limit?: number;
-  }) {
-    return retailProductRepository.findAll(filters);
-  }
+export const retailProductService = {
+  async create(data: any) {
+    const trader = await traderProfileRepository.findById(data.traderId);
 
-  async getProductById(id: number) {
-    const product = await retailProductRepository.findById(id);
-    if (!product) {
-      throw new AppError("Product not found", 404);
+    if (!trader) {
+      throw new AppError("Trader not found", 404);
     }
-    return product;
-  }
 
-  async getProductBySlug(slug: string) {
-    const product = await retailProductRepository.findBySlug(slug);
-    if (!product) {
-      throw new AppError("Product not found", 404);
-    }
-    return product;
-  }
-
-  async createProduct(data: {
-    name: string;
-    slug: string;
-    description?: string;
-    shortDescription?: string;
-    price: number;
-    discountPrice?: number;
-    stock?: number;
-    sku?: string;
-    brand?: string;
-    isFeatured?: boolean;
-    isActive?: boolean;
-    categoryId: number;
-    images?: { url: string; alt?: string; isMain?: boolean }[];
-    colors?: { name: string; hexCode?: string }[];
-    sizes?: { name: string; stock?: number }[];
-    depositAmount?: number;
-    securityDeposit?: number;
-    termsAndConditions?: string;
-    privacyPolicy?: string;
-  }) {
-    // Validate category exists
     const category = await retailProductRepository.categoryExists(
       data.categoryId,
     );
+
     if (!category) {
       throw new AppError("Category not found", 404);
     }
 
-    // Validate slug uniqueness
-    const existingSlug = await retailProductRepository.existsBySlug(data.slug);
-    if (existingSlug) {
-      throw new AppError("Slug already exists", 400);
-    }
+    if (data.brandId) {
+      const brand = await retailProductRepository.brandExists(data.brandId);
 
-    // Validate SKU uniqueness if provided
-    if (data.sku) {
-      const existingSku = await retailProductRepository.existsBySku(data.sku);
-      if (existingSku) {
-        throw new AppError("SKU already exists", 400);
+      if (!brand) {
+        throw new AppError("Brand not found", 404);
       }
     }
 
     return retailProductRepository.create(data);
-  }
+  },
 
-  async updateProduct(
-    id: number,
-    data: Partial<{
-      name: string;
-      slug: string;
-      description: string;
-      shortDescription: string;
-      price: number;
-      discountPrice: number;
-      stock: number;
-      sku: string;
-      brand: string;
-      isFeatured: boolean;
-      isActive: boolean;
-      categoryId: number;
-      depositAmount: number;
-      securityDeposit: number;
-      termsAndConditions: string;
-      privacyPolicy: string;
-    }>,
-  ) {
+  async getAll(query: any) {
+    return retailProductRepository.findAll(query);
+  },
+
+  async getRecommendations(query: any) {
+    return retailProductRepository.findRecommendations(query);
+  },
+
+  async getByTraderId(traderId: number) {
+    return retailProductRepository.findByTraderId(traderId);
+  },
+
+  async getById(id: number) {
     const product = await retailProductRepository.findById(id);
+
     if (!product) {
-      throw new AppError("Product not found", 404);
+      throw new AppError("Retail product not found", 404);
     }
 
-    // Validate category if being updated
+    return product;
+  },
+
+  async update(id: number, data: any) {
+    const product = await this.getById(id);
+
+    if (data.traderId !== product.traderId) {
+      throw new AppError("You are not authorized to update this product", 403);
+    }
+
     if (data.categoryId && data.categoryId !== product.categoryId) {
       const category = await retailProductRepository.categoryExists(
         data.categoryId,
       );
+
       if (!category) {
         throw new AppError("Category not found", 404);
       }
     }
 
-    // Validate slug uniqueness if being updated
-    if (data.slug && data.slug !== product.slug) {
-      const existing = await retailProductRepository.existsBySlug(
-        data.slug,
-        id,
-      );
-      if (existing) {
-        throw new AppError("Slug already exists", 400);
-      }
-    }
+    if (data.brandId) {
+      const brand = await retailProductRepository.brandExists(data.brandId);
 
-    // Validate SKU uniqueness if being updated
-    if (data.sku && data.sku !== product.sku) {
-      const existing = await retailProductRepository.existsBySku(data.sku, id);
-      if (existing) {
-        throw new AppError("SKU already exists", 400);
+      if (!brand) {
+        throw new AppError("Brand not found", 404);
       }
     }
 
     const oldStock = product.stock ?? 0;
+
     const newStock = data.stock !== undefined ? data.stock : oldStock;
-    const updated = await retailProductRepository.update(id, data);
+
+    const updatedProduct = await retailProductRepository.update(id, data);
+
+    // Notification logic kept as it is
 
     if (oldStock <= 0 && newStock > 0) {
-      const imageUrl = (product as any).images?.[0]?.url;
+      const imageUrl = product.images?.[0]?.url;
+
       await notifyRetailRestock(id, product.name, imageUrl);
     }
 
-    return updated;
-  }
+    return updatedProduct;
+  },
 
-  async updateProductWithRelations(
-    id: number,
-    data: {
-      product?: Partial<{
-        name: string;
-        slug: string;
-        description: string;
-        shortDescription: string;
-        price: number;
-        discountPrice: number;
-        stock: number;
-        sku: string;
-        brand: string;
-        isFeatured: boolean;
-        isActive: boolean;
-        categoryId: number;
-        depositAmount: number;
-        securityDeposit: number;
-        termsAndConditions: string;
-        privacyPolicy: string;
-      }>;
-      images?: { url: string; alt?: string; isMain?: boolean }[];
-      colors?: { name: string; hexCode?: string }[];
-      sizes?: { name: string; stock?: number }[];
-    },
-  ) {
-    const product = await retailProductRepository.findById(id);
-    if (!product) {
-      throw new AppError("Product not found", 404);
-    }
+  async delete(id: number, traderId: number) {
+    const product = await this.getById(id);
 
-    // Validate category if being updated
-    if (
-      data.product?.categoryId &&
-      data.product.categoryId !== product.categoryId
-    ) {
-      const category = await retailProductRepository.categoryExists(
-        data.product.categoryId,
-      );
-      if (!category) {
-        throw new AppError("Category not found", 404);
-      }
-    }
-
-    // Validate slug uniqueness if being updated
-    if (data.product?.slug && data.product.slug !== product.slug) {
-      const existing = await retailProductRepository.existsBySlug(
-        data.product.slug,
-        id,
-      );
-      if (existing) {
-        throw new AppError("Slug already exists", 400);
-      }
-    }
-
-    // Validate SKU uniqueness if being updated
-    if (data.product?.sku && data.product.sku !== product.sku) {
-      const existing = await retailProductRepository.existsBySku(
-        data.product.sku,
-        id,
-      );
-      if (existing) {
-        throw new AppError("SKU already exists", 400);
-      }
-    }
-
-    const oldStock = product.stock ?? 0;
-    const newStock =
-      data.product?.stock !== undefined ? data.product.stock : oldStock;
-    const updated = await retailProductRepository.updateWithRelations(id, data);
-
-    if (oldStock <= 0 && newStock > 0) {
-      const imageUrl = (product as any).images?.[0]?.url;
-      await notifyRetailRestock(id, product.name, imageUrl);
-    }
-
-    return updated;
-  }
-
-  async deleteProduct(id: number) {
-    const product = await retailProductRepository.findById(id);
-    if (!product) {
-      throw new AppError("Product not found", 404);
+    if (product.traderId !== traderId) {
+      throw new AppError("You are not authorized to delete this product", 403);
     }
 
     return retailProductRepository.delete(id);
-  }
-}
+  },
+};
