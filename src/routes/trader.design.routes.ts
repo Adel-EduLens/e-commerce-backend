@@ -11,12 +11,14 @@ import {
 const traderDesignRouter = Router()
 
 const uploadVoteImage = multerMiddleware({
-  getPath: (req) => ['votes'],
+  getPath: () => ['votes'],
 })
 
 // Public endpoints
 traderDesignRouter.get('/images', getImages)
-traderDesignRouter.put('/vote/:id', vote)
+
+// Authenticated endpoints
+traderDesignRouter.put('/vote/:id', requireAuth, vote)
 
 // Trader-only endpoints
 traderDesignRouter.post(

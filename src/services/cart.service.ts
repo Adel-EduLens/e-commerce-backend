@@ -1,50 +1,99 @@
 import { cartRepository } from '../repositories/cart.repository.js';
 import AppError from '../utils/AppError.util.js';
 import prisma from '../utils/prismaClient.js';
+import { Cart, CartItem } from '@prisma/client';
 
-async function populateCartCategories(cart: any) {
-  if (!cart || !cart.items) return cart;
-  const itemsWithCategory = await Promise.all(
-    cart.items.map(async (item: any) => {
+type CartWithItems = Cart & { items: CartItem[] };
+
+interface AddItemInput {
+  productId?: string | number;
+  retailProductId?: string | number;
+  productType?: string;
+  quantity?: number | string;
+  size?: string;
+  color?: string;
+  retailSizeId?: string;
+  retailColorId?: string;
+  sizeId?: string;
+  colorId?: string;
+}
+
+async function populateCartCategories(cart: CartWithItems | null) {
+  if (!cart || !cart.items || cart.items.length === 0) return cart;
+
+  const retailIds = cart.items
+    .filter((item) => item.productType === 'RETAIL')
+    .map((item) => Number(item.productId));
+  
+  const wholesaleIds = cart.items
+    .filter((item) => item.productType === 'WHOLESALE')
+    .map((item) => item.productId);
+
+  const shopIds = cart.items
+    .filter((item) => item.productType !== 'RETAIL' && item.productType !== 'WHOLESALE')
+    .map((item) => item.productId);
+
+  try {
+    const [retailProducts, wholesaleProducts, shopProducts] = await Promise.all([
+      retailIds.length > 0
+        ? prisma.retailProduct.findMany({
+            where: { id: { in: retailIds } },
+            select: { id: true, categoryId: true }
+          })
+        : [],
+      wholesaleIds.length > 0
+        ? prisma.wholesale.findMany({
+            where: { id: { in: wholesaleIds } },
+            select: { id: true, categoryId: true, minOrder: true }
+          })
+        : [],
+      shopIds.length > 0
+        ? prisma.product.findMany({
+            where: { id: { in: shopIds } },
+            select: { id: true, categoryId: true }
+          })
+        : []
+    ]);
+
+    const retailMap = new Map(retailProducts.map((p) => [p.id, p]));
+    const wholesaleMap = new Map(wholesaleProducts.map((p) => [p.id, p]));
+    const shopMap = new Map(shopProducts.map((p) => [p.id, p]));
+
+    const itemsWithCategory = cart.items.map((item) => {
       let categoryId: string | null = null;
       let minOrder: number | null = null;
-      try {
-        if (item.productType === 'RETAIL') {
-          const prod = await prisma.retailProduct.findUnique({
-            where: { id: Number(item.productId) },
-            select: { categoryId: true }
-          });
-          if (prod) categoryId = String(prod.categoryId);
-        } else if (item.productType === 'WHOLESALE') {
-          const prod = await prisma.wholesale.findUnique({
-            where: { id: item.productId },
-            select: { categoryId: true, minOrder: true }
-          });
-          if (prod) {
-            categoryId = String(prod.categoryId);
-            minOrder = prod.minOrder;
-          }
-        } else {
-          const prod = await prisma.product.findUnique({
-            where: { id: item.productId },
-            select: { categoryId: true }
-          });
-          if (prod) categoryId = String(prod.categoryId);
+
+      if (item.productType === 'RETAIL') {
+        const prod = retailMap.get(Number(item.productId));
+        if (prod) categoryId = String(prod.categoryId);
+      } else if (item.productType === 'WHOLESALE') {
+        const prod = wholesaleMap.get(item.productId);
+        if (prod) {
+          categoryId = String(prod.categoryId);
+          minOrder = prod.minOrder;
         }
-      } catch (err) {
-        console.error(`Failed to fetch category for product ${item.productId}:`, err);
+      } else {
+        const prod = shopMap.get(item.productId);
+        if (prod) categoryId = String(prod.categoryId);
       }
+
+      const rawItem = item as unknown as { toJSON?: () => Record<string, unknown> } & CartItem;
       return {
-        ...item.toJSON ? item.toJSON() : item,
+        ...(rawItem.toJSON ? rawItem.toJSON() : rawItem),
         categoryId,
         minOrder
       };
-    })
-  );
-  return {
-    ...cart.toJSON ? cart.toJSON() : cart,
-    items: itemsWithCategory
-  };
+    });
+
+    const rawCart = cart as unknown as { toJSON?: () => Record<string, unknown> } & CartWithItems;
+    return {
+      ...(rawCart.toJSON ? rawCart.toJSON() : rawCart),
+      items: itemsWithCategory
+    };
+  } catch (err) {
+    console.error('Failed to batch fetch categories for cart items:', err);
+    return cart;
+  }
 }
 
 export const cartService = {
@@ -56,7 +105,7 @@ export const cartService = {
     return populateCartCategories(cart);
   },
 
-  addItem: async (userId: number, itemData: any) => {
+  addItem: async (userId: number, itemData: AddItemInput) => {
     let cart = await cartRepository.findCartByUserId(userId);
     if (!cart) {
       cart = await cartRepository.createCartForUser(userId);
@@ -64,7 +113,7 @@ export const cartService = {
 
     const isRetail = 'retailProductId' in itemData || itemData.productType === 'RETAIL';
     const finalProductId = itemData.retailProductId || itemData.productId;
-    const quantity = parseInt(itemData.quantity || 1, 10);
+    const quantity = parseInt(String(itemData.quantity || 1), 10);
     
     let title = 'Product';
     let price = 0;
@@ -201,7 +250,7 @@ export const cartService = {
     const cart = await cartRepository.findCartByUserId(userId);
     if (!cart) throw new AppError('Cart not found', 404);
 
-    await cartRepository.updateCartItemQuantity(itemId, parseInt(quantity as any, 10));
+    await cartRepository.updateCartItemQuantity(itemId, parseInt(String(quantity), 10));
     return populateCartCategories(await cartRepository.findCartByUserId(userId));
   },
 

@@ -23,9 +23,6 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
     mapAddress,
     latitude,
     longitude,
-    subtotal,
-    discount,
-    shipping,
     total,
     couponCode,
     paymentMethod,
@@ -52,8 +49,102 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 
   // Run database transaction to create order, its items, and update coupon usage
   const result = await prisma.$transaction(async (tx) => {
-    // 1. If coupon code is used, validate it and record usage
-    let appliedCoupon = null;
+    interface ResolvedOrderItem {
+      productId: string;
+      title: string;
+      price: number;
+      quantity: number;
+      size: string | null;
+      color: string | null;
+      imageSrc: string | null;
+      categoryId: string | null;
+    }
+    const resolvedItems: ResolvedOrderItem[] = [];
+    let calculatedSubtotal = 0;
+
+    // 1. Resolve and calculate the real price for each item from the DB
+    for (const item of items) {
+      const pId = String(item.id || item.productId);
+      const qty = parseInt(item.quantity || 1, 10);
+      let dbPrice = 0;
+      let dbTitle = '';
+      let dbImageSrc = '';
+      let dbCategoryId: string | null = null;
+      let resolved = false;
+
+      // Try Product (String CUID)
+      const product = await tx.product.findUnique({
+        where: { id: pId },
+        include: { images: true }
+      });
+      if (product) {
+        const hasFlashDeal = product.isFlashDeals && 
+                             product.flashDealPrice && 
+                             product.flashDealEndsAt && 
+                             new Date(product.flashDealEndsAt) > new Date();
+        dbPrice = (hasFlashDeal && product.flashDealPrice) ? product.flashDealPrice : product.price;
+        dbTitle = product.name;
+        const colorImage = product.images.find(
+          img => img.color && img.color.toLowerCase() === (item.color || '').toLowerCase()
+        );
+        dbImageSrc = colorImage ? colorImage.url : (product.images?.[0]?.url || '');
+        dbCategoryId = String(product.categoryId);
+        resolved = true;
+      }
+
+      // Try RetailProduct (Int ID)
+      if (!resolved && !isNaN(Number(pId))) {
+        const retailProduct = await tx.retailProduct.findUnique({
+          where: { id: Number(pId) },
+          include: { images: true }
+        });
+        if (retailProduct) {
+          dbPrice = retailProduct.discountPrice || retailProduct.price;
+          dbTitle = retailProduct.name;
+          dbImageSrc = retailProduct.images?.[0]?.url || '';
+          dbCategoryId = String(retailProduct.categoryId);
+          resolved = true;
+        }
+      }
+
+      // Try Wholesale (String ID)
+      if (!resolved) {
+        const wholesale = await tx.wholesale.findUnique({
+          where: { id: pId },
+          include: { images: true }
+        });
+        if (wholesale) {
+          dbPrice = wholesale.price;
+          dbTitle = wholesale.name;
+          const colorImage = wholesale.images.find(
+            img => img.color && img.color.toLowerCase() === (item.color || '').toLowerCase()
+          );
+          dbImageSrc = colorImage ? colorImage.url : (wholesale.images?.[0]?.url || '');
+          dbCategoryId = String(wholesale.categoryId);
+          resolved = true;
+        }
+      }
+
+      if (!resolved) {
+        throw new AppError(`Product not found: ${pId}`, 404);
+      }
+
+      calculatedSubtotal += dbPrice * qty;
+
+      resolvedItems.push({
+        productId: pId,
+        title: dbTitle,
+        price: dbPrice,
+        quantity: qty,
+        size: item.size || null,
+        color: item.color || null,
+        imageSrc: dbImageSrc || null,
+        categoryId: dbCategoryId
+      });
+    }
+
+    // 2. If coupon code is used, validate it and record usage
+    let calculatedDiscount = 0;
     if (couponCode) {
       const coupon = await tx.coupon.findUnique({
         where: { code: couponCode.trim().toUpperCase() },
@@ -65,6 +156,30 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
         }
         if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
           throw new AppError('Used coupon usage limit has been reached', 400);
+        }
+
+        // Calculate discount amount based on qualifying items
+        let qualifyingSubtotal = 0;
+        let hasMatchingItem = false;
+
+        for (const orderItem of resolvedItems) {
+          let applies = false;
+          if (!coupon.categoryId && !coupon.productId) {
+            applies = true;
+          } else if (coupon.productId && String(orderItem.productId) === String(coupon.productId)) {
+            applies = true;
+          } else if (coupon.categoryId && String(orderItem.categoryId) === String(coupon.categoryId)) {
+            applies = true;
+          }
+
+          if (applies) {
+            qualifyingSubtotal += orderItem.price * orderItem.quantity;
+            hasMatchingItem = true;
+          }
+        }
+
+        if (hasMatchingItem) {
+          calculatedDiscount = (qualifyingSubtotal * coupon.discount) / 100;
         }
 
         // Increment usedCount
@@ -80,12 +195,18 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
             userId: userId,
           },
         });
-        
-        appliedCoupon = coupon;
       }
     }
 
-    // 2. Create the Order
+    const calculatedShipping = 50; // flat rate matching front-end
+    const calculatedTotal = Math.max(0, calculatedSubtotal - calculatedDiscount + calculatedShipping);
+
+    // Validate client-provided values to prevent total tampering (with safe float epsilon check)
+    if (Math.abs(calculatedTotal - parseFloat(total)) > 1.0) {
+      throw new AppError('Order total manipulation detected or calculation mismatch', 400);
+    }
+
+    // 3. Create the Order
     const order = await tx.order.create({
       data: {
         userId,
@@ -101,26 +222,26 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
         mapAddress: mapAddress || null,
         latitude: latitude ? String(latitude) : null,
         longitude: longitude ? String(longitude) : null,
-        subtotal: parseFloat(subtotal),
-        discount: parseFloat(discount),
-        shipping: parseFloat(shipping),
-        total: parseFloat(total),
+        subtotal: calculatedSubtotal,
+        discount: calculatedDiscount,
+        shipping: calculatedShipping,
+        total: calculatedTotal,
         couponCode: couponCode || null,
         paymentMethod: paymentMethod.toUpperCase(),
         status: 'PENDING',
       },
     });
 
-    // 3. Create the OrderItems
-    const orderItemsData = items.map((item: any) => ({
+    // 4. Create the OrderItems
+    const orderItemsData = resolvedItems.map((item) => ({
       orderId: order.id,
-      productId: String(item.id || item.productId),
+      productId: item.productId,
       title: item.title,
-      price: parseFloat(item.unitPrice || item.price),
-      quantity: parseInt(item.quantity, 10),
-      size: item.size || null,
-      color: item.color || null,
-      imageSrc: item.imageSrc || null,
+      price: item.price,
+      quantity: item.quantity,
+      size: item.size,
+      color: item.color,
+      imageSrc: item.imageSrc,
     }));
 
     await tx.orderItem.createMany({
@@ -243,7 +364,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   successResponse(res, {
     message: 'Order created successfully',
     data: result,
-    statusCode: 211, // or 201 Created
+    statusCode: 201, // or 201 Created
   });
 });
 
@@ -278,21 +399,11 @@ export const getTraderOrders = asyncHandler(async (req: Request, res: Response) 
   const traderId = Number(req.user.id);
 
   // 1. Get all product IDs for this trader
-  let traderProducts = await prisma.product.findMany({
+  const traderProducts = await prisma.product.findMany({
     where: { traderId },
     select: { id: true },
   });
 
-  // Fallback: If this trader has no products, reassign all existing products to them (for testing/development purposes)
-  if (traderProducts.length === 0) {
-    await prisma.product.updateMany({
-      data: { traderId },
-    });
-    traderProducts = await prisma.product.findMany({
-      where: { traderId },
-      select: { id: true },
-    });
-  }
 
   const traderProductIds = traderProducts.map((p) => p.id);
 
@@ -375,6 +486,11 @@ export const updateTraderOrderStatus = asyncHandler(async (req: Request, res: Re
     throw new AppError('Please provide a status update', 400);
   }
 
+  const allowedStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
+  if (!allowedStatuses.includes(status.toUpperCase())) {
+    throw new AppError('Invalid order status. Allowed values: PENDING, PROCESSING, SHIPPED, COMPLETED, CANCELLED', 400);
+  }
+
   const traderId = Number(req.user.id);
 
   // 1. Get all product IDs for this trader
@@ -395,7 +511,7 @@ export const updateTraderOrderStatus = asyncHandler(async (req: Request, res: Re
     throw new AppError('Order not found', 404);
   }
 
-  const ownsProduct = order.items.some((item: any) => traderProductIds.includes(item.productId));
+  const ownsProduct = order.items.some((item) => traderProductIds.includes(item.productId));
   if (!ownsProduct) {
     throw new AppError('Unauthorized: You do not own any products in this order', 403);
   }

@@ -22,7 +22,13 @@ export const changeStatus = asyncHandler(
     const userId = Number(req.params.id)
     if (isNaN(userId)) throw new AppError('Invalid user ID', 400)
     const { status } = req.body
-    const result = await adminRepository.changeStatus(userId, status)
+    
+    const allowedStatuses = ['active', 'suspended']
+    if (!status || !allowedStatuses.includes(status)) {
+      throw new AppError('Invalid user status. Allowed values: active, suspended', 400)
+    }
+
+    const result = await adminRepository.changeStatus(userId, status as 'active' | 'suspended')
     successResponse(res, {
       statusCode: 200,
       message: 'User status updated successfully',

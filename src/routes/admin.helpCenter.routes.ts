@@ -7,7 +7,7 @@ import {
   addHelpCenterCategory,
   getHelpCenterCategories,
   deleteHelpCenterCategory,
-} from '../controllers/admin.video.controller.js'
+} from '../controllers/video.controller.js'
 import { requireAdminAuth } from '../middlewares/auth.middleware.js'
 import { validateRequest } from '../middlewares/validation.middleware.js'
 import { videoSchema, helpCenterCategorySchema } from '../schemas/admin.auth.schema.js'

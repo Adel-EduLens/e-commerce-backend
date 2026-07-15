@@ -11,6 +11,14 @@ export const addQuestion = asyncHandler(
       question: string
       answer: string
     }
+
+    if (!question || typeof question !== 'string' || !question.trim()) {
+      throw new AppError('Question field is required and must be a valid string', 400)
+    }
+    if (!answer || typeof answer !== 'string' || !answer.trim()) {
+      throw new AppError('Answer field is required and must be a valid string', 400)
+    }
+
     const result = await adminRepository.addQuestion(question, answer)
 
     successResponse(res, {
@@ -67,6 +75,14 @@ export const updateQuestion = asyncHandler(
       question: string
       answer: string
     }
+
+    if (!question || typeof question !== 'string' || !question.trim()) {
+      throw new AppError('Question field is required and must be a valid string', 400)
+    }
+    if (!answer || typeof answer !== 'string' || !answer.trim()) {
+      throw new AppError('Answer field is required and must be a valid string', 400)
+    }
+
     const result = await adminRepository.updateQuestion(
       questionId,
       question,
