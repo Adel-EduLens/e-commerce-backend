@@ -37,6 +37,7 @@ async function clearDatabase() {
   await prisma.retailProductColor.deleteMany();
   await prisma.retailProductSize.deleteMany();
   await prisma.retailProduct.deleteMany();
+  await prisma.retailBrand.deleteMany();
   await prisma.retailCategory.deleteMany();
 
   await prisma.wholesaleSize.deleteMany();
@@ -512,21 +513,36 @@ async function main() {
       data: {
         name: 'Custom Hoodie Blank',
         description: 'Plain heavyweight hoodie ready for custom design uploads.',
-        material: 'Cotton fleece',
-        pattern: 'Plain',
         price: 700,
-        colors: {
-          createMany: {
-            data: [{ color: 'Black' }, { color: 'Gray' }],
-          },
-        },
-        images: {
+        materials: {
           createMany: {
             data: [
-              { url: productImages[0], color: 'Black' },
-              { url: productImages[1], color: 'Gray' },
+              { material: 'Cotton fleece' },
+              { material: 'Polyester blend' },
             ],
           },
+        },
+        colors: {
+          create: [
+            {
+              color: 'Black',
+              images: {
+                create: [
+                  { url: productImages[0], direction: 'FRONT' },
+                  { url: productImages[1], direction: 'BACK' },
+                ],
+              },
+            },
+            {
+              color: 'Gray',
+              images: {
+                create: [
+                  { url: productImages[2], direction: 'FRONT' },
+                  { url: productImages[3], direction: 'BACK' },
+                ],
+              },
+            },
+          ],
         },
       },
     }),
