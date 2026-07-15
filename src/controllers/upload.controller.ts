@@ -18,7 +18,7 @@ const createUploadHandler = (folder: string) =>
     });
   });
 
-export const uploadBlankProductImage = createUploadHandler("BlankProduct");
+export const uploadBlankProductImage = createUploadHandler("blank-broducts");
 export const uploadCategoryImage = createUploadHandler("categories");
 export const uploadRetailCategoryImage = createUploadHandler("retail-categories");
 export const uploadRetailProductImage = createUploadHandler("retail-products");

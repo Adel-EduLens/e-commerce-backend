@@ -24,7 +24,7 @@ const uploadRetailProductImg = multerMiddleware({
   getPath: (req) => ['retail-products'],
 })
 const uploadBlankProductImg = multerMiddleware({
-  getPath: (req) => ['BlankProduct'],
+  getPath: (req) => ['blank-broducts'],
 })
 
 uploadRouter.post(
