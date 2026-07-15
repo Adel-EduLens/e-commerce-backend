@@ -29,7 +29,7 @@ async function clearDatabase() {
   await prisma.coupon.deleteMany();
   await prisma.userNotification.deleteMany();
   await prisma.notifyMeSubscription.deleteMany();
-  await prisma.retailProductRating.deleteMany();
+  await prisma.retailProductReview.deleteMany();
   await prisma.review.deleteMany();
   await prisma.address.deleteMany();
 
@@ -295,29 +295,28 @@ async function main() {
     },
   });
 
-  const [retailClothing, retailShoes, retailAccessories] = await Promise.all([
+  const [retailClothing, retailShoes, retailAccessories, retailBrand] = await Promise.all([
     prisma.retailCategory.create({
       data: {
         name: 'Rental Clothing',
-        slug: 'rental-clothing',
-        description: 'Rent standout apparel for shoots, events, and trips.',
-        imageUrl: productImages[0],
+        image: productImages[0],
       },
     }),
     prisma.retailCategory.create({
       data: {
         name: 'Rental Shoes',
-        slug: 'rental-shoes',
-        description: 'Short-term footwear rentals for styled looks.',
-        imageUrl: productImages[2],
+        image: productImages[2],
       },
     }),
     prisma.retailCategory.create({
       data: {
         name: 'Rental Accessories',
-        slug: 'rental-accessories',
-        description: 'Bags, caps, and accessories available for rental.',
-        imageUrl: productImages[1],
+        image: productImages[1],
+      },
+    }),
+    prisma.retailBrand.create({
+      data: {
+        name: 'Nasu Archive',
       },
     }),
   ]);
@@ -325,17 +324,15 @@ async function main() {
   const retailJacket = await prisma.retailProduct.create({
     data: {
       name: 'Vintage Denim Jacket',
-      slug: 'vintage-denim-jacket',
       description:
         'Statement denim jacket available to rent for shoots, events, and weekend styling.',
-      shortDescription: 'Vintage rental jacket',
       price: 900,
-      discountPrice: 750,
       stock: 6,
       sku: 'RENT-JACKET-001',
-      brand: 'Nasu Archive',
       isFeatured: true,
       categoryId: retailClothing.id,
+      traderId: trader.id,
+      brandId: retailBrand.id,
       depositAmount: 300,
       securityDeposit: 1200,
       termsAndConditions:
@@ -344,19 +341,19 @@ async function main() {
         'ID verification is used only for rental security and order support.',
       images: {
         createMany: {
-          data: [{ url: productImages[3], alt: 'Vintage denim jacket', isMain: true }],
+          data: [{ url: productImages[3], color: 'Blue' }],
         },
       },
       colors: {
         createMany: {
-          data: [{ name: 'Blue', hexCode: '#315C8A' }],
+          data: [{ color: 'Blue' }],
         },
       },
       sizes: {
         createMany: {
           data: [
-            { name: 'M', stock: 3 },
-            { name: 'L', stock: 3 },
+            { size: 'M', quantity: 3, color: 'Blue' },
+            { size: 'L', quantity: 3, color: 'Blue' },
           ],
         },
       },
@@ -366,17 +363,15 @@ async function main() {
   const retailSneakers = await prisma.retailProduct.create({
     data: {
       name: 'White Platform Sneakers',
-      slug: 'white-platform-sneakers',
       description:
         'Clean white sneakers for rentals where the look matters more than owning another pair.',
-      shortDescription: 'Platform sneaker rental',
       price: 650,
-      discountPrice: 520,
       stock: 8,
       sku: 'RENT-SHOE-001',
-      brand: 'Cairo Made',
       isFeatured: true,
       categoryId: retailShoes.id,
+      traderId: trader.id,
+      brandId: retailBrand.id,
       depositAmount: 250,
       securityDeposit: 900,
       termsAndConditions:
@@ -385,20 +380,20 @@ async function main() {
         'Rental details are stored for fulfillment and customer service.',
       images: {
         createMany: {
-          data: [{ url: productImages[2], alt: 'White platform sneakers', isMain: true }],
+          data: [{ url: productImages[2], color: 'White' }],
         },
       },
       colors: {
         createMany: {
-          data: [{ name: 'White', hexCode: '#FFFFFF' }],
+          data: [{ color: 'White' }],
         },
       },
       sizes: {
         createMany: {
           data: [
-            { name: '41', stock: 3 },
-            { name: '42', stock: 3 },
-            { name: '43', stock: 2 },
+            { size: '41', quantity: 3, color: 'White' },
+            { size: '42', quantity: 3, color: 'White' },
+            { size: '43', quantity: 2, color: 'White' },
           ],
         },
       },
@@ -408,31 +403,30 @@ async function main() {
   const retailBag = await prisma.retailProduct.create({
     data: {
       name: 'Mini Event Bag',
-      slug: 'mini-event-bag',
       description: 'A compact rental bag sized for phone, wallet, keys, and event passes.',
-      shortDescription: 'Compact rental bag',
       price: 420,
       stock: 10,
       sku: 'RENT-BAG-001',
-      brand: 'Nasu',
       categoryId: retailAccessories.id,
+      traderId: trader.id,
+      brandId: retailBrand.id,
       depositAmount: 150,
       securityDeposit: 600,
       termsAndConditions: 'Return with all straps and hardware attached.',
       privacyPolicy: 'Order data is used only to process and support rentals.',
       images: {
         createMany: {
-          data: [{ url: productImages[1], alt: 'Mini event bag', isMain: true }],
+          data: [{ url: productImages[1], color: 'Black' }],
         },
       },
       colors: {
         createMany: {
-          data: [{ name: 'Black', hexCode: '#111111' }],
+          data: [{ color: 'Black' }],
         },
       },
       sizes: {
         createMany: {
-          data: [{ name: 'One Size', stock: 10 }],
+          data: [{ size: 'One Size', quantity: 10, color: 'Black' }],
         },
       },
     },
@@ -578,7 +572,7 @@ async function main() {
         productId: essentialTee.id,
       },
     }),
-    prisma.retailProductRating.create({
+    prisma.retailProductReview.create({
       data: {
         userId: user.id,
         retailProductId: retailJacket.id,
@@ -620,7 +614,7 @@ async function main() {
               productId: String(retailJacket.id),
               productType: 'RETAIL',
               title: retailJacket.name,
-              price: retailJacket.discountPrice ?? retailJacket.price,
+              price: retailJacket.price,
               quantity: 1,
               size: 'M',
               color: 'Blue',
@@ -628,7 +622,7 @@ async function main() {
             },
             {
               productId: oversizedHoodie.id,
-              productType: 'STANDARD',
+              productType: 'SHOP',
               title: oversizedHoodie.name,
               price: oversizedHoodie.flashDealPrice ?? oversizedHoodie.price,
               quantity: 2,
@@ -646,15 +640,15 @@ async function main() {
     prisma.wishlist.createMany({
       data: [
         { userId: user.id, productType: 'RETAIL', productId: String(retailSneakers.id) },
-        { userId: user.id, productType: 'STANDARD', productId: crossbodyBag.id },
+        { userId: user.id, productType: 'SHOP', productId: crossbodyBag.id },
         { userId: secondUser.id, productType: 'WHOLESALE', productId: wholesalePack.id },
       ],
     }),
     prisma.recentlyViewedProduct.createMany({
       data: [
-        { userId: user.id, productType: 'STANDARD', productId: essentialTee.id },
+        { userId: user.id, productType: 'SHOP', productId: essentialTee.id },
         { userId: user.id, productType: 'RETAIL', productId: String(retailJacket.id) },
-        { userId: secondUser.id, productType: 'STANDARD', productId: oversizedHoodie.id },
+        { userId: secondUser.id, productType: 'SHOP', productId: oversizedHoodie.id },
       ],
     }),
     prisma.recommend.createMany({
@@ -725,7 +719,7 @@ async function main() {
     data: {
       userId: user.id,
       productId: retailJacket.id,
-      productPrice: retailJacket.discountPrice ?? retailJacket.price,
+      productPrice: retailJacket.price,
       depositAmount: retailJacket.depositAmount,
       securityDeposit: retailJacket.securityDeposit,
       depositPaid: true,

@@ -1,22 +1,14 @@
 import { Router } from 'express'
-import { requireAdminAuth, requireAuth, requireRole } from '../middlewares/auth.middleware.js'
+import { requireAuth, requireRole } from '../middlewares/auth.middleware.js'
 import { multerMiddleware } from '../middlewares/middleware.js'
 import {
-  deleteImage,
-  getImages,
   uploadCategoryImage,
-  uploadImage,
   uploadProductImage,
   uploadRetailCategoryImage,
   uploadRetailProductImage,
-  vote,
 } from '../controllers/upload.controller.js'
 
 const uploadRouter = Router()
-
-const uploadVoteImage = multerMiddleware({
-  getPath: (req) => ['votes'],
-})
 
 const uploadProductImg = multerMiddleware({
   getPath: (req) => ['products'],
@@ -59,18 +51,5 @@ uploadRouter.post(
   uploadProductImg.single('image'),
   uploadProductImage,
 )
-
-uploadRouter.post(
-  '/',
-  requireAdminAuth,
-  uploadVoteImage.single('image'),
-  uploadImage
-)
-
-uploadRouter.get('/images', getImages)
-
-uploadRouter.put('/vote/:id', vote)
-
-uploadRouter.delete('/:id', requireAdminAuth, deleteImage)
 
 export default uploadRouter
