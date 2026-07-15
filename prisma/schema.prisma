@@ -584,23 +584,32 @@ model ShopBanner {
 model BlankProduct {
   id String @id @default(cuid())
 
-  name String // T-Shirt, Hoodie, Pants
+  name String
 
   description String? @db.LongText
-
-  material String // Cotton, Polyester
-
-  pattern String // Plain, Stripes, Printed
 
   price Float?
 
   isActive Boolean @default(true)
 
-  colors BlankProductColor[]
-  images BlankProductImage[]
+  materials BlankProductMaterial[]
+  colors    BlankProductColor[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model BlankProductMaterial {
+  id String @id @default(cuid())
+
+  material String
+
+  blankProductId String
+  blankProduct BlankProduct @relation(fields: [blankProductId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blankProductId, material])
 }
 
 model BlankProductColor {
@@ -609,9 +618,22 @@ model BlankProductColor {
   color String
 
   blankProductId String
-  blankProduct BlankProduct @relation( fields: [blankProductId], references: [id], onDelete: Cascade )
+  blankProduct BlankProduct @relation(fields: [blankProductId], references: [id], onDelete: Cascade)
+
+  images BlankProductImage[]
 
   createdAt DateTime @default(now())
+
+  @@unique([blankProductId, color])
+}
+
+enum ImageDirection {
+  FRONT
+  BACK
+  LEFT
+  RIGHT
+  TOP
+  BOTTOM
 }
 
 model BlankProductImage {
@@ -619,10 +641,14 @@ model BlankProductImage {
 
   url String
 
-  color String 
+  direction ImageDirection
 
-  blankProductId String
-  blankProduct BlankProduct @relation( fields: [blankProductId], references: [id], onDelete: Cascade )
+  colorId String
+  color BlankProductColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([colorId, direction])
 }
 
 model RetailOrder {

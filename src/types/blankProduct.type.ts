@@ -1,31 +1,35 @@
+import { ImageDirection } from "@prisma/client";
+
+export interface BlankProductMaterialInput {
+  material: string;
+}
+
+export interface BlankProductImageInput {
+  url: string;
+  direction: ImageDirection;
+}
+
+export interface BlankProductColorInput {
+  color: string;
+  images: BlankProductImageInput[];
+}
+
 export interface CreateBlankProductInput {
   name: string;
   description?: string | null;
-  material: string;
-  pattern: string;
   price?: number | null;
   isActive?: boolean;
-  colors: {
-    color: string;
-  }[];
-  images: {
-    url: string;
-    color: string;
-  }[];
+
+  materials: BlankProductMaterialInput[];
+  colors: BlankProductColorInput[];
 }
 
 export interface UpdateBlankProductInput {
   name?: string;
   description?: string | null;
-  material?: string;
-  pattern?: string;
   price?: number | null;
   isActive?: boolean;
-  colors?: {
-    color: string;
-  }[];
-  images?: {
-    url: string;
-    color: string;
-  }[];
+
+  materials?: BlankProductMaterialInput[];
+  colors?: BlankProductColorInput[];
 }

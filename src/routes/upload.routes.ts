@@ -6,6 +6,7 @@ import {
   uploadProductImage,
   uploadRetailCategoryImage,
   uploadRetailProductImage,
+  uploadBlankProductImage
 } from '../controllers/upload.controller.js'
 
 const uploadRouter = Router()
@@ -22,6 +23,17 @@ const uploadRetailCategoryImg = multerMiddleware({
 const uploadRetailProductImg = multerMiddleware({
   getPath: (req) => ['retail-products'],
 })
+const uploadBlankProductImg = multerMiddleware({
+  getPath: (req) => ['BlankProduct'],
+})
+
+uploadRouter.post(
+  '/blank-product-image',
+  requireAuth,
+  requireRole('trader'),
+  uploadBlankProductImg.single('image'),
+  uploadBlankProductImage,
+)
 
 uploadRouter.post(
   '/category-image',

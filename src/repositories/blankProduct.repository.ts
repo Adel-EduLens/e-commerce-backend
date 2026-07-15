@@ -1,15 +1,15 @@
 import prisma from "../utils/prismaClient.js";
+
 import type {
   CreateBlankProductInput,
   UpdateBlankProductInput,
 } from "../types/blankProduct.type.js";
+
 class BlankProductRepository {
   create(data: CreateBlankProductInput) {
     return prisma.blankProduct.create({
       data: {
         name: data.name,
-        material: data.material,
-        pattern: data.pattern,
 
         ...(data.description !== undefined && {
           description: data.description,
@@ -23,18 +23,29 @@ class BlankProductRepository {
           isActive: data.isActive,
         }),
 
-        colors: {
-          create: data.colors,
+        materials: {
+          create: data.materials,
         },
 
-        images: {
-          create: data.images,
+        colors: {
+          create: data.colors.map((color) => ({
+            color: color.color,
+
+            images: {
+              create: color.images,
+            },
+          })),
         },
       },
 
       include: {
-        colors: true,
-        images: true,
+        materials: true,
+
+        colors: {
+          include: {
+            images: true,
+          },
+        },
       },
     });
   }
@@ -42,9 +53,13 @@ class BlankProductRepository {
   findAll() {
     return prisma.blankProduct.findMany({
       include: {
-        colors: true,
+        materials: true,
 
-        images: true,
+        colors: {
+          include: {
+            images: true,
+          },
+        },
       },
 
       orderBy: {
@@ -60,65 +75,89 @@ class BlankProductRepository {
       },
 
       include: {
-        colors: true,
+        materials: true,
 
-        images: true,
+        colors: {
+          include: {
+            images: true,
+          },
+        },
       },
     });
   }
 
   async update(id: string, data: UpdateBlankProductInput) {
-    const updateData = {
-      ...(data.name !== undefined && {
-        name: data.name,
-      }),
+    return prisma.$transaction(async (tx) => {
+      if (data.materials !== undefined) {
+        await tx.blankProductMaterial.deleteMany({
+          where: {
+            blankProductId: id,
+          },
+        });
+      }
 
-      ...(data.description !== undefined && {
-        description: data.description,
-      }),
+      if (data.colors !== undefined) {
+        await tx.blankProductColor.deleteMany({
+          where: {
+            blankProductId: id,
+          },
+        });
+      }
 
-      ...(data.material !== undefined && {
-        material: data.material,
-      }),
-
-      ...(data.pattern !== undefined && {
-        pattern: data.pattern,
-      }),
-
-      ...(data.price !== undefined && {
-        price: data.price,
-      }),
-
-      ...(data.isActive !== undefined && {
-        isActive: data.isActive,
-      }),
-
-      ...(data.colors !== undefined && {
-        colors: {
-          deleteMany: {},
-          create: data.colors,
+      return tx.blankProduct.update({
+        where: {
+          id,
         },
-      }),
 
-      ...(data.images !== undefined && {
-        images: {
-          deleteMany: {},
-          create: data.images,
+        data: {
+          ...(data.name !== undefined && {
+            name: data.name,
+          }),
+
+          ...(data.description !== undefined && {
+            description: data.description,
+          }),
+
+          ...(data.price !== undefined && {
+            price: data.price,
+          }),
+
+          ...(data.isActive !== undefined && {
+            isActive: data.isActive,
+          }),
+
+          ...(data.materials !== undefined && {
+            materials: {
+              create: data.materials,
+            },
+          }),
+
+          ...(data.colors !== undefined && {
+            colors: {
+              create: data.colors.map((color) => ({
+                color: color.color,
+
+                images: {
+                  create: color.images,
+                },
+              })),
+            },
+          }),
         },
-      }),
-    };
 
-    return prisma.blankProduct.update({
-      where: {
-        id,
-      },
-      data: updateData,
-      include: {
-        colors: true,
-        images: true,
-      },
+        include: {
+          materials: true,
+
+          colors: {
+            include: {
+              images: true,
+            },
+          },
+        },
+      });
     });
   }
+
   delete(id: string) {
     return prisma.blankProduct.delete({
       where: {

@@ -1,75 +1,61 @@
 import Joi from "joi";
+import { ImageDirection } from "@prisma/client";
 
-
-const colorSchema = Joi.object({
-  color: Joi.string().required(),
+const materialSchema = Joi.object({
+  material: Joi.string().trim().required(),
 });
-
 
 const imageSchema = Joi.object({
   url: Joi.string().uri().required(),
-  color: Joi.string().required(),
+
+  direction: Joi.string()
+    .valid(...Object.values(ImageDirection))
+    .required(),
 });
 
-
-export const createBlankProductSchema = Joi.object({
-
-  name: Joi.string()
-    .required()
-    .min(2),
-
-  description: Joi.string()
-    .allow("", null),
-
-  material: Joi.string()
-    .required(),
-
-  pattern: Joi.string()
-    .required(),
-
-  price: Joi.number()
-    .min(0)
-    .allow(null),
-
-  isActive: Joi.boolean()
-    .default(true),
-
-
-  colors: Joi.array()
-    .items(colorSchema)
-    .min(1)
-    .required(),
-
+const colorSchema = Joi.object({
+  color: Joi.string().trim().required(),
 
   images: Joi.array()
     .items(imageSchema)
     .min(1)
     .required(),
+});
 
+export const createBlankProductSchema = Joi.object({
+  name: Joi.string().trim().min(2).required(),
+
+  description: Joi.string().allow("", null),
+
+  price: Joi.number().min(0).allow(null),
+
+  isActive: Joi.boolean().default(true),
+
+  materials: Joi.array()
+    .items(materialSchema)
+    .min(1)
+    .required(),
+
+  colors: Joi.array()
+    .items(colorSchema)
+    .min(1)
+    .required(),
 });
 
 export const updateBlankProductSchema = Joi.object({
-  name: Joi.string().min(2),
+  name: Joi.string().trim().min(2),
 
-  description: Joi.string()
-    .allow("", null),
+  description: Joi.string().allow("", null),
 
-  material: Joi.string(),
-
-  pattern: Joi.string(),
-
-  price: Joi.number()
-    .min(0)
-    .allow(null),
+  price: Joi.number().min(0).allow(null),
 
   isActive: Joi.boolean(),
+
+  materials: Joi.array()
+    .items(materialSchema)
+    .min(1),
 
   colors: Joi.array()
     .items(colorSchema)
     .min(1),
-
-  images: Joi.array()
-    .items(imageSchema)
-    .min(1),
-
 }).min(1);
