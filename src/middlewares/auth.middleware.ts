@@ -81,7 +81,7 @@ export const optionalAuth = async (
   next: NextFunction
 ) => {
   try {
-    const token = req.headers.authorization
+    const token = req.headers.token as string
     if (!token) {
       return next()
     }
@@ -139,7 +139,7 @@ export const requireAdminAuth = async (
   next: NextFunction
 ) => {
   try {
-    const token = req.headers.authorization
+    const token = req.headers.token as string
 
     if (!token) {
       return next(new AppError('No token provided', 401))
