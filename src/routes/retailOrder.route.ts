@@ -45,13 +45,13 @@ router.post("/:id/pay-deposit", validateRequest(payDepositSchema), payDeposit);
 
 // ================= ADMIN =================
 
-router.get("/admin/all", requireAdminAuth, getAllRetailOrders);
+router.get("/trader/all", requireAuth, requireRole("trader"), getAllRetailOrders);
 
-router.patch("/admin/:id/verify-id", requireAdminAuth, verifyId);
+router.patch("/trader/:id/verify-id", requireAuth, requireRole("trader"), verifyId);
 
 router.patch(
-  "/admin/:id/status",
-  requireAdminAuth,
+  "/trader/:id/status",
+  requireAuth, requireRole("trader"),
   validateRequest(updateRetailOrderStatusSchema),
   updateStatus,
 );

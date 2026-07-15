@@ -6,7 +6,7 @@ import {
   getRetailBrandById,
   updateRetailBrand,
   deleteRetailBrand,
-  getMyRetailBrands,
+
 } from "../controllers/retailBrand.controller.js";
 
 import { validateRequest } from "../middlewares/validation.middleware.js";
@@ -35,7 +35,6 @@ router.post(
   createRetailBrand,
 );
 
-router.get("/my", requireAuth, requireRole("trader"), getMyRetailBrands);
 
 router.patch(
   "/:id",
