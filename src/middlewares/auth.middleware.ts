@@ -2,6 +2,7 @@ import type { Response, NextFunction, Request } from 'express'
 import { verifyToken } from '../utils/jwt.util.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { traderProfileRepository } from '../repositories/traderProfile.repository.js'
+import { influencerRepository } from '../repositories/influencer.repository.js'
 import AppError from '../utils/AppError.util.js'
 
 // =======================================================
@@ -31,6 +32,18 @@ export const requireAuth = async (
         req.user = {
           id: trader.id,
           role: 'trader',
+        }
+        return next()
+      }
+    } else if (role === 'influencer') {
+      const influencer = await influencerRepository.findById(id, {
+        id: true,
+        role: true,
+      })
+      if (influencer) {
+        req.user = {
+          id: influencer.id,
+          role: 'influencer',
         }
         return next()
       }
@@ -84,6 +97,11 @@ export const optionalAuth = async (
       if (trader) {
         req.user = { id: trader.id, role: 'trader' }
       }
+    } else if (role === 'influencer') {
+      const influencer = await influencerRepository.findById(id, { id: true, role: true })
+      if (influencer) {
+        req.user = { id: influencer.id, role: 'influencer' }
+      }
     } else {
       const user = await userRepository.findById(id, { id: true, role: true })
       if (user) {
@@ -100,7 +118,7 @@ export const optionalAuth = async (
 // =======================================================
 // ROLE-BASED ACCESS CONTROL
 // =======================================================
-export const requireRole = (...roles: Array<'user' | 'trader' | 'admin'>) => {
+export const requireRole = (...roles: Array<'user' | 'trader' | 'admin' | 'influencer'>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError('Not authenticated', 401))

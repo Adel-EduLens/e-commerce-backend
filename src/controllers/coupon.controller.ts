@@ -51,7 +51,8 @@ export const getCoupon = asyncHandler(async (req: Request, res: Response) => {
 
 export const getCouponByCode = asyncHandler(async (req: Request, res: Response) => {
     const code = String(req.params.code).toUpperCase();
-    const result = await couponService.getByCode(code);
+    const userId = req.user ? Number(req.user.id) : undefined;
+    const result = await couponService.getByCode(code, userId);
 
     successResponse(res, {
         message: "Coupon is valid",

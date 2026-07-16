@@ -42,6 +42,10 @@ import retailCategoryRouter from './routes/retailCategory.routes.js'
 import retailBrandRouter from './routes/retailBrand.route.js'
 import retailReviewRouter from "./routes/retailReview.route.js";
 
+import influencerAuthRouter from './routes/influencer.auth.routes.js'
+import influencerRouter from './routes/influencer.routes.js'
+import traderInfluencerRouter from './routes/trader.influencer.routes.js'
+
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 dotenv.config({ path: envFile, override: true })
@@ -94,6 +98,10 @@ app.use('/api/collections', collectionRouter)
 app.use("/api/retail-category", retailCategoryRouter)
 app.use("/api/retail-brand", retailBrandRouter)
 app.use("/api/retail-reviews", retailReviewRouter);
+
+app.use('/api/influencer/auth', influencerAuthRouter)
+app.use('/api/influencer', influencerRouter)
+app.use('/api/trader/influencers', traderInfluencerRouter)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with Prisma!')

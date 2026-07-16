@@ -2,11 +2,18 @@ import AppError from "../utils/AppError.util.js";
 import { couponRepository, CouponCreateInput, CouponUpdateInput } from "../repositories/coupon.repository.js";
 import { categoryRepository } from "../repositories/category.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
+import { influencerRepository } from "../repositories/influencer.repository.js";
 
 export const couponService = {
   async create(data: CouponCreateInput) {
     const existing = await couponRepository.findByCode(data.code);
     if (existing) {
+      throw new AppError("Coupon code already exists", 400);
+    }
+
+    // Check influencer coupons too
+    const existingInfluencer = await influencerRepository.findCouponByCode(data.code);
+    if (existingInfluencer) {
       throw new AppError("Coupon code already exists", 400);
     }
 
@@ -39,12 +46,43 @@ export const couponService = {
     return coupon;
   },
 
-  async getByCode(code: string) {
+  async getByCode(code: string, userId?: number) {
+    // First check if it's an influencer coupon
+    const influencerCoupon = await influencerRepository.findCouponByCode(code);
+    if (influencerCoupon) {
+      if (!influencerCoupon.isActive) {
+        throw new AppError("Coupon is inactive", 400);
+      }
+      if (influencerCoupon.influencer.status !== "active") {
+        throw new AppError("Coupon is inactive", 400);
+      }
+
+      // Check one-time-per-user rule
+      if (userId) {
+        const existingUsage = await influencerRepository.findCouponUsage(
+          influencerCoupon.id,
+          userId
+        );
+        if (existingUsage) {
+          throw new AppError("You have already used this coupon", 400);
+        }
+      }
+
+      return {
+        id: influencerCoupon.id,
+        code: influencerCoupon.code,
+        discount: influencerCoupon.discountPercent,
+        type: "influencer" as const,
+        isActive: influencerCoupon.isActive,
+      };
+    }
+
+    // Fall through to trader coupon
     const coupon = await couponRepository.findByCode(code);
     if (!coupon) {
       throw new AppError("Coupon not found or invalid", 404);
     }
-    
+
     // Check if active
     if (!coupon.isActive) {
       throw new AppError("Coupon is inactive", 400);
@@ -59,8 +97,8 @@ export const couponService = {
     if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
       throw new AppError("Coupon usage limit has been reached", 400);
     }
-    
-    return coupon;
+
+    return { ...coupon, type: "trader" as const };
   },
 
   async use(code: string, userId: number) {

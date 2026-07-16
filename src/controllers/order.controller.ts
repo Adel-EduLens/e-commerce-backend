@@ -78,9 +78,9 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
         include: { images: true }
       });
       if (product) {
-        const hasFlashDeal = product.isFlashDeals && 
-                             product.flashDealPrice && 
-                             product.flashDealEndsAt && 
+        const hasFlashDeal = product.isFlashDeals &&
+                             product.flashDealPrice &&
+                             product.flashDealEndsAt &&
                              new Date(product.flashDealEndsAt) > new Date();
         dbPrice = (hasFlashDeal && product.flashDealPrice) ? product.flashDealPrice : product.price;
         dbTitle = product.name;
@@ -145,56 +145,96 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 
     // 2. If coupon code is used, validate it and record usage
     let calculatedDiscount = 0;
+    let isInfluencerCoupon = false;
+    let influencerCouponData: any = null;
+
     if (couponCode) {
-      const coupon = await tx.coupon.findUnique({
-        where: { code: couponCode.trim().toUpperCase() },
+      const trimmedCode = couponCode.trim().toUpperCase();
+
+      // First check if it's an influencer coupon
+      const influencerCoupon = await tx.influencerCoupon.findUnique({
+        where: { code: trimmedCode },
+        include: { influencer: { select: { id: true, status: true } } },
       });
 
-      if (coupon) {
-        if (!coupon.isActive || coupon.validUntil < new Date()) {
-          throw new AppError('Used coupon is invalid or has expired', 400);
+      if (influencerCoupon) {
+        isInfluencerCoupon = true;
+        influencerCouponData = influencerCoupon;
+
+        if (!influencerCoupon.isActive) {
+          throw new AppError('This coupon is no longer active', 400);
         }
-        if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
-          throw new AppError('Used coupon usage limit has been reached', 400);
-        }
-
-        // Calculate discount amount based on qualifying items
-        let qualifyingSubtotal = 0;
-        let hasMatchingItem = false;
-
-        for (const orderItem of resolvedItems) {
-          let applies = false;
-          if (!coupon.categoryId && !coupon.productId) {
-            applies = true;
-          } else if (coupon.productId && String(orderItem.productId) === String(coupon.productId)) {
-            applies = true;
-          } else if (coupon.categoryId && String(orderItem.categoryId) === String(coupon.categoryId)) {
-            applies = true;
-          }
-
-          if (applies) {
-            qualifyingSubtotal += orderItem.price * orderItem.quantity;
-            hasMatchingItem = true;
-          }
+        if (influencerCoupon.influencer.status !== 'active') {
+          throw new AppError('This coupon is no longer active', 400);
         }
 
-        if (hasMatchingItem) {
-          calculatedDiscount = (qualifyingSubtotal * coupon.discount) / 100;
-        }
-
-        // Increment usedCount
-        await tx.coupon.update({
-          where: { id: coupon.id },
-          data: { usedCount: { increment: 1 } },
-        });
-
-        // Create CouponUsage record
-        await tx.couponUsage.create({
-          data: {
-            couponId: coupon.id,
-            userId: userId,
+        // Check one-time-per-user rule
+        const existingUsage = await tx.influencerCouponUsage.findUnique({
+          where: {
+            couponId_userId: {
+              couponId: influencerCoupon.id,
+              userId: userId,
+            },
           },
         });
+        if (existingUsage) {
+          throw new AppError('You have already used this coupon', 400);
+        }
+
+        // Influencer coupons apply to entire cart
+        calculatedDiscount = (calculatedSubtotal * influencerCoupon.discountPercent) / 100;
+      } else {
+        // Fall through to trader coupon
+        const coupon = await tx.coupon.findUnique({
+          where: { code: trimmedCode },
+        });
+
+        if (coupon) {
+          if (!coupon.isActive || coupon.validUntil < new Date()) {
+            throw new AppError('Used coupon is invalid or has expired', 400);
+          }
+          if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+            throw new AppError('Used coupon usage limit has been reached', 400);
+          }
+
+          // Calculate discount amount based on qualifying items
+          let qualifyingSubtotal = 0;
+          let hasMatchingItem = false;
+
+          for (const orderItem of resolvedItems) {
+            let applies = false;
+            if (!coupon.categoryId && !coupon.productId) {
+              applies = true;
+            } else if (coupon.productId && String(orderItem.productId) === String(coupon.productId)) {
+              applies = true;
+            } else if (coupon.categoryId && String(orderItem.categoryId) === String(coupon.categoryId)) {
+              applies = true;
+            }
+
+            if (applies) {
+              qualifyingSubtotal += orderItem.price * orderItem.quantity;
+              hasMatchingItem = true;
+            }
+          }
+
+          if (hasMatchingItem) {
+            calculatedDiscount = (qualifyingSubtotal * coupon.discount) / 100;
+          }
+
+          // Increment usedCount
+          await tx.coupon.update({
+            where: { id: coupon.id },
+            data: { usedCount: { increment: 1 } },
+          });
+
+          // Create CouponUsage record
+          await tx.couponUsage.create({
+            data: {
+              couponId: coupon.id,
+              userId: userId,
+            },
+          });
+        }
       }
     }
 
@@ -248,7 +288,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       data: orderItemsData,
     });
 
-    // 4. Decrement product stock levels
+    // 5. Decrement product stock levels
     for (const item of items) {
       const pId = String(item.id || item.productId);
       const qty = parseInt(item.quantity || 1, 10);
@@ -352,6 +392,35 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       }
     }
 
+    // 6. If influencer coupon was used, create usage and commission records
+    if (isInfluencerCoupon && influencerCouponData) {
+      const commissionAmt = calculatedTotal * (influencerCouponData.commissionPercent / 100);
+      const eligibleAt = new Date();
+      eligibleAt.setDate(eligibleAt.getDate() + 15);
+
+      await tx.influencerCouponUsage.create({
+        data: {
+          couponId: influencerCouponData.id,
+          userId: userId,
+          orderId: order.id,
+          orderTotal: calculatedTotal,
+          discountAmount: calculatedDiscount,
+          commissionAmount: commissionAmt,
+        },
+      });
+
+      await tx.influencerCommission.create({
+        data: {
+          influencerId: influencerCouponData.influencerId,
+          orderId: order.id,
+          orderTotal: calculatedTotal,
+          commissionPercent: influencerCouponData.commissionPercent,
+          commissionAmount: commissionAmt,
+          eligibleAt: eligibleAt,
+        },
+      });
+    }
+
     // Return the created order with its items included
     return tx.order.findUnique({
       where: { id: order.id },
@@ -364,7 +433,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   successResponse(res, {
     message: 'Order created successfully',
     data: result,
-    statusCode: 201, // or 201 Created
+    statusCode: 201,
   });
 });
 
@@ -453,7 +522,7 @@ export const getTraderOrders = asyncHandler(async (req: Request, res: Response) 
       subtotal: `EGP ${traderSubtotal.toFixed(2)}`,
       shipping: `EGP ${order.shipping.toFixed(2)}`,
       discount: `EGP ${order.discount.toFixed(2)}`,
-      status: order.status, // PENDING, PROCESSING, SHIPPED, COMPLETED, CANCELLED
+      status: order.status,
       items: traderItems.map((item) => ({
         id: item.productId,
         productId: item.productId,
@@ -480,7 +549,7 @@ export const updateTraderOrderStatus = asyncHandler(async (req: Request, res: Re
   }
 
   const id = String(req.params.id);
-  const { status } = req.body; // PENDING, PROCESSING, SHIPPED, COMPLETED, CANCELLED
+  const { status } = req.body;
 
   if (!status) {
     throw new AppError('Please provide a status update', 400);

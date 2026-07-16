@@ -32,6 +32,8 @@ model User {
   addresses Address[]
   cart      Cart?
   retailOrders RetailOrder[]
+
+  influencerCouponUsages InfluencerCouponUsage[]
 }
 
 model Address {
@@ -487,6 +489,9 @@ model Order {
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  influencerCouponUsage  InfluencerCouponUsage?
+  influencerCommissions  InfluencerCommission[]
 }
 
 model OrderItem {
@@ -683,4 +688,100 @@ model RetailOrder {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ============ Influencer System ============
+
+model Influencer {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String
+  phone     String?
+  status    String   @default("active") // active, suspended
+  role      String   @default("influencer")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coupon              InfluencerCoupon?
+  commissionRecords   InfluencerCommission[]
+  settlements         InfluencerSettlement[]
+}
+
+model InfluencerCoupon {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  discountPercent   Float
+  commissionPercent Float
+  isActive          Boolean  @default(true)
+
+  influencerId      Int      @unique
+  influencer        Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  usages            InfluencerCouponUsage[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model InfluencerCouponUsage {
+  id               String   @id @default(cuid())
+
+  couponId         String
+  coupon           InfluencerCoupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  userId           Int
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orderId          String   @unique
+  order            Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  orderTotal       Float
+  discountAmount   Float
+  commissionAmount Float
+
+  usedAt           DateTime @default(now())
+
+  @@unique([couponId, userId])
+}
+
+model InfluencerCommission {
+  id                String   @id @default(cuid())
+
+  influencerId      Int
+  influencer        Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  orderId           String
+  order             Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  orderTotal        Float
+  commissionPercent Float
+  commissionAmount  Float
+
+  status            String   @default("PENDING") // PENDING, ELIGIBLE, SETTLED
+
+  eligibleAt        DateTime
+
+  settlementId      String?
+  settlement        InfluencerSettlement? @relation(fields: [settlementId], references: [id])
+
+  createdAt         DateTime @default(now())
+}
+
+model InfluencerSettlement {
+  id              String   @id @default(cuid())
+
+  influencerId    Int
+  influencer      Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  totalAmount     Float
+  periodStart     DateTime
+  periodEnd       DateTime
+
+  status          String   @default("PENDING") // PENDING, PAID
+  paidAt          DateTime?
+
+  commissions     InfluencerCommission[]
+
+  createdAt       DateTime @default(now())
 }
