@@ -4,10 +4,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { globalErrorHandler } from './utils/globalErrorHandler.util.js'
 import authRouter from './routes/auth.routes.js'
-import adminAuthRouter from './routes/admin.auth.routes.js'
 import prizeRouter from './routes/prize.route.js'
-import FAQRouter from './routes/admin.FAQ.routes.js'
-import adminUserRouter from './routes/admin.user.routes.js'
 import categoryRouter from './routes/category.route.js'
 import productRouter from './routes/product.route.js'
 import reviewRouter from './routes/review.route.js'
@@ -29,6 +26,7 @@ import notifyMeRouter from './routes/notifyMe.routes.js'
 import userNotificationRouter from './routes/userNotification.routes.js'
 import traderHelpCenterRouter from './routes/trader.helpCenter.routes.js'
 import traderDesignRouter from './routes/trader.design.routes.js'
+import traderFAQRouter from './routes/trader.faq.routes.js'
 import wishlistRouter from './routes/wishlist.routes.js'
 import recommendRouter from './routes/recommend.routes.js'
 import recentlyViewedRouter from './routes/recentlyViewed.routes.js'
@@ -67,9 +65,6 @@ app.use('/api/user', userRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/trader', traderRouter)
 app.use('/api/auth', authRouter)
-app.use('/api/admin/faqs', FAQRouter)
-app.use('/api/admin/auth', adminAuthRouter)
-app.use('/api/admin/users', adminUserRouter)
 app.use('/api/prizes', prizeRouter)
 app.use('/api/products', productRouter)
 app.use('/api/categories', categoryRouter)
@@ -84,6 +79,7 @@ app.use('/api/notify-me', notifyMeRouter)
 app.use('/api/notifications', userNotificationRouter)
 app.use('/api/trader/help-center', traderHelpCenterRouter)
 app.use('/api/trader/designs', traderDesignRouter)
+app.use('/api/trader/faqs', traderFAQRouter)
 app.use('/api/wishlist', wishlistRouter)
 app.use('/api/recommend', recommendRouter)
 app.use('/api/recently-viewed', recentlyViewedRouter)

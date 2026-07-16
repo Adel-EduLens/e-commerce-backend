@@ -14,7 +14,7 @@ export const createCategory = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getCategories = asyncHandler(async (req: Request, res: Response) => {
-  const isWholesale = req.query.isWholesale === 'true' ? true : req.query.isWholesale === 'false' ? false : undefined;
+  const isWholesale = req.query.isWholesale === 'true';
   const result = await categoryService.getAll(isWholesale);
 
   successResponse(res, {

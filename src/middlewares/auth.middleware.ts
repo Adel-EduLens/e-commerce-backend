@@ -1,7 +1,6 @@
 import type { Response, NextFunction, Request } from 'express'
 import { verifyToken } from '../utils/jwt.util.js'
 import { userRepository } from '../repositories/user.repository.js'
-import { adminRepository } from '../repositories/admin.repository.js'
 import { traderProfileRepository } from '../repositories/traderProfile.repository.js'
 import AppError from '../utils/AppError.util.js'
 
@@ -23,16 +22,7 @@ export const requireAuth = async (
     const id = Number(decoded.id)
     const role = decoded.role
 
-    if (role === 'admin') {
-      const admin = await adminRepository.findById(id, { id: true, role: true })
-      if (admin) {
-        req.user = {
-          id: admin.id,
-          role: 'admin',
-        }
-        return next()
-      }
-    } else if (role === 'trader') {
+    if (role === 'trader') {
       const trader = await traderProfileRepository.findById(id, {
         id: true,
         role: true,
@@ -89,13 +79,7 @@ export const optionalAuth = async (
     const decoded = verifyToken(token)
     const id = Number(decoded.id)
     const role = decoded.role
-
-    if (role === 'admin') {
-      const admin = await adminRepository.findById(id, { id: true, role: true })
-      if (admin) {
-        req.user = { id: admin.id, role: 'admin' }
-      }
-    } else if (role === 'trader') {
+    if (role === 'trader') {
       const trader = await traderProfileRepository.findById(id, { id: true, role: true })
       if (trader) {
         req.user = { id: trader.id, role: 'trader' }
@@ -144,20 +128,6 @@ export const requireAdminAuth = async (
     if (!token) {
       return next(new AppError('No token provided', 401))
     }
-    const decoded = verifyToken(token)
-    const admin = await adminRepository.findById(Number(decoded.id), {
-      id: true,
-      role: true,
-    })
-
-    if (!admin) {
-      return next(new AppError('Admin not found', 401))
-    }
-    req.user = {
-      id: admin.id,
-      role: 'admin',
-    }
-
     next()
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError') {
