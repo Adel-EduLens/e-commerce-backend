@@ -117,7 +117,13 @@ class InfluencerRepository {
           select: { id: true, name: true, email: true, phone: true },
         },
         order: {
-          select: { id: true, status: true },
+          select: {
+            id: true,
+            status: true,
+            items: {
+              select: { title: true, price: true, quantity: true, size: true, color: true, imageSrc: true },
+            },
+          },
         },
       },
       orderBy: { usedAt: "desc" },

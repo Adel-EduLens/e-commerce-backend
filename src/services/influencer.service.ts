@@ -163,6 +163,7 @@ export const influencerService = {
       orderTotal: u.orderTotal,
       discountAmount: u.discountAmount,
       commissionAmount: u.commissionAmount,
+      orderItems: u.order.items,
       usedAt: u.usedAt,
     }));
   },
