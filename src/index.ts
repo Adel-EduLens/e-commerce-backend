@@ -45,6 +45,7 @@ import retailReviewRouter from "./routes/retailReview.route.js";
 import influencerAuthRouter from './routes/influencer.auth.routes.js'
 import influencerRouter from './routes/influencer.routes.js'
 import traderInfluencerRouter from './routes/trader.influencer.routes.js'
+import { startInfluencerCrons } from './cron/influencer.cron.js'
 
 const envFile =
   process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
@@ -116,6 +117,7 @@ const startServer = async () => {
     console.log(
       `🚀 Server is running at http://localhost:${env.PORT} in ${env.NODE_ENV} mode`
     )
+    startInfluencerCrons()
   })
 }
 
