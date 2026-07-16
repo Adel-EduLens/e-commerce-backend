@@ -5,6 +5,7 @@ import {
   getInfluencerById,
   updateInfluencer,
   updateInfluencerCoupon,
+  getInfluencerCouponUsers,
   getInfluencerCommissions,
   getInfluencerSettlements,
   getAllSettlements,
@@ -35,6 +36,7 @@ router.patch("/settlements/:id/pay", markSettlementPaid);
 router.get("/:id", getInfluencerById);
 router.patch("/:id", validateRequest(updateInfluencerSchema), updateInfluencer);
 router.patch("/:id/coupon", validateRequest(updateInfluencerCouponSchema), updateInfluencerCoupon);
+router.get("/:id/coupon-users", getInfluencerCouponUsers);
 router.get("/:id/commissions", getInfluencerCommissions);
 router.get("/:id/settlements", getInfluencerSettlements);
 

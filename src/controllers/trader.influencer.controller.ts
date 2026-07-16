@@ -48,6 +48,15 @@ export const updateInfluencerCoupon = asyncHandler(async (req: Request, res: Res
   });
 });
 
+export const getInfluencerCouponUsers = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const result = await influencerService.getCouponUsers(id);
+  successResponse(res, {
+    message: "Coupon users fetched successfully",
+    data: result,
+  });
+});
+
 export const getInfluencerCommissions = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const result = await influencerService.getCommissions(id);
