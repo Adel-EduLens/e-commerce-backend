@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "cross-env NODE_ENV=production node dist/index.js",
-    "build": "npm install && npx tsc",
+    "build": "prisma generate",
     "seed": "node prisma/seed.js",
     "seed:collections": "node prisma/add-collections.js",
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
