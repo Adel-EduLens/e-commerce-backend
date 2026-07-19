@@ -6,6 +6,7 @@ interface CreateCategoryData {
   image?: string;
   appearOnHome?: boolean;
   isWholesale?: boolean;
+  isRetail?: boolean;
 }
 
 interface UpdateCategoryData {
@@ -13,6 +14,7 @@ interface UpdateCategoryData {
   image?: string;
   appearOnHome?: boolean;
   isWholesale?: boolean;
+  isRetail?: boolean;
 }
 
 export const categoryService = {
@@ -26,8 +28,8 @@ export const categoryService = {
     return categoryRepository.create(data);
   },
 
-  async getAll(isWholesale?: boolean) {
-    return categoryRepository.findAll(isWholesale);
+  async getAll(filters?: { isWholesale?: boolean; isRetail?: boolean }) {
+    return categoryRepository.findAll(filters);
   },
 
   async getById(id: string) {

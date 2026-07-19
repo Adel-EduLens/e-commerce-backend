@@ -35,6 +35,7 @@ import shopBannerRouter from './routes/shopBanner.route.js'
 import addressRouter from './routes/address.routes.js'
 import blankProductRouter from './routes/blankProduct.routes.js'
 import retailOrderRouter from './routes/retailOrder.route.js'
+import wholesaleOrderRouter from './routes/wholesaleOrder.routes.js'
 
 import collectionRouter from './routes/collection.routes.js'
 
@@ -95,6 +96,7 @@ app.use('/api/address', addressRouter)
 app.use('/api/blank-products', blankProductRouter)
 app.use('/api/retail-products', retailProductRouter)
 app.use('/api/retail-orders', retailOrderRouter)
+app.use('/api/wholesale-orders', wholesaleOrderRouter)
 app.use('/api/collections', collectionRouter)
 app.use("/api/retail-category", retailCategoryRouter)
 app.use("/api/retail-brand", retailBrandRouter)

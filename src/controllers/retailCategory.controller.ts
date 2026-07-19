@@ -16,9 +16,9 @@ export const getAllCategories = asyncHandler(async (_req: Request, res: Response
 });
 
 export const getCategoryById = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
 
-  const category = await retailCategoryService.getCategoryById(Number(id));
+  const category = await retailCategoryService.getCategoryById(id);
 
   successResponse(res, {
     statusCode: 200,
@@ -44,10 +44,10 @@ export const createCategory = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const updateCategory = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   const { name, image, appearOnHome } = req.body;
 
-  const category = await retailCategoryService.updateCategory(Number(id), {
+  const category = await retailCategoryService.updateCategory(id, {
     name,
     image,
     appearOnHome,
@@ -61,9 +61,9 @@ export const updateCategory = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const deleteCategory = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
 
-  await retailCategoryService.deleteCategory(Number(id));
+  await retailCategoryService.deleteCategory(id);
 
   successResponse(res, {
     statusCode: 200,

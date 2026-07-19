@@ -12,7 +12,10 @@ export const wholesaleService = {
       throw new AppError("Trader not found", 404);
     }
 
-    const category = await categoryRepository.findById(data.categoryId);
+    const category = await categoryRepository.findById(data.categoryId, {
+      isWholesale: true,
+      isRetail: false,
+    });
     if (!category) {
       throw new AppError("Category not found", 404);
     }
@@ -61,7 +64,10 @@ export const wholesaleService = {
     }
 
     if (data.categoryId) {
-      const category = await categoryRepository.findById(data.categoryId);
+      const category = await categoryRepository.findById(data.categoryId, {
+        isWholesale: true,
+        isRetail: false,
+      });
       if (!category) {
         throw new AppError("Category not found", 404);
       }

@@ -13,6 +13,7 @@ export const createCategorySchema = Joi.object({
 
   appearOnHome: Joi.boolean().optional().default(false),
   isWholesale: Joi.boolean().optional().default(false),
+  isRetail: Joi.boolean().optional().default(false),
 });
 
 export const updateCategorySchema = Joi.object({
@@ -24,4 +25,5 @@ export const updateCategorySchema = Joi.object({
 
   appearOnHome: Joi.boolean().optional(),
   isWholesale: Joi.boolean().optional(),
+  isRetail: Joi.boolean().optional(),
 });

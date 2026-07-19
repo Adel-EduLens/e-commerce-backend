@@ -2,7 +2,8 @@ import prismaClient from "../utils/prismaClient.js";
 
 export class RetailCategoryRepository {
   async findAll() {
-    return prismaClient.retailCategory.findMany({
+    return prismaClient.category.findMany({
+      where: { isRetail: true },
       include: {
         retailProducts: true,
       },
@@ -12,9 +13,9 @@ export class RetailCategoryRepository {
     });
   }
 
-  async findById(id: number) {
-    return prismaClient.retailCategory.findUnique({
-      where: { id },
+  async findById(id: string) {
+    return prismaClient.category.findFirst({
+      where: { id, isRetail: true },
       include: {
         retailProducts: true,
       },
@@ -22,8 +23,8 @@ export class RetailCategoryRepository {
   }
 
   async findByName(name: string) {
-    return prismaClient.retailCategory.findUnique({
-      where: { name },
+    return prismaClient.category.findFirst({
+      where: { name, isRetail: true },
     });
   }
 
@@ -32,8 +33,8 @@ export class RetailCategoryRepository {
     image?: string;
     appearOnHome?: boolean;
   }) {
-    return prismaClient.retailCategory.create({
-      data,
+    return prismaClient.category.create({
+      data: { ...data, isRetail: true, isWholesale: false },
       include: {
         retailProducts: true,
       },
@@ -41,14 +42,14 @@ export class RetailCategoryRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     data: Partial<{
       name: string;
       image: string;
       appearOnHome: boolean;
     }>
   ) {
-    return prismaClient.retailCategory.update({
+    return prismaClient.category.update({
       where: { id },
       data,
       include: {
@@ -57,8 +58,8 @@ export class RetailCategoryRepository {
     });
   }
 
-  async delete(id: number) {
-    return prismaClient.retailCategory.delete({
+  async delete(id: string) {
+    return prismaClient.category.delete({
       where: { id },
     });
   }

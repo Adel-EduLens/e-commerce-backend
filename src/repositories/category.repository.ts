@@ -8,10 +8,10 @@ class CategoryRepository {
     });
   }
 
-  async findAll(isWholesale?: boolean) {
+  async findAll(filters: { isWholesale?: boolean; isRetail?: boolean } = {}) {
     return prisma.category.findMany({
       where: {
-        ...(isWholesale !== undefined && { isWholesale }),
+        ...filters,
       },
       orderBy: {
         createdAt: "desc",
@@ -20,19 +20,21 @@ class CategoryRepository {
         _count: {
           select: {
             products: true,
+            retailProducts: true,
           },
         },
       },
     });
   }
 
-  async findById(id: string) {
-    return prisma.category.findUnique({
-      where: { id },
+  async findById(id: string, filters: { isWholesale?: boolean; isRetail?: boolean } = {}) {
+    return prisma.category.findFirst({
+      where: { id, ...filters },
       include: {
         _count: {
           select: {
             products: true,
+            retailProducts: true,
           },
         },
       },
@@ -47,7 +49,7 @@ class CategoryRepository {
     });
   }
   async getCategoryUsage(id: string) {
-    const [products, wholesales, coupons] = await Promise.all([
+    const [products, wholesales, coupons, retailProducts] = await Promise.all([
       prisma.product.count({
         where: {
           categoryId: id,
@@ -65,17 +67,21 @@ class CategoryRepository {
           categoryId: id,
         },
       }),
+      prisma.retailProduct.count({
+        where: { categoryId: id },
+      }),
     ]);
 
     return {
       products,
       wholesales,
       coupons,
+      retailProducts,
     };
   }
 
   async findByName(name: string) {
-    return prisma.category.findUnique({
+    return prisma.category.findFirst({
       where: { name },
     });
   }

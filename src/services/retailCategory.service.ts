@@ -8,7 +8,7 @@ export class RetailCategoryService {
     return retailCategoryRepository.findAll();
   }
 
-  async getCategoryById(id: number) {
+  async getCategoryById(id: string) {
     const category = await retailCategoryRepository.findById(id);
 
     if (!category) {
@@ -33,7 +33,7 @@ export class RetailCategoryService {
   }
 
   async updateCategory(
-    id: number,
+    id: string,
     data: Partial<{
       name: string;
       image: string;
@@ -57,7 +57,7 @@ export class RetailCategoryService {
     return retailCategoryRepository.update(id, data);
   }
 
-  async deleteCategory(id: number) {
+  async deleteCategory(id: string) {
     const category = await retailCategoryRepository.findById(id);
 
     if (!category) {

@@ -38,7 +38,6 @@ async function clearDatabase() {
   await prisma.retailProductSize.deleteMany();
   await prisma.retailProduct.deleteMany();
   await prisma.retailBrand.deleteMany();
-  await prisma.retailCategory.deleteMany();
 
   await prisma.wholesaleSize.deleteMany();
   await prisma.wholesaleColor.deleteMany();
@@ -286,10 +285,83 @@ async function main() {
           {
             color: 'Black',
             sizes: { createMany: { data: [{ size: 'M' }, { size: 'L' }] } },
+            stock: 60,
           },
           {
             color: 'White',
             sizes: { createMany: { data: [{ size: 'S' }, { size: 'M' }] } },
+            stock: 60,
+          },
+        ],
+      },
+    },
+  });
+
+  const essentialWholesalePack = await prisma.wholesale.create({
+    data: {
+      name: 'Essential Tee Pack (50pcs)',
+      description: 'Bulk pack of premium boxy fit blank t-shirts in essential colors.',
+      price: 15000,
+      minOrder: 1,
+      isBestDeal: false,
+      isMostPopular: true,
+      sku: 'WHOLE-TEE-001',
+      stock: 300,
+      brand: 'Nasu',
+      rating: 4.6,
+      traderId: trader.id,
+      categoryId: essentials.id,
+      images: {
+        createMany: {
+          data: [
+            { url: productImages[2], color: 'White' },
+            { url: productImages[3], color: 'Navy' },
+          ],
+        },
+      },
+      wholesaleColors: {
+        create: [
+          {
+            color: 'White',
+            sizes: { createMany: { data: [{ size: 'S' }, { size: 'M' }, { size: 'L' }] } },
+            stock: 150,
+          },
+          {
+            color: 'Navy',
+            sizes: { createMany: { data: [{ size: 'M' }, { size: 'L' }, { size: 'XL' }] } },
+            stock: 150,
+          },
+        ],
+      },
+    },
+  });
+
+  const accessoryWholesalePack = await prisma.wholesale.create({
+    data: {
+      name: 'Utility Bag wholesale pack',
+      description: 'Bulk package of our best selling utility crossbody bags.',
+      price: 9500,
+      minOrder: 10,
+      isBestDeal: true,
+      sku: 'WHOLE-BAG-001',
+      stock: 80,
+      brand: 'Nasu',
+      rating: 4.5,
+      traderId: trader.id,
+      categoryId: accessories.id,
+      images: {
+        createMany: {
+          data: [
+            { url: productImages[1], color: 'Olive' },
+          ],
+        },
+      },
+      wholesaleColors: {
+        create: [
+          {
+            color: 'Olive',
+            sizes: { createMany: { data: [{ size: 'One Size' }] } },
+            stock: 80,
           },
         ],
       },
@@ -297,22 +369,25 @@ async function main() {
   });
 
   const [retailClothing, retailShoes, retailAccessories, retailBrand] = await Promise.all([
-    prisma.retailCategory.create({
+    prisma.category.create({
       data: {
         name: 'Rental Clothing',
         image: productImages[0],
+        isRetail: true,
       },
     }),
-    prisma.retailCategory.create({
+    prisma.category.create({
       data: {
         name: 'Rental Shoes',
         image: productImages[2],
+        isRetail: true,
       },
     }),
-    prisma.retailCategory.create({
+    prisma.category.create({
       data: {
         name: 'Rental Accessories',
         image: productImages[1],
+        isRetail: true,
       },
     }),
     prisma.retailBrand.create({

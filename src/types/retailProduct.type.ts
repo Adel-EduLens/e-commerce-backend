@@ -1,6 +1,6 @@
 export interface RetailProductFilters {
   search?: string;
-  categoryId?: number;
+  categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
   sort?: "latest" | "price_asc" | "price_desc";

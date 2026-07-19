@@ -27,7 +27,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const result = await retailProductService.getAll({
     search: typeof req.query.search === "string" ? req.query.search : undefined,
 
-    categoryId: req.query.categoryId ? Number(req.query.categoryId) : undefined,
+    categoryId: typeof req.query.categoryId === "string" ? req.query.categoryId : undefined,
 
     brandId:
       typeof req.query.brandId === "string" ? req.query.brandId : undefined,
@@ -63,17 +63,15 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
 
 export const getRecommendations = asyncHandler(
   async (req: Request, res: Response) => {
-    let categories: number[] | undefined;
+    let categories: string[] | undefined;
 
     if (typeof req.query.categories === "string") {
       categories = req.query.categories
         .split(",")
-        .map(Number)
-        .filter((id) => !Number.isNaN(id));
+        .filter(Boolean);
     } else if (Array.isArray(req.query.categories)) {
       categories = (req.query.categories as string[])
-        .map(Number)
-        .filter((id) => !Number.isNaN(id));
+        .filter(Boolean);
     }
 
     const result = await retailProductService.getRecommendations({
@@ -86,10 +84,7 @@ export const getRecommendations = asyncHandler(
           ? Number(req.query.excludeId)
           : undefined,
 
-      categoryId:
-        typeof req.query.categoryId === "string"
-          ? Number(req.query.categoryId)
-          : undefined,
+      categoryId: typeof req.query.categoryId === "string" ? req.query.categoryId : undefined,
 
       size: typeof req.query.size === "string" ? req.query.size : undefined,
 

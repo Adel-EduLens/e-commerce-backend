@@ -525,11 +525,9 @@ class RetailProductRepository {
     });
   }
 
-  async categoryExists(categoryId: number) {
-    return prisma.retailCategory.findUnique({
-      where: {
-        id: categoryId,
-      },
+  async categoryExists(categoryId: string) {
+    return prisma.category.findFirst({
+      where: { id: categoryId, isRetail: true },
     });
   }
 

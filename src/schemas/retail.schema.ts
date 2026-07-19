@@ -38,7 +38,7 @@ export const createRetailProductSchema = Joi.object({
 
   isFeatured: Joi.boolean().optional(),
 
-  categoryId: Joi.number().required(),
+  categoryId: Joi.string().required(),
 
   images: Joi.array()
     .optional()
@@ -89,7 +89,7 @@ export const updateRetailProductSchema = Joi.object({
 
   isFeatured: Joi.boolean().optional(),
 
-  categoryId: Joi.number().optional(),
+  categoryId: Joi.string().optional(),
 
   images: Joi.array()
     .optional()

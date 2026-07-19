@@ -33,6 +33,7 @@ model User {
   addresses Address[]
   cart      Cart?
   retailOrders RetailOrder[]
+  wholesaleOrders WholesaleOrder[]
 
   influencerCouponUsages InfluencerCouponUsage[]
 }
@@ -136,15 +137,20 @@ model HelpCenterCategory {
 
 model Category {
   id         String      @id @default(cuid())
-  name       String      @unique
+  name       String
   products   Product[]
   wholesales Wholesale[]
   coupons    Coupon[]
+  retailProducts RetailProduct[]
   image      String?
   appearOnHome   Boolean     @default(false)
   isWholesale    Boolean     @default(false)
+  isRetail       Boolean     @default(false)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+
+  @@unique([name, isWholesale, isRetail])
+  @@map("categories")
 }
 
 model Collection {
@@ -344,19 +350,6 @@ model Coupon {
 
 // ============ Retail Products ============
 
-model RetailCategory {
-  id   Int @id @default(autoincrement())
-
-  name String @unique
-
-  retailProducts RetailProduct[]
-
-  image        String?
-  appearOnHome Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
 model RetailProduct {
   id               Int      @id @default(autoincrement())
   name             String
@@ -370,8 +363,8 @@ model RetailProduct {
   colors           RetailProductColor[]
   sizes            RetailProductSize[]
 
-  categoryId       Int
-  category         RetailCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId       String
+  category         Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   rating           Float @default(0)
   reviews          RetailProductReview[]
@@ -689,6 +682,46 @@ model RetailOrder {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WholesaleOrder {
+  id            String      @id @default(cuid())
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String
+  phone         String
+  email         String
+  country       String
+  city          String
+  area          String
+  streetAddress String
+  apartment     String
+  mapAddress    String?
+  latitude      String?
+  longitude     String?
+  subtotal      Float
+  discount      Float
+  shipping      Float
+  total         Float
+  status        String      @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
+  paymentMethod String      @default("COD") // COD, CARD
+  items         WholesaleOrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model WholesaleOrderItem {
+  id               String  @id @default(cuid())
+  wholesaleOrderId String
+  wholesaleOrder   WholesaleOrder @relation(fields: [wholesaleOrderId], references: [id], onDelete: Cascade)
+  wholesaleId      String
+  title            String
+  price            Float
+  quantity         Int
+  size             String?
+  color            String?
+  imageSrc         String?
 }
 
 // ============ Influencer System ============

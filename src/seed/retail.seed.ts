@@ -55,23 +55,25 @@ async function main() {
   await prisma.retailProductColor.deleteMany()
   await prisma.retailProductSize.deleteMany()
   await prisma.retailProduct.deleteMany()
-  await prisma.retailCategory.deleteMany()
 
-  const clothing = await prisma.retailCategory.create({
+  const clothing = await prisma.category.create({
     data: {
-      name: 'Clothing'
+      name: 'Clothing',
+      isRetail: true,
     }
   })
 
-  const shoes = await prisma.retailCategory.create({
+  const shoes = await prisma.category.create({
     data: {
-      name: 'Shoes'
+      name: 'Shoes',
+      isRetail: true,
     }
   })
 
-  const accessories = await prisma.retailCategory.create({
+  const accessories = await prisma.category.create({
     data: {
-      name: 'Accessories'
+      name: 'Accessories',
+      isRetail: true,
     }
   })
 
