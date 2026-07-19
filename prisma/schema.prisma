@@ -19,20 +19,20 @@ model User {
   status    String   @default("active")
 
   reviews              Review[]
-  retailProductReviews   RetailProductReview[]
+  retailProductReviews RetailProductReview[]
   couponUsages         CouponUsage[]
   orders               Order[]
 
   notifyMeSubscriptions NotifyMeSubscription[]
 
-  notifications UserNotification[]
-  wishlists     Wishlist[]
+  notifications  UserNotification[]
+  wishlists      Wishlist[]
   recentlyViewed RecentlyViewedProduct[]
-  recommends    Recommend[]
+  recommends     Recommend[]
 
-  addresses Address[]
-  cart      Cart?
-  retailOrders RetailOrder[]
+  addresses       Address[]
+  cart            Cart?
+  retailOrders    RetailOrder[]
   wholesaleOrders WholesaleOrder[]
 
   influencerCouponUsages InfluencerCouponUsage[]
@@ -55,18 +55,18 @@ model Address {
 }
 
 model Trader {
-  id         Int         @id @default(autoincrement())
-  email      String      @unique
-  name       String?
-  password   String
-  createdAt  DateTime    @default(now())
-  phone      String?
-  address    String?
-  products   Product[]
-  wholesales Wholesale[]
-  coupons    Coupon[]
-  retailProducts  RetailProduct[] 
-  role       String      @default("trader")
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  name           String?
+  password       String
+  createdAt      DateTime        @default(now())
+  phone          String?
+  address        String?
+  products       Product[]
+  wholesales     Wholesale[]
+  coupons        Coupon[]
+  retailProducts RetailProduct[]
+  role           String          @default("trader")
 }
 
 model Admin {
@@ -136,33 +136,33 @@ model HelpCenterCategory {
 }
 
 model Category {
-  id         String      @id @default(cuid())
-  name       String
-  products   Product[]
-  wholesales Wholesale[]
-  coupons    Coupon[]
+  id             String          @id @default(cuid())
+  name           String
+  products       Product[]
+  wholesales     Wholesale[]
+  coupons        Coupon[]
   retailProducts RetailProduct[]
-  image      String?
-  appearOnHome   Boolean     @default(false)
-  isWholesale    Boolean     @default(false)
-  isRetail       Boolean     @default(false)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  image          String?
+  appearOnHome   Boolean         @default(false)
+  isWholesale    Boolean         @default(false)
+  isRetail       Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@unique([name, isWholesale, isRetail])
   @@map("categories")
 }
 
 model Collection {
-  id           String      @id @default(cuid())
-  name         String      @unique
-  description  String?     @db.Text
+  id           String   @id @default(cuid())
+  name         String   @unique
+  description  String?  @db.Text
   image        String
-  appearOnHome Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  appearOnHome Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  products     Product[]
+  products Product[]
 }
 
 model Product {
@@ -302,11 +302,9 @@ model WholesaleImage {
   wholesale   Wholesale @relation(fields: [wholesaleId], references: [id], onDelete: Cascade)
 }
 
-
-
 model WholesaleSize {
-  id       String @id @default(cuid())
-  size     String
+  id   String @id @default(cuid())
+  size String
 
   wholesaleColorId String
   wholesaleColor   WholesaleColor @relation(fields: [wholesaleColorId], references: [id], onDelete: Cascade)
@@ -351,74 +349,72 @@ model Coupon {
 // ============ Retail Products ============
 
 model RetailProduct {
-  id               Int      @id @default(autoincrement())
-  name             String
-  description      String?  @db.Text
-  price            Float
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String? @db.Text
+  price       Float
 
-  stock            Int      @default(0)
-  sku              String?  @unique
+  stock Int     @default(0)
+  sku   String? @unique
 
-  images           RetailProductImage[]
-  colors           RetailProductColor[]
-  sizes            RetailProductSize[]
+  images RetailProductImage[]
+  colors RetailProductColor[]
+  sizes  RetailProductSize[]
 
-  categoryId       String
-  category         Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  rating           Float @default(0)
-  reviews          RetailProductReview[]
+  rating  Float                 @default(0)
+  reviews RetailProductReview[]
 
-  traderId         Int
-  trader           Trader @relation(fields: [traderId], references: [id])
+  traderId Int
+  trader   Trader @relation(fields: [traderId], references: [id])
 
-  brandId          String?
-  brand            RetailBrand? @relation(fields: [brandId], references: [id])
+  brandId String?
+  brand   RetailBrand? @relation(fields: [brandId], references: [id])
 
-  isFeatured       Boolean @default(false)
+  isFeatured Boolean @default(false)
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  depositAmount       Float
-  securityDeposit     Float
-  termsAndConditions  String? @db.Text
-  privacyPolicy       String? @db.Text
+  depositAmount      Float
+  securityDeposit    Float
+  termsAndConditions String? @db.Text
+  privacyPolicy      String? @db.Text
 
-  retailOrders     RetailOrder[]
+  retailOrders RetailOrder[]
 }
 
 model RetailProductImage {
-  id        Int @id @default(autoincrement())
-  url       String
-  color     String?
+  id    Int     @id @default(autoincrement())
+  url   String
+  color String?
 
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-
-
 model RetailProductColor {
-  id        Int @id @default(autoincrement())
-  color     String
+  id    Int    @id @default(autoincrement())
+  color String
 
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model RetailProductSize {
-  id        Int @id @default(autoincrement())
-  size      String
-  quantity  Int @default(0)
-  color     String?
+  id       Int     @id @default(autoincrement())
+  size     String
+  quantity Int     @default(0)
+  color    String?
 
   productId Int
   product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model RetailProductReview {
-  id      String @id @default(cuid())
+  id String @id @default(cuid())
 
   rating  Int
   comment String? @db.Text
@@ -444,9 +440,6 @@ model RetailBrand {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
-
-
 
 model CouponUsage {
   id       String   @id @default(cuid())
@@ -484,8 +477,8 @@ model Order {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  influencerCouponUsage  InfluencerCouponUsage?
-  influencerCommissions  InfluencerCommission[]
+  influencerCouponUsage InfluencerCouponUsage?
+  influencerCommissions InfluencerCommission[]
 }
 
 model OrderItem {
@@ -533,48 +526,48 @@ model Cart {
 }
 
 model CartItem {
-  id          String   @id @default(cuid())
-  cartId      String
-  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
   productId   String
-  productType String   @default("RETAIL")
-  
-  title       String
-  price       Float
-  quantity    Int      @default(1)
-  size        String?
-  color       String?
-  imageSrc    String?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  productType String @default("RETAIL")
+
+  title    String
+  price    Float
+  quantity Int     @default(1)
+  size     String?
+  color    String?
+  imageSrc String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Recommend {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId   String
-  categoryId  String
-  type        String
-  timestamp   DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId  String
+  categoryId String
+  type       String
+  timestamp  DateTime @default(now())
 
   @@unique([userId, productId, type])
   @@map("recommend")
 }
 
 model ShopBanner {
-  id              String   @id @default(cuid())
+  id              String  @id @default(cuid())
   title           String
   description     String
   buttonText      String?
   buttonLink      String?
   image           String
-  backgroundColor String   @default("#C1121F")
-  isActive        Boolean  @default(true)
-  order           Int      @default(0)
-  type            String   @default("shop")
+  backgroundColor String  @default("#C1121F")
+  isActive        Boolean @default(true)
+  order           Int     @default(0)
+  type            String  @default("shop")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -604,7 +597,7 @@ model BlankProductMaterial {
   material String
 
   blankProductId String
-  blankProduct BlankProduct @relation(fields: [blankProductId], references: [id], onDelete: Cascade)
+  blankProduct   BlankProduct @relation(fields: [blankProductId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -617,7 +610,7 @@ model BlankProductColor {
   color String
 
   blankProductId String
-  blankProduct BlankProduct @relation(fields: [blankProductId], references: [id], onDelete: Cascade)
+  blankProduct   BlankProduct @relation(fields: [blankProductId], references: [id], onDelete: Cascade)
 
   images BlankProductImage[]
 
@@ -643,7 +636,7 @@ model BlankProductImage {
   direction ImageDirection
 
   colorId String
-  color BlankProductColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+  color   BlankProductColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -654,23 +647,23 @@ model RetailOrder {
   id String @id @default(cuid())
 
   userId Int
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   productId Int
-  product RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   RetailProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  productPrice Float
-  depositAmount Float
+  productPrice    Float
+  depositAmount   Float
   securityDeposit Float
 
   depositPaid Boolean @default(false)
-  paymentId String?
+  paymentId   String?
 
   idCardImage String
-  idVerified Boolean @default(false)
+  idVerified  Boolean @default(false)
 
-  startDate DateTime?
-  endDate DateTime?
+  startDate  DateTime?
+  endDate    DateTime?
   returnDate DateTime?
 
   status String @default("PENDING")
@@ -685,9 +678,9 @@ model RetailOrder {
 }
 
 model WholesaleOrder {
-  id            String      @id @default(cuid())
+  id            String               @id @default(cuid())
   userId        Int
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   firstName     String
   lastName      String
   phone         String
@@ -704,15 +697,15 @@ model WholesaleOrder {
   discount      Float
   shipping      Float
   total         Float
-  status        String      @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
-  paymentMethod String      @default("COD") // COD, CARD
+  status        String               @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
+  paymentMethod String               @default("COD") // COD, CARD
   items         WholesaleOrderItem[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 }
 
 model WholesaleOrderItem {
-  id               String  @id @default(cuid())
+  id               String         @id @default(cuid())
   wholesaleOrderId String
   wholesaleOrder   WholesaleOrder @relation(fields: [wholesaleOrderId], references: [id], onDelete: Cascade)
   wholesaleId      String
@@ -737,85 +730,85 @@ model Influencer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  coupon              InfluencerCoupon?
-  commissionRecords   InfluencerCommission[]
-  settlements         InfluencerSettlement[]
+  coupon            InfluencerCoupon?
+  commissionRecords InfluencerCommission[]
+  settlements       InfluencerSettlement[]
 }
 
 model InfluencerCoupon {
-  id                String   @id @default(cuid())
-  code              String   @unique
+  id                String  @id @default(cuid())
+  code              String  @unique
   discountPercent   Float
   commissionPercent Float
-  isActive          Boolean  @default(true)
+  isActive          Boolean @default(true)
 
-  influencerId      Int      @unique
-  influencer        Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  influencerId Int        @unique
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
-  usages            InfluencerCouponUsage[]
+  usages InfluencerCouponUsage[]
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model InfluencerCouponUsage {
-  id               String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  couponId         String
-  coupon           InfluencerCoupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  couponId String
+  coupon   InfluencerCoupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
 
-  userId           Int
-  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  orderId          String   @unique
-  order            Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   orderTotal       Float
   discountAmount   Float
   commissionAmount Float
 
-  usedAt           DateTime @default(now())
+  usedAt DateTime @default(now())
 
   @@unique([couponId, userId])
 }
 
 model InfluencerCommission {
-  id                String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  influencerId      Int
-  influencer        Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  influencerId Int
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
-  orderId           String
-  order             Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   orderTotal        Float
   commissionPercent Float
   commissionAmount  Float
 
-  status            String   @default("PENDING") // PENDING, ELIGIBLE, SETTLED
+  status String @default("PENDING") // PENDING, ELIGIBLE, SETTLED
 
-  eligibleAt        DateTime
+  eligibleAt DateTime
 
-  settlementId      String?
-  settlement        InfluencerSettlement? @relation(fields: [settlementId], references: [id])
+  settlementId String?
+  settlement   InfluencerSettlement? @relation(fields: [settlementId], references: [id])
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model InfluencerSettlement {
-  id              String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  influencerId    Int
-  influencer      Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  influencerId Int
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
-  totalAmount     Float
-  periodStart     DateTime
-  periodEnd       DateTime
+  totalAmount Float
+  periodStart DateTime
+  periodEnd   DateTime
 
-  status          String   @default("PENDING") // PENDING, PAID
-  paidAt          DateTime?
+  status String    @default("PENDING") // PENDING, PAID
+  paidAt DateTime?
 
-  commissions     InfluencerCommission[]
+  commissions InfluencerCommission[]
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 }

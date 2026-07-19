@@ -47,7 +47,7 @@ export class RetailCategoryRepository {
       name: string;
       image: string;
       appearOnHome: boolean;
-    }>
+    }>,
   ) {
     return prismaClient.category.update({
       where: { id },
@@ -62,5 +62,17 @@ export class RetailCategoryRepository {
     return prismaClient.category.delete({
       where: { id },
     });
+  }
+
+  async getCategoryUsage(id: number) {
+    const products = await prismaClient.retailProduct.count({
+      where: {
+        categoryId: id,
+      },
+    });
+
+    return {
+      products,
+    };
   }
 }
