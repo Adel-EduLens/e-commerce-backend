@@ -37,6 +37,20 @@ async function main() {
 
   console.info('✅ Seeded default test users (user@example.com / user2@example.com)')
 
+  let trader = await prisma.trader.findFirst()
+  if (!trader) {
+    trader = await prisma.trader.create({
+      data: {
+        id: 1,
+        email: 'trader@example.com',
+        name: 'Test Trader',
+        password: hashedPassword,
+        phone: '01000000002',
+        role: 'trader'
+      }
+    })
+  }
+
   await prisma.retailProductImage.deleteMany()
   await prisma.retailProductColor.deleteMany()
   await prisma.retailProductSize.deleteMany()
@@ -45,54 +59,39 @@ async function main() {
 
   const clothing = await prisma.retailCategory.create({
     data: {
-      name: 'Clothing',
-      slug: 'clothing',
-      description: 'Apparel and clothing items',
-      isActive: true
+      name: 'Clothing'
     }
   })
 
   const shoes = await prisma.retailCategory.create({
     data: {
-      name: 'Shoes',
-      slug: 'shoes',
-      description: 'Footwear and shoes',
-      isActive: true
+      name: 'Shoes'
     }
   })
 
   const accessories = await prisma.retailCategory.create({
     data: {
-      name: 'Accessories',
-      slug: 'accessories',
-      description: 'Fashion accessories',
-      isActive: true
+      name: 'Accessories'
     }
   })
 
   await prisma.retailProduct.create({
     data: {
       name: 'Black Hoodie',
-      slug: 'black-hoodie',
       description: 'Premium black hoodie for everyday comfort',
-      shortDescription: 'Premium hoodie',
       price: 850,
-      discountPrice: 699,
       stock: 10,
       sku: 'BH-001',
-      brand: 'Nasu',
       isFeatured: true,
-      isActive: true,
       categoryId: clothing.id,
+      traderId: trader.id,
       depositAmount: 0,
       securityDeposit: 0,
       images: {
         createMany: {
           data: [
             {
-              url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
-              alt: 'Black Hoodie',
-              isMain: true
+              url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'
             }
           ]
         }
@@ -101,8 +100,7 @@ async function main() {
         createMany: {
           data: [
             {
-              name: 'Black',
-              hexCode: '#000000'
+              color: 'Black'
             }
           ]
         }
@@ -110,8 +108,8 @@ async function main() {
       sizes: {
         createMany: {
           data: [
-            { name: 'M', stock: 5 },
-            { name: 'L', stock: 5 }
+            { size: 'M', quantity: 5 },
+            { size: 'L', quantity: 5 }
           ]
         }
       }
@@ -121,26 +119,20 @@ async function main() {
   await prisma.retailProduct.create({
     data: {
       name: 'White Sneakers',
-      slug: 'white-sneakers',
       description: 'Comfortable white sneakers with modern design',
-      shortDescription: 'Casual sneakers',
       price: 1200,
-      discountPrice: 999,
       stock: 15,
       sku: 'WS-001',
-      brand: 'Nasu',
       isFeatured: true,
-      isActive: true,
       categoryId: shoes.id,
+      traderId: trader.id,
       depositAmount: 0,
       securityDeposit: 0,
       images: {
         createMany: {
           data: [
             {
-              url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
-              alt: 'White Sneakers',
-              isMain: true
+              url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80'
             }
           ]
         }
@@ -149,8 +141,7 @@ async function main() {
         createMany: {
           data: [
             {
-              name: 'White',
-              hexCode: '#FFFFFF'
+              color: 'White'
             }
           ]
         }
@@ -158,8 +149,8 @@ async function main() {
       sizes: {
         createMany: {
           data: [
-            { name: '42', stock: 8 },
-            { name: '43', stock: 7 }
+            { size: '42', quantity: 8 },
+            { size: '43', quantity: 7 }
           ]
         }
       }
@@ -169,26 +160,20 @@ async function main() {
   await prisma.retailProduct.create({
     data: {
       name: 'Retail Cap',
-      slug: 'retail-cap',
       description: 'Stylish cap for everyday wear',
-      shortDescription: 'Fashion cap',
       price: 350,
-      discountPrice: 249,
       stock: 20,
       sku: 'RC-001',
-      brand: 'Nasu',
       isFeatured: false,
-      isActive: true,
       categoryId: accessories.id,
+      traderId: trader.id,
       depositAmount: 0,
       securityDeposit: 0,
       images: {
         createMany: {
           data: [
             {
-              url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
-              alt: 'Retail Cap',
-              isMain: true
+              url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80'
             }
           ]
         }
@@ -197,8 +182,7 @@ async function main() {
         createMany: {
           data: [
             {
-              name: 'Gray',
-              hexCode: '#808080'
+              color: 'Gray'
             }
           ]
         }
@@ -206,7 +190,7 @@ async function main() {
       sizes: {
         createMany: {
           data: [
-            { name: 'One Size', stock: 20 }
+            { size: 'One Size', quantity: 20 }
           ]
         }
       }

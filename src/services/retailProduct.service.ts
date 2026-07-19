@@ -27,7 +27,6 @@ async function notifyRetailRestock(
       type: "restock",
       productId: String(productId),
       imageUrl: imageUrl ?? null,
-      productId: String(productId),
     })),
   });
 

@@ -99,7 +99,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
           include: { images: true }
         });
         if (retailProduct) {
-          dbPrice = retailProduct.discountPrice || retailProduct.price;
+          dbPrice = retailProduct.price;
           dbTitle = retailProduct.name;
           dbImageSrc = retailProduct.images?.[0]?.url || '';
           dbCategoryId = String(retailProduct.categoryId);
@@ -341,13 +341,13 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
             const retailSize = await tx.retailProductSize.findFirst({
               where: {
                 productId: Number(pId),
-                name: item.size,
+                size: item.size,
               }
             });
             if (retailSize) {
               await tx.retailProductSize.update({
                 where: { id: retailSize.id },
-                data: { stock: Math.max(0, (retailSize.stock || 0) - qty) }
+                data: { quantity: Math.max(0, (retailSize.quantity || 0) - qty) }
               });
             }
           }

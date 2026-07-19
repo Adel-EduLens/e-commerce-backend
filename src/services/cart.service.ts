@@ -130,7 +130,7 @@ export const cartService = {
       });
       if (retailProduct) {
         title = retailProduct.name;
-        price = retailProduct.discountPrice || retailProduct.price;
+        price = retailProduct.price;
 
         // Resolve default/missing values
         if (!colorVal || colorVal === 'Default') {
@@ -138,7 +138,7 @@ export const cartService = {
             where: { productId: retailProduct.id }
           });
           if (firstColor) {
-            colorVal = firstColor.name;
+            colorVal = firstColor.color;
           }
         }
         if (!sizeVal || sizeVal === 'Default' || sizeVal.includes('XS - XXL')) {
@@ -146,7 +146,7 @@ export const cartService = {
             where: { productId: retailProduct.id }
           });
           if (firstSize) {
-            sizeVal = firstSize.name;
+            sizeVal = firstSize.size;
           }
         }
 
@@ -220,8 +220,8 @@ export const cartService = {
     const existingItem = await cartRepository.findCartItem(
       cart.id,
       String(finalProductId),
-      sizeVal,
-      colorVal
+      sizeVal || undefined,
+      colorVal || undefined
     );
 
     if (existingItem) {

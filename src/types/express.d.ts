@@ -5,7 +5,7 @@ declare global {
     interface Request {
       user?: {
         id: string | number;
-        role: 'user' | 'trader' | 'admin';
+        role: 'user' | 'trader' | 'admin' | 'influencer';
       };
     }
   }

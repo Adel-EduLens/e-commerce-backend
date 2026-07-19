@@ -33,12 +33,22 @@ export const influencerService = {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const influencer = await influencerRepository.create({
+    const createData: {
+      email: string;
+      name: string;
+      password: string;
+      phone?: string;
+    } = {
       name: data.name,
       email: data.email,
       password: hashedPassword,
-      phone: data.phone,
-    });
+    };
+
+    if (data.phone !== undefined) {
+      createData.phone = data.phone;
+    }
+
+    const influencer = await influencerRepository.create(createData);
 
     const coupon = await influencerRepository.createCoupon({
       code,
