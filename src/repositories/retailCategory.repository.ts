@@ -27,11 +27,7 @@ export class RetailCategoryRepository {
     });
   }
 
-  async create(data: {
-    name: string;
-    image?: string;
-    appearOnHome?: boolean;
-  }) {
+  async create(data: { name: string; image?: string; appearOnHome?: boolean }) {
     return prismaClient.retailCategory.create({
       data,
       include: {
@@ -46,7 +42,7 @@ export class RetailCategoryRepository {
       name: string;
       image: string;
       appearOnHome: boolean;
-    }>
+    }>,
   ) {
     return prismaClient.retailCategory.update({
       where: { id },
@@ -61,5 +57,16 @@ export class RetailCategoryRepository {
     return prismaClient.retailCategory.delete({
       where: { id },
     });
+  }
+  async getCategoryUsage(id: number) {
+    const products = await prismaClient.retailProduct.count({
+      where: {
+        categoryId: id,
+      },
+    });
+
+    return {
+      products,
+    };
   }
 }

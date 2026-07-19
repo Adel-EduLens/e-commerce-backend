@@ -371,7 +371,7 @@ model RetailProduct {
   sizes            RetailProductSize[]
 
   categoryId       Int
-  category         RetailCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category         RetailCategory @relation(fields: [categoryId], references: [id])
 
   rating           Float @default(0)
   reviews          RetailProductReview[]

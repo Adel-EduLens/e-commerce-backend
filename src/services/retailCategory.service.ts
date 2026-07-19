@@ -38,7 +38,7 @@ export class RetailCategoryService {
       name: string;
       image: string;
       appearOnHome: boolean;
-    }>
+    }>,
   ) {
     const category = await retailCategoryRepository.findById(id);
 
@@ -62,6 +62,14 @@ export class RetailCategoryService {
 
     if (!category) {
       throw new AppError("Category not found", 404);
+    }
+    const usage = await retailCategoryRepository.getCategoryUsage(id);
+
+    if (usage.products > 0) {
+      throw new AppError(
+        `Cannot delete category. It is used by ${usage.products} product${usage.products > 1 ? "s" : ""}.`,
+        400,
+      );
     }
 
     return retailCategoryRepository.delete(id);
