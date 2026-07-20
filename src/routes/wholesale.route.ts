@@ -7,6 +7,7 @@ import {
   getWholesale,
   updateWholesale,
   deleteWholesale,
+  addWholesaleColor,
 } from "../controllers/wholesale.controller.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
@@ -42,6 +43,13 @@ router.patch(
   requireAuth,
   requireRole("trader"),
   updateWholesale,
+);
+
+router.post(
+  "/:id/colors",
+  requireAuth,
+  requireRole("trader"),
+  addWholesaleColor,
 );
 
 router.delete("/:id", requireAuth, requireRole("trader"), deleteWholesale);

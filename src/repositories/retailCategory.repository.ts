@@ -67,7 +67,7 @@ export class RetailCategoryRepository {
   async getCategoryUsage(id: number) {
     const products = await prismaClient.retailProduct.count({
       where: {
-        categoryId: id,
+        categoryId: id.toString(),
       },
     });
 
@@ -75,4 +75,5 @@ export class RetailCategoryRepository {
       products,
     };
   }
+
 }

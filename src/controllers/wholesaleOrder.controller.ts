@@ -409,3 +409,178 @@ export const getUserWholesaleOrders = asyncHandler(async (req: Request, res: Res
   });
 });
 
+export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'trader') {
+    throw new AppError('Unauthorized: Trader access only', 401);
+  }
+
+  const id = String(req.params.id);
+  const { status, items, deletedItemIds } = req.body;
+
+  const traderId = Number(req.user.id);
+
+  const traderWholesales = await prisma.wholesale.findMany({
+    where: { traderId },
+    select: { id: true },
+  });
+
+  const traderWholesaleIds = traderWholesales.map((w) => w.id);
+
+  const order = await prisma.wholesaleOrder.findUnique({
+    where: { id },
+    include: { items: true },
+  });
+
+  if (!order) {
+    throw new AppError('Wholesale order not found', 404);
+  }
+
+  const ownsProduct = order.items.some((item) => traderWholesaleIds.includes(item.wholesaleId));
+  if (!ownsProduct) {
+    throw new AppError('Unauthorized: You do not own any products in this order', 403);
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    if (status) {
+      const allowedStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
+      if (!allowedStatuses.includes(status.toUpperCase())) {
+        throw new AppError('Invalid order status', 400);
+      }
+      await tx.wholesaleOrder.update({
+        where: { id },
+        data: { status: status.toUpperCase() },
+      });
+    }
+
+    if (items && Array.isArray(items)) {
+      for (const itemUpdate of items) {
+        if (itemUpdate.id) {
+          const existingItem = order.items.find(it => it.id === itemUpdate.id);
+          if (!existingItem) {
+            throw new AppError(`Item ${itemUpdate.id} not found in this order`, 404);
+          }
+
+          if (!traderWholesaleIds.includes(existingItem.wholesaleId)) {
+            throw new AppError(`Unauthorized to update item ${itemUpdate.id}`, 403);
+          }
+
+          const newQty = itemUpdate.quantity !== undefined ? parseInt(itemUpdate.quantity, 10) : existingItem.quantity;
+          const newPrice = itemUpdate.price !== undefined ? parseFloat(itemUpdate.price) : existingItem.price;
+
+          await tx.wholesaleOrderItem.update({
+            where: { id: itemUpdate.id },
+            data: {
+              quantity: newQty,
+              price: newPrice,
+            },
+          });
+        } else {
+          const { productId, quantity, price, color, size } = itemUpdate;
+          if (!productId || quantity === undefined || price === undefined) {
+            throw new AppError('Product ID, quantity, and price are required for new items', 400);
+          }
+
+          if (!traderWholesaleIds.includes(productId)) {
+            throw new AppError(`Unauthorized to add product ${productId} to this order`, 403);
+          }
+
+          const wholesale = await tx.wholesale.findUnique({
+            where: { id: productId },
+            include: { images: true }
+          });
+
+          if (!wholesale) {
+            throw new AppError(`Product not found: ${productId}`, 404);
+          }
+
+          const colorImage = wholesale.images.find(
+            img => img.color && img.color.toLowerCase() === (color || '').toLowerCase()
+          );
+          const dbImageSrc = colorImage ? colorImage.url : (wholesale.images?.[0]?.url || '');
+
+          await tx.wholesaleOrderItem.create({
+            data: {
+              wholesaleOrderId: id,
+              wholesaleId: productId,
+              title: wholesale.name,
+              price: parseFloat(price),
+              quantity: parseInt(quantity, 10),
+              color: color || null,
+              size: size || null,
+              imageSrc: dbImageSrc || null,
+            }
+          });
+        }
+      }
+    }
+
+    if (deletedItemIds && Array.isArray(deletedItemIds)) {
+      await tx.wholesaleOrderItem.deleteMany({
+        where: {
+          id: { in: deletedItemIds.map(String) },
+          wholesaleOrderId: id,
+        },
+      });
+    }
+
+    const updatedItems = await tx.wholesaleOrderItem.findMany({
+      where: { wholesaleOrderId: id }
+    });
+
+    const newSubtotal = updatedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const newTotal = newSubtotal + order.shipping;
+
+    const updatedOrder = await tx.wholesaleOrder.update({
+      where: { id },
+      data: {
+        subtotal: newSubtotal,
+        total: newTotal,
+      },
+      include: {
+        items: true,
+      }
+    });
+
+    return updatedOrder;
+  });
+
+  const traderItems = result.items.filter((item) => traderWholesaleIds.includes(item.wholesaleId));
+  const traderSubtotal = traderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
+  const formattedOrder = {
+    id: result.id,
+    orderId: `#WS-${result.id.slice(-8).toUpperCase()}`,
+    customer: `${result.firstName} ${result.lastName}`,
+    customerEmail: result.email,
+    customerPhone: result.phone,
+    address: `${result.apartment ? `Apt ${result.apartment}, ` : ''}${result.streetAddress}, ${result.area}, ${result.city}, ${result.country}`,
+    mapAddress: result.mapAddress,
+    latitude: result.latitude,
+    longitude: result.longitude,
+    date: new Date(result.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }),
+    time: new Date(result.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+    payment: result.paymentMethod === "COD" ? "Cash" : "Card",
+    total: `EGP ${result.total.toFixed(2)}`,
+    subtotal: `EGP ${traderSubtotal.toFixed(2)}`,
+    shipping: `EGP ${result.shipping.toFixed(2)}`,
+    discount: `EGP ${result.discount.toFixed(2)}`,
+    status: result.status,
+    items: traderItems.map((item) => ({
+      id: item.id,
+      productId: item.wholesaleId,
+      product: item.title,
+      quantity: item.quantity,
+      price: `EGP ${item.price.toFixed(2)}`,
+      subtotal: `EGP ${(item.price * item.quantity).toFixed(2)}`,
+      size: item.size,
+      color: item.color,
+      image: item.imageSrc || "",
+    })),
+  };
+
+  successResponse(res, {
+    message: 'Wholesale order updated successfully',
+    data: formattedOrder,
+  });
+});
+
