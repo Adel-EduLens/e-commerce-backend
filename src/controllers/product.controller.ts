@@ -236,13 +236,6 @@ const PRODUCT_FULL_INCLUDE = {
   
       if (!color) throw new AppError("color is required", 400);
 
-      const isBlank = product.productTypes.some((pt) => pt.type === "BLANK");
-      if (images && images.length) {
-        if (!isBlank && images.some((img) => img.direction)) {
-          throw new AppError("Image direction can only be specified for BLANK products", 400);
-        }
-      }
-
     const newColor = await prisma.productColor.create({
       data: {
         color,
@@ -267,7 +260,7 @@ const PRODUCT_FULL_INCLUDE = {
         data: images.map((img) => ({
           url: img.url,
           color,
-          direction: (img.direction as any) ?? null,
+          direction: (img.direction as any) || null,
           colorId: newColor.id,
           productId,
         })),
@@ -336,18 +329,13 @@ export const deleteProductColor = asyncHandler(
       };
   
       if (!images || !images.length) throw new AppError("images array is required", 400);
-  
-      const isBlank = product.productTypes.some((pt) => pt.type === "BLANK");
-      if (!isBlank && images.some((img) => img.direction)) {
-        throw new AppError("Image direction can only be specified for BLANK products", 400);
-      }
 
     await prisma.productImage.createMany({
       data: images.map((img) => ({
         url: img.url,
-        color: img.color ?? null,
-        direction: (img.direction as any) ?? null,
-        colorId: img.colorId ?? null,
+        color: img.color || null,
+        direction: (img.direction as any) || null,
+        colorId: img.colorId || null,
         productId,
       })),
     });
@@ -386,11 +374,6 @@ export const deleteProductColor = asyncHandler(
   
       if (!images || !images.length) throw new AppError("images array is required", 400);
 
-      const isBlank = product.productTypes.some((pt) => pt.type === "BLANK");
-      if (!isBlank && images.some((img) => img.direction)) {
-        throw new AppError("Image direction can only be specified for BLANK products", 400);
-      }
-
     // Delete old images for this color
     await prisma.productImage.deleteMany({
       where: { productId: colorRecord.productId, color: colorRecord.color },
@@ -401,7 +384,7 @@ export const deleteProductColor = asyncHandler(
       data: images.map((img) => ({
         url: img.url,
         color: colorRecord.color,
-        direction: (img.direction as any) ?? null,
+        direction: (img.direction as any) || null,
         colorId,
         productId: colorRecord.productId,
       })),

@@ -21,61 +21,24 @@ interface AddItemInput {
 async function populateCartCategories(cart: CartWithItems | null) {
   if (!cart || !cart.items || cart.items.length === 0) return cart;
 
-  const retailIds = cart.items
-    .filter((item) => item.productType === 'RETAIL')
-    .map((item) => Number(item.productId));
-  
-  const wholesaleIds = cart.items
-    .filter((item) => item.productType === 'WHOLESALE')
-    .map((item) => item.productId);
-
-  const shopIds = cart.items
-    .filter((item) => item.productType !== 'RETAIL' && item.productType !== 'WHOLESALE')
-    .map((item) => item.productId);
+  const productIds = Array.from(new Set(cart.items.map((item) => String(item.productId))));
 
   try {
-    const [retailProducts, wholesaleProducts, shopProducts] = await Promise.all([
-      retailIds.length > 0
-        ? prisma.retailProduct.findMany({
-            where: { id: { in: retailIds } },
-            select: { id: true, categoryId: true }
-          })
-        : [],
-      wholesaleIds.length > 0
-        ? prisma.wholesale.findMany({
-            where: { id: { in: wholesaleIds } },
-            select: { id: true, categoryId: true, minOrder: true }
-          })
-        : [],
-      shopIds.length > 0
-        ? prisma.product.findMany({
-            where: { id: { in: shopIds } },
-            select: { id: true, categories: { select: { id: true }, take: 1 } }
-          })
-        : []
-    ]);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        minOrder: true,
+        categories: { select: { id: true }, take: 1 }
+      }
+    });
 
-    const retailMap = new Map(retailProducts.map((p) => [p.id, p]));
-    const wholesaleMap = new Map(wholesaleProducts.map((p) => [p.id, p]));
-    const shopMap = new Map(shopProducts.map((p) => [p.id, p]));
+    const productMap = new Map(products.map((p) => [p.id, p]));
 
     const itemsWithCategory = cart.items.map((item) => {
-      let categoryId: string | null = null;
-      let minOrder: number | null = null;
-
-      if (item.productType === 'RETAIL') {
-        const prod = retailMap.get(Number(item.productId));
-        if (prod) categoryId = String(prod.categoryId);
-      } else if (item.productType === 'WHOLESALE') {
-        const prod = wholesaleMap.get(item.productId);
-        if (prod) {
-          categoryId = String(prod.categoryId);
-          minOrder = prod.minOrder;
-        }
-      } else {
-        const prod = shopMap.get(item.productId) as any;
-        if (prod && prod.categories && prod.categories.length > 0) categoryId = String(prod.categories[0].id);
-      }
+      const prod = productMap.get(String(item.productId));
+      const categoryId = prod && prod.categories && prod.categories.length > 0 ? String(prod.categories[0].id) : null;
+      const minOrder = prod ? prod.minOrder : null;
 
       const rawItem = item as unknown as { toJSON?: () => Record<string, unknown> } & CartItem;
       return {
@@ -137,15 +100,15 @@ export const cartService = {
 
     // Pricing logic based on type
     if (productType === 'RETAIL') {
-      price = product.retailPrice ?? product.price;
+      price = product.retailPrice ?? product.shopPrice ?? product.wholesalePrice ?? product.blankPrice ?? 0;
     } else if (productType === 'WHOLESALE') {
-      price = product.wholesalePrice ?? product.price;
+      price = product.wholesalePrice ?? product.shopPrice ?? product.retailPrice ?? product.blankPrice ?? 0;
     } else {
       const hasFlashDeal = product.isFlashDeals && 
                            product.flashDealPrice && 
                            product.flashDealEndsAt && 
                            new Date(product.flashDealEndsAt) > new Date();
-      price = (hasFlashDeal && product.flashDealPrice) ? product.flashDealPrice : (product.shopPrice ?? product.price);
+      price = (hasFlashDeal && product.flashDealPrice) ? product.flashDealPrice : (product.shopPrice ?? product.retailPrice ?? product.wholesalePrice ?? product.blankPrice ?? 0);
     }
 
     // Resolve default/missing values

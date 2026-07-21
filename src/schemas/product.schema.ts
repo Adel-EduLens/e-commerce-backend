@@ -9,7 +9,7 @@ const imageSchema = Joi.object({
   direction: Joi.string()
     .valid("FRONT", "BACK", "LEFT", "RIGHT", "TOP", "BOTTOM")
     .optional()
-    .allow(null),
+    .allow("", null),
   colorId: Joi.string().optional().allow(null),
 });
 

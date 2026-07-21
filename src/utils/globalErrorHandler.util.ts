@@ -22,7 +22,9 @@ export function globalErrorHandler(
   // Prisma Error Mapping
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
-      const target = err.meta?.target ? ` on ${(err.meta.target as string[]).join(', ')}` : '';
+      const target = err.meta?.target
+        ? ` on ${Array.isArray(err.meta.target) ? err.meta.target.join(', ') : err.meta.target}`
+        : '';
       err = new AppError(`Duplicate field value entered${target}`, 400);
     } else if (err.code === 'P2025') {
       err = new AppError('Record not found', 404);

@@ -147,9 +147,9 @@ class ProductRepository {
             images: {
               create: data.images.map((img) => ({
                 url: img.url,
-                color: img.color ?? null,
-                direction: img.direction ?? null,
-                colorId: img.colorId ?? null,
+                color: img.color || null,
+                direction: img.direction || null,
+                colorId: img.colorId || null,
               })),
             },
           }),
@@ -520,9 +520,9 @@ class ProductRepository {
             images: {
               create: data.images.map((img) => ({
                 url: img.url,
-                color: img.color ?? null,
-                direction: img.direction ?? null,
-                colorId: img.colorId ?? null,
+                color: img.color || null,
+                direction: img.direction || null,
+                colorId: img.colorId || null,
               })),
             },
           }),

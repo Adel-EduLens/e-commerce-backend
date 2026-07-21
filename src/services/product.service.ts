@@ -75,16 +75,6 @@ function validateBlankType(data: Partial<ProductCreateData>) {
  * Runs all type-specific validations for the given productTypes.
  */
 function runTypeValidations(types: ProductType[], data: Partial<ProductCreateData>) {
-  const isBlank = types.includes(ProductType.BLANK);
-
-  if (data.images && data.images.length > 0) {
-    if (!isBlank) {
-      if (data.images.some((img) => img.direction)) {
-        throw new AppError("Image direction can only be specified for BLANK products", 400);
-      }
-    }
-  }
-
   for (const type of types) {
     switch (type) {
       case ProductType.SHOP:
