@@ -43,9 +43,9 @@ export const recommendService = {
       } else if (item.productType === 'SHOP') {
         const product = await prismaClient.product.findUnique({
           where: { id: item.productId },
-          select: { categoryId: true },
+          select: { categories: { select: { id: true }, take: 1 } },
         })
-        if (product) categoryId = product.categoryId
+        if (product && product.categories.length > 0) categoryId = product.categories[0].id
       }
 
       if (categoryId) {

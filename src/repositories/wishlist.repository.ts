@@ -29,6 +29,17 @@ export class WishlistRepository {
       },
     })
   }
+  async findByProductId(userId: number, productId: string) {
+    return prismaClient.wishlist.findFirst({
+      where: { userId, productId },
+    })
+  }
+
+  async deleteByProductId(userId: number, productId: string) {
+    return prismaClient.wishlist.deleteMany({
+      where: { userId, productId },
+    })
+  }
 }
 
 export const wishlistRepository = new WishlistRepository()
