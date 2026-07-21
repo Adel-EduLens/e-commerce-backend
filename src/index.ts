@@ -33,6 +33,7 @@ import collectionRouter from './routes/collection.routes.js'
 import influencerAuthRouter from './routes/influencer.auth.routes.js'
 import influencerRouter from './routes/influencer.routes.js'
 import traderInfluencerRouter from './routes/trader.influencer.routes.js'
+import shippingRouter from './routes/shipping.routes.js'
 import { startInfluencerCrons } from './cron/influencer.cron.js'
 
 const envFile =
@@ -93,6 +94,7 @@ app.use('/api/collections', collectionRouter)
 app.use('/api/influencer/auth', influencerAuthRouter)
 app.use('/api/influencer', influencerRouter)
 app.use('/api/trader/influencers', traderInfluencerRouter)
+app.use('/api/shipping', shippingRouter)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from TypeScript Express with Prisma!')
