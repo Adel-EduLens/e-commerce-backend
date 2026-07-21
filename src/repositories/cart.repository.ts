@@ -15,11 +15,12 @@ export const cartRepository = {
     });
   },
 
-  findCartItem: async (cartId: string, productId: string, size?: string, color?: string) => {
+  findCartItem: async (cartId: string, productId: string, productType: string, size?: string, color?: string) => {
     return prisma.cartItem.findFirst({
       where: {
         cartId,
         productId,
+        productType,
         size: size || null,
         color: color || null,
       },

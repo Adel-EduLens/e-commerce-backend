@@ -17,8 +17,16 @@ export const influencerSettlementService = {
     // First, update eligible commissions
     await this.updateEligibleCommissions();
 
-    // Get all eligible unsettled commissions
-    const eligibleCommissions = await influencerRepository.getEligibleCommissions();
+    // Calculate period (previous month)
+    const now = new Date();
+    const periodEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999); // last day of prev month
+    const periodStart = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), 1); // 1st of prev month
+
+    // Get eligible unsettled commissions for the settlement period only
+    const eligibleCommissions = await influencerRepository.getEligibleCommissions({
+      periodStart,
+      periodEnd,
+    });
 
     if (eligibleCommissions.length === 0) {
       return { settlementsCreated: 0 };
@@ -31,11 +39,6 @@ export const influencerSettlementService = {
       existing.push(commission);
       grouped.set(commission.influencerId, existing);
     }
-
-    // Calculate period (previous month)
-    const now = new Date();
-    const periodEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59); // last day of prev month
-    const periodStart = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), 1); // 1st of prev month
 
     let settlementsCreated = 0;
 

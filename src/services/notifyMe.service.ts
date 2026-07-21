@@ -1,51 +1,30 @@
 import prisma from '../utils/prismaClient.js'
 import { notifyMeRepository } from '../repositories/notifyMe.repository.js'
-import { Product, RetailProduct, Wholesale } from '@prisma/client'
+import { Product } from '@prisma/client'
 
-type PopulatedProduct = Product | RetailProduct | Wholesale | {
+type PopulatedProduct = Product | {
   name: string
   price: number
   stock: number
   images: { url: string }[]
 } | null
 
-
 export const notifyMeService = {
   async getSubscriptions(userId: number) {
     const subs = await notifyMeRepository.findActiveByUser(userId)
 
-    const shopIds = subs
-      .filter((s) => s.targetType === 'SHOP_RESTOCK')
-      .map((s) => s.targetId)
-
-    const retailIds = subs
-      .filter((s) => s.targetType === 'RETAIL_RESTOCK')
-      .map((s) => Number(s.targetId))
-
-    const wholesaleIds = subs
-      .filter((s) => s.targetType === 'WHOLESALE_RESTOCK')
+    const productIds = subs
+      .filter((s) => s.targetType !== 'CATEGORY')
       .map((s) => s.targetId)
 
     const categoryIds = subs
       .filter((s) => s.targetType === 'CATEGORY')
       .map((s) => s.targetId)
 
-    const [shopProducts, retailProducts, wholesaleProducts, categories] = await Promise.all([
-      shopIds.length > 0
+    const [products, categories] = await Promise.all([
+      productIds.length > 0
         ? prisma.product.findMany({
-            where: { id: { in: shopIds } },
-            include: { images: true },
-          })
-        : [],
-      retailIds.length > 0
-        ? prisma.retailProduct.findMany({
-            where: { id: { in: retailIds } },
-            include: { images: true },
-          })
-        : [],
-      wholesaleIds.length > 0
-        ? prisma.wholesale.findMany({
-            where: { id: { in: wholesaleIds } },
+            where: { id: { in: productIds } },
             include: { images: true },
           })
         : [],
@@ -56,20 +35,14 @@ export const notifyMeService = {
         : [],
     ])
 
-    const shopMap = new Map(shopProducts.map((p) => [p.id, p]))
-    const retailMap = new Map(retailProducts.map((p) => [p.id, p]))
-    const wholesaleMap = new Map(wholesaleProducts.map((p) => [p.id, p]))
+    const productMap = new Map(products.map((p) => [p.id, p]))
     const categoryMap = new Map(categories.map((c) => [c.id, c]))
 
     const populatedSubs = subs.map((sub) => {
       let product: PopulatedProduct = null
 
-      if (sub.targetType === 'SHOP_RESTOCK') {
-        product = shopMap.get(sub.targetId) || null
-      } else if (sub.targetType === 'RETAIL_RESTOCK') {
-        product = retailMap.get(Number(sub.targetId)) || null
-      } else if (sub.targetType === 'WHOLESALE_RESTOCK') {
-        product = wholesaleMap.get(sub.targetId) || null
+      if (sub.targetType !== 'CATEGORY') {
+        product = productMap.get(sub.targetId) || null
       } else if (sub.targetType === 'CATEGORY') {
         const category = categoryMap.get(sub.targetId)
         product = category
@@ -93,12 +66,12 @@ export const notifyMeService = {
       }
     })
 
-    return populatedSubs
+    return populatedSubs.filter((sub) => sub.product !== null)
   },
 
   async checkSubscription(userId: number, targetType: string, targetId: string) {
     const sub = await notifyMeRepository.findByUniqueIndex(userId, targetType, targetId)
-    return { isSubscribed: !!(sub?.isActive) }
+    return sub ? sub.isActive : false
   },
 
   async subscribe(userId: number, targetType: string, targetId: string) {
@@ -107,5 +80,5 @@ export const notifyMeService = {
 
   async unsubscribe(userId: number, targetType: string, targetId: string) {
     return notifyMeRepository.updateSubscriptionStatus(userId, targetType, targetId, false)
-  }
+  },
 }

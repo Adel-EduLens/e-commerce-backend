@@ -8,75 +8,76 @@ dotenv.config({ path: '.env', override: false });
 const prisma = new PrismaClient();
 
 const productImages = [
-  '/uploads/products/2026-07-11_11-35-33-am_17c742b2bd7f9c6fdd789a368222b3db7b8a6bc6.jpg',
-  '/uploads/products/2026-07-11_11-46-44-am_17c742b2bd7f9c6fdd789a368222b3db7b8a6bc6.jpg',
-  '/uploads/products/2026-07-11_12-07-30-pm_17c742b2bd7f9c6fdd789a368222b3db7b8a6bc6.jpg',
-  '/uploads/products/2026-07-12_04-32-24-pm_e71ae64c-f658-4dcf-88c2-63fa55cd53dd.jpeg',
+  'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
 ];
 
 const futureDate = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
 async function clearDatabase() {
-  await prisma.retailOrder.deleteMany();
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.cartItem.deleteMany();
-  await prisma.cart.deleteMany();
-  await prisma.wishlist.deleteMany();
-  await prisma.recentlyViewedProduct.deleteMany();
-  await prisma.recommend.deleteMany();
-  await prisma.couponUsage.deleteMany();
-  await prisma.coupon.deleteMany();
-  await prisma.userNotification.deleteMany();
-  await prisma.notifyMeSubscription.deleteMany();
-  await prisma.retailProductReview.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.address.deleteMany();
+  console.log('Clearing database tables...');
+  try { await prisma.collection.deleteMany(); } catch (e) {}
+  try { await prisma.influencerSettlementItem.deleteMany(); } catch (e) {}
+  try { await prisma.influencerSettlement.deleteMany(); } catch (e) {}
+  try { await prisma.influencerCommission.deleteMany(); } catch (e) {}
+  try { await prisma.influencerProduct.deleteMany(); } catch (e) {}
+  try { await prisma.influencerProfile.deleteMany(); } catch (e) {}
+  try { await prisma.traderProfile.deleteMany(); } catch (e) {}
 
-  await prisma.retailProductImage.deleteMany();
-  await prisma.retailProductColor.deleteMany();
-  await prisma.retailProductSize.deleteMany();
-  await prisma.retailProduct.deleteMany();
-  await prisma.retailBrand.deleteMany();
+  try { await prisma.orderItem.deleteMany(); } catch (e) {}
+  try { await prisma.order.deleteMany(); } catch (e) {}
+  try { await prisma.wholesaleOrderItem.deleteMany(); } catch (e) {}
+  try { await prisma.wholesaleOrder.deleteMany(); } catch (e) {}
+  try { await prisma.retailOrderItem.deleteMany(); } catch (e) {}
+  try { await prisma.retailOrder.deleteMany(); } catch (e) {}
 
-  await prisma.wholesaleSize.deleteMany();
-  await prisma.wholesaleColor.deleteMany();
-  await prisma.wholesaleImage.deleteMany();
-  await prisma.wholesale.deleteMany();
+  try { await prisma.cartItem.deleteMany(); } catch (e) {}
+  try { await prisma.cart.deleteMany(); } catch (e) {}
+  try { await prisma.wishlist.deleteMany(); } catch (e) {}
+  try { await prisma.recentlyViewedProduct.deleteMany(); } catch (e) {}
+  try { await prisma.recommend.deleteMany(); } catch (e) {}
+  try { await prisma.couponUsage.deleteMany(); } catch (e) {}
+  try { await prisma.coupon.deleteMany(); } catch (e) {}
+  try { await prisma.userNotification.deleteMany(); } catch (e) {}
+  try { await prisma.notifyMeSubscription.deleteMany(); } catch (e) {}
+  try { await prisma.review.deleteMany(); } catch (e) {}
+  try { await prisma.address.deleteMany(); } catch (e) {}
 
-  await prisma.productImage.deleteMany();
-  await prisma.productSize.deleteMany();
-  await prisma.productColor.deleteMany();
-  await prisma.product.deleteMany();
+  try { await prisma.productTypeRelation.deleteMany(); } catch (e) {}
+  try { await prisma.productMaterial.deleteMany(); } catch (e) {}
+  try { await prisma.productImage.deleteMany(); } catch (e) {}
+  try { await prisma.productSize.deleteMany(); } catch (e) {}
+  try { await prisma.productColor.deleteMany(); } catch (e) {}
+  try { await prisma.product.deleteMany(); } catch (e) {}
 
-  await prisma.blankProductImage.deleteMany();
-  await prisma.blankProductColor.deleteMany();
-  await prisma.blankProduct.deleteMany();
+  try { await prisma.brand.deleteMany(); } catch (e) {}
+  try { await prisma.category.deleteMany(); } catch (e) {}
+  try { await prisma.shopBanner.deleteMany(); } catch (e) {}
+  try { await prisma.prize.deleteMany(); } catch (e) {}
+  try { await prisma.helpCenterVideo.deleteMany(); } catch (e) {}
+  try { await prisma.helpCenterCategory.deleteMany(); } catch (e) {}
+  try { await prisma.frequentlyAskedQuestion.deleteMany(); } catch (e) {}
+  try { await prisma.design.deleteMany(); } catch (e) {}
 
-  await prisma.brand.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.shopBanner.deleteMany();
-  await prisma.prize.deleteMany();
-  await prisma.helpCenterVideo.deleteMany();
-  await prisma.helpCenterCategory.deleteMany();
-  await prisma.frequentlyAskedQuestion.deleteMany();
-  await prisma.design.deleteMany();
-
-  await prisma.trader.deleteMany();
-  await prisma.admin.deleteMany();
-  await prisma.user.deleteMany();
+  try { await prisma.trader.deleteMany(); } catch (e) {}
+  try { await prisma.admin.deleteMany(); } catch (e) {}
+  try { await prisma.user.deleteMany(); } catch (e) {}
 }
 
 async function main() {
-  console.log('Seeding database...');
+  console.log('🌱 Starting full database seed...');
 
   await clearDatabase();
 
   const password = await bcrypt.hash('password123', 10);
 
-  const [user, secondUser] = await Promise.all([
+  // 1. Create Users
+  const [user1, user2] = await Promise.all([
     prisma.user.create({
       data: {
+        id: 1,
         email: 'user@example.com',
         name: 'Nasu Demo User',
         password,
@@ -87,6 +88,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
+        id: 2,
         email: 'user2@example.com',
         name: 'Mariam Hassan',
         password,
@@ -100,6 +102,7 @@ async function main() {
   const [admin, trader] = await Promise.all([
     prisma.admin.create({
       data: {
+        id: 1,
         email: 'admin@example.com',
         name: 'Nasu Admin',
         password,
@@ -108,6 +111,7 @@ async function main() {
     }),
     prisma.trader.create({
       data: {
+        id: 1,
         email: 'trader@example.com',
         name: 'Nasu Studio',
         password,
@@ -117,735 +121,302 @@ async function main() {
     }),
   ]);
 
-  const [streetwear, essentials, accessories] = await Promise.all([
-    prisma.category.create({
-      data: {
-        name: 'Streetwear',
-        image: productImages[0],
-        appearOnHome: true,
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Essentials',
-        image: productImages[1],
-        appearOnHome: true,
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Accessories',
-        image: productImages[2],
-        appearOnHome: true,
-      },
-    }),
+  // 2. Create Brands
+  const [brandOriginals, brandArchive, brandWholesale] = await Promise.all([
+    prisma.brand.create({ data: { name: 'Nasu Originals' } }),
+    prisma.brand.create({ data: { name: 'Nasu Archive' } }),
+    prisma.brand.create({ data: { name: 'Nasu Wholesale' } }),
   ]);
 
-  const [nasuBrand, cairoMadeBrand] = await Promise.all([
-    prisma.brand.create({ data: { name: 'Nasu' } }),
-    prisma.brand.create({ data: { name: 'Cairo Made' } }),
+  // 3. Create Categories
+  const [catStreetwear, catEssentials, catWholesaleApparel, catWholesaleAcc, catRetailClothing, catRetailShoes] = await Promise.all([
+    prisma.category.create({ data: { name: 'Streetwear', image: productImages[0], isShop: true, isWholesale: false, isRetail: false } }),
+    prisma.category.create({ data: { name: 'Essentials', image: productImages[1], isShop: true, isWholesale: false, isRetail: false } }),
+    prisma.category.create({ data: { name: 'Wholesale Apparel', image: productImages[0], isShop: false, isWholesale: true, isRetail: false } }),
+    prisma.category.create({ data: { name: 'Wholesale Accessories', image: productImages[3], isShop: false, isWholesale: true, isRetail: false } }),
+    prisma.category.create({ data: { name: 'Rental Clothing', image: productImages[0], isShop: false, isWholesale: false, isRetail: true } }),
+    prisma.category.create({ data: { name: 'Rental Shoes', image: productImages[2], isShop: false, isWholesale: false, isRetail: true } }),
   ]);
 
-  const oversizedHoodie = await prisma.product.create({
+  // 4. Create SHOP Products
+  const shopTee = await prisma.product.create({
     data: {
-      name: 'Oversized Graphic Hoodie',
-      description:
-        'Heavyweight cotton hoodie with a relaxed fit, dropped shoulders, and screen printed Nasu artwork.',
-      price: 1450,
-      sku: 'NASU-HOODIE-001',
-      stock: 42,
-      rating: 4.7,
+      name: 'Oversized Graphic Tee',
+      description: 'Heavyweight cotton graphic T-shirt with signature Nasu streetwear print.',
+      sku: 'SHOP-TEE-001',
+      shopPrice: 450,
+      stock: 35,
+      rating: 4.8,
       isMustHave: true,
       isFlashDeals: true,
-      flashDealPrice: 1199,
-      flashDealEndsAt: futureDate(14),
+      flashDealPrice: 380,
+      flashDealEndsAt: futureDate(7),
+      categories: { connect: [{ id: catStreetwear.id }] },
+      brandId: brandOriginals.id,
       traderId: trader.id,
-      categoryId: streetwear.id,
-      brandId: nasuBrand.id,
-      images: {
-        createMany: {
-          data: [
-            { url: productImages[0], color: 'Black' },
-            { url: productImages[1], color: 'Sand' },
-          ],
-        },
-      },
-      colors: {
-        createMany: {
-          data: [{ color: 'Black' }, { color: 'Sand' }],
-        },
-      },
+      productTypes: { create: [{ type: 'SHOP' }] },
+      images: { create: [{ url: productImages[0], color: 'Black' }] },
+      colors: { create: [{ color: 'Black' }] },
       sizes: {
-        createMany: {
-          data: [
-            { size: 'S', quantity: 8, color: 'Black' },
-            { size: 'M', quantity: 14, color: 'Black' },
-            { size: 'L', quantity: 12, color: 'Black' },
-            { size: 'M', quantity: 8, color: 'Sand' },
-          ],
-        },
+        create: [
+          { size: 'M', quantity: 15, color: 'Black' },
+          { size: 'L', quantity: 12, color: 'Black' },
+          { size: 'XL', quantity: 8, color: 'Black' },
+        ],
       },
     },
   });
 
-  const essentialTee = await prisma.product.create({
+  const shopHoodie = await prisma.product.create({
     data: {
-      name: 'Boxy Essential T-Shirt',
-      description:
-        'Soft everyday tee with a boxy silhouette, ribbed neck, and breathable premium cotton.',
-      price: 620,
-      sku: 'NASU-TEE-001',
-      stock: 80,
-      rating: 4.5,
+      name: 'Minimalist Heavyweight Hoodie',
+      description: 'Ultra-soft fleece hoodie designed for clean layered streetwear looks.',
+      sku: 'SHOP-HOOD-001',
+      shopPrice: 850,
+      stock: 20,
+      rating: 4.9,
       isMustHave: true,
+      categories: { connect: [{ id: catEssentials.id }] },
+      brandId: brandOriginals.id,
       traderId: trader.id,
-      categoryId: essentials.id,
-      brandId: cairoMadeBrand.id,
-      images: {
-        createMany: {
-          data: [
-            { url: productImages[2], color: 'White' },
-            { url: productImages[3], color: 'Navy' },
-          ],
-        },
-      },
-      colors: {
-        createMany: {
-          data: [{ color: 'White' }, { color: 'Navy' }],
-        },
-      },
+      productTypes: { create: [{ type: 'SHOP' }] },
+      images: { create: [{ url: productImages[1], color: 'Off-White' }] },
+      colors: { create: [{ color: 'Off-White' }] },
       sizes: {
-        createMany: {
-          data: [
-            { size: 'S', quantity: 20, color: 'White' },
-            { size: 'M', quantity: 24, color: 'White' },
-            { size: 'L', quantity: 18, color: 'Navy' },
-            { size: 'XL', quantity: 18, color: 'Navy' },
-          ],
-        },
-      },
-    },
-  });
-
-  const crossbodyBag = await prisma.product.create({
-    data: {
-      name: 'Utility Crossbody Bag',
-      description:
-        'Compact crossbody bag with water resistant fabric, zip pockets, and adjustable strap.',
-      price: 780,
-      sku: 'NASU-BAG-001',
-      stock: 25,
-      rating: 4.3,
-      traderId: trader.id,
-      categoryId: accessories.id,
-      brandId: nasuBrand.id,
-      images: {
-        createMany: {
-          data: [{ url: productImages[1], color: 'Olive' }],
-        },
-      },
-      colors: {
-        createMany: {
-          data: [{ color: 'Olive' }],
-        },
-      },
-      sizes: {
-        createMany: {
-          data: [{ size: 'One Size', quantity: 25, color: 'Olive' }],
-        },
-      },
-    },
-  });
-
-  const wholesalePack = await prisma.wholesale.create({
-    data: {
-      name: 'Streetwear Starter Pack',
-      description:
-        'Bulk pack of hoodies and tees for stores launching a streetwear rail.',
-      price: 18500,
-      minOrder: 5,
-      isBestDeal: true,
-      isMostPopular: true,
-      sku: 'WHOLE-STREET-001',
-      stock: 120,
-      brand: 'Nasu',
-      rating: 4.8,
-      traderId: trader.id,
-      categoryId: streetwear.id,
-      images: {
-        createMany: {
-          data: [
-            { url: productImages[0], color: 'Mixed' },
-            { url: productImages[2], color: 'Mixed' },
-          ],
-        },
-      },
-      wholesaleColors: {
         create: [
-          {
-            color: 'Black',
-            sizes: { createMany: { data: [{ size: 'M' }, { size: 'L' }] } },
-            stock: 60,
-          },
-          {
-            color: 'White',
-            sizes: { createMany: { data: [{ size: 'S' }, { size: 'M' }] } },
-            stock: 60,
-          },
+          { size: 'S', quantity: 5, color: 'Off-White' },
+          { size: 'M', quantity: 10, color: 'Off-White' },
+          { size: 'L', quantity: 5, color: 'Off-White' },
         ],
       },
     },
   });
 
-  const essentialWholesalePack = await prisma.wholesale.create({
+  // 5. Create WHOLESALE Products
+  const wsTees = await prisma.product.create({
     data: {
-      name: 'Essential Tee Pack (50pcs)',
-      description: 'Bulk pack of premium boxy fit blank t-shirts in essential colors.',
-      price: 15000,
-      minOrder: 1,
-      isBestDeal: false,
+      name: 'Bulk Plain Cotton T-Shirts',
+      description: 'High-volume wholesale blank t-shirts for printing shops and retail brands.',
+      sku: 'WS-TEE-100',
+      wholesalePrice: 150,
+      stock: 500,
+      minOrder: 50,
+      isBestDeal: true,
       isMostPopular: true,
-      sku: 'WHOLE-TEE-001',
+      categories: { connect: [{ id: catWholesaleApparel.id }] },
+      brandId: brandWholesale.id,
+      traderId: trader.id,
+      productTypes: { create: [{ type: 'WHOLESALE' }] },
+      images: { create: [{ url: productImages[0], color: 'White' }, { url: productImages[1], color: 'Black' }] },
+    },
+  });
+
+  await prisma.productColor.create({
+    data: {
+      color: 'White',
+      minOrder: 50,
       stock: 300,
-      brand: 'Nasu',
-      rating: 4.6,
-      traderId: trader.id,
-      categoryId: essentials.id,
-      images: {
-        createMany: {
-          data: [
-            { url: productImages[2], color: 'White' },
-            { url: productImages[3], color: 'Navy' },
-          ],
-        },
-      },
-      wholesaleColors: {
+      productId: wsTees.id,
+      sizes: {
         create: [
-          {
-            color: 'White',
-            sizes: { createMany: { data: [{ size: 'S' }, { size: 'M' }, { size: 'L' }] } },
-            stock: 150,
-          },
-          {
-            color: 'Navy',
-            sizes: { createMany: { data: [{ size: 'M' }, { size: 'L' }, { size: 'XL' }] } },
-            stock: 150,
-          },
+          { size: 'M', quantity: 100, productId: wsTees.id },
+          { size: 'L', quantity: 100, productId: wsTees.id },
+          { size: 'XL', quantity: 100, productId: wsTees.id },
         ],
       },
     },
   });
 
-  const accessoryWholesalePack = await prisma.wholesale.create({
+  await prisma.productColor.create({
     data: {
-      name: 'Utility Bag wholesale pack',
-      description: 'Bulk package of our best selling utility crossbody bags.',
-      price: 9500,
-      minOrder: 10,
-      isBestDeal: true,
-      sku: 'WHOLE-BAG-001',
-      stock: 80,
-      brand: 'Nasu',
-      rating: 4.5,
-      traderId: trader.id,
-      categoryId: accessories.id,
-      images: {
-        createMany: {
-          data: [
-            { url: productImages[1], color: 'Olive' },
-          ],
-        },
-      },
-      wholesaleColors: {
+      color: 'Black',
+      minOrder: 50,
+      stock: 200,
+      productId: wsTees.id,
+      sizes: {
         create: [
-          {
-            color: 'Olive',
-            sizes: { createMany: { data: [{ size: 'One Size' }] } },
-            stock: 80,
-          },
+          { size: 'M', quantity: 100, productId: wsTees.id },
+          { size: 'L', quantity: 100, productId: wsTees.id },
         ],
       },
     },
   });
 
-  const [retailClothing, retailShoes, retailAccessories, retailBrand] = await Promise.all([
-    prisma.category.create({
-      data: {
-        name: 'Rental Clothing',
-        image: productImages[0],
-        isRetail: true,
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Rental Shoes',
-        image: productImages[2],
-        isRetail: true,
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Rental Accessories',
-        image: productImages[1],
-        isRetail: true,
-      },
-    }),
-    prisma.retailBrand.create({
-      data: {
-        name: 'Nasu Archive',
-      },
-    }),
-  ]);
+  const wsJackets = await prisma.product.create({
+    data: {
+      name: 'Wholesale Premium Denim Jackets',
+      description: 'Durable denim jackets suitable for corporate merchandise or boutique resale.',
+      sku: 'WS-JACK-100',
+      wholesalePrice: 650,
+      stock: 150,
+      minOrder: 20,
+      isPremiumCollection: true,
+      categories: { connect: [{ id: catWholesaleApparel.id }] },
+      brandId: brandWholesale.id,
+      traderId: trader.id,
+      productTypes: { create: [{ type: 'WHOLESALE' }] },
+      images: { create: [{ url: productImages[3], color: 'Blue' }] },
+    },
+  });
 
-  const retailJacket = await prisma.retailProduct.create({
+  await prisma.productColor.create({
+    data: {
+      color: 'Blue',
+      minOrder: 20,
+      stock: 150,
+      productId: wsJackets.id,
+      sizes: {
+        create: [
+          { size: 'M', quantity: 50, productId: wsJackets.id },
+          { size: 'L', quantity: 50, productId: wsJackets.id },
+          { size: 'XL', quantity: 50, productId: wsJackets.id },
+        ],
+      },
+    },
+  });
+
+  // 6. Create RETAIL / RENTAL Products
+  const retailJacket = await prisma.product.create({
     data: {
       name: 'Vintage Denim Jacket',
-      description:
-        'Statement denim jacket available to rent for shoots, events, and weekend styling.',
-      price: 900,
-      stock: 6,
+      description: 'Statement denim jacket available to rent for shoots, events, and weekend styling.',
       sku: 'RENT-JACKET-001',
-      isFeatured: true,
-      categoryId: retailClothing.id,
-      traderId: trader.id,
-      brandId: retailBrand.id,
+      retailPrice: 900,
+      stock: 6,
       depositAmount: 300,
       securityDeposit: 1200,
-      termsAndConditions:
-        'Return clean and undamaged by the selected end date. Late returns may incur additional fees.',
-      privacyPolicy:
-        'ID verification is used only for rental security and order support.',
-      images: {
-        createMany: {
-          data: [{ url: productImages[3], color: 'Blue' }],
-        },
-      },
-      colors: {
-        createMany: {
-          data: [{ color: 'Blue' }],
-        },
-      },
+      isFeatured: true,
+      termsAndConditions: 'Return clean and undamaged by the selected end date.',
+      privacyPolicy: 'ID verification is used only for rental security.',
+      categories: { connect: [{ id: catRetailClothing.id }] },
+      brandId: brandArchive.id,
+      traderId: trader.id,
+      productTypes: { create: [{ type: 'RETAIL' }] },
+      images: { create: [{ url: productImages[3], color: 'Blue' }] },
+      colors: { create: [{ color: 'Blue' }] },
       sizes: {
-        createMany: {
-          data: [
-            { size: 'M', quantity: 3, color: 'Blue' },
-            { size: 'L', quantity: 3, color: 'Blue' },
-          ],
-        },
+        create: [
+          { size: 'M', quantity: 3, color: 'Blue' },
+          { size: 'L', quantity: 3, color: 'Blue' },
+        ],
       },
     },
   });
 
-  const retailSneakers = await prisma.retailProduct.create({
+  const retailSneakers = await prisma.product.create({
     data: {
       name: 'White Platform Sneakers',
-      description:
-        'Clean white sneakers for rentals where the look matters more than owning another pair.',
-      price: 650,
-      stock: 8,
+      description: 'Clean white sneakers for rentals where the look matters more than owning another pair.',
       sku: 'RENT-SHOE-001',
-      isFeatured: true,
-      categoryId: retailShoes.id,
-      traderId: trader.id,
-      brandId: retailBrand.id,
+      retailPrice: 650,
+      stock: 8,
       depositAmount: 250,
       securityDeposit: 900,
-      termsAndConditions:
-        'Return with normal wear only. Heavy stains or damage may reduce the refundable deposit.',
-      privacyPolicy:
-        'Rental details are stored for fulfillment and customer service.',
-      images: {
-        createMany: {
-          data: [{ url: productImages[2], color: 'White' }],
-        },
-      },
-      colors: {
-        createMany: {
-          data: [{ color: 'White' }],
-        },
-      },
-      sizes: {
-        createMany: {
-          data: [
-            { size: '41', quantity: 3, color: 'White' },
-            { size: '42', quantity: 3, color: 'White' },
-            { size: '43', quantity: 2, color: 'White' },
-          ],
-        },
-      },
-    },
-  });
-
-  const retailBag = await prisma.retailProduct.create({
-    data: {
-      name: 'Mini Event Bag',
-      description: 'A compact rental bag sized for phone, wallet, keys, and event passes.',
-      price: 420,
-      stock: 10,
-      sku: 'RENT-BAG-001',
-      categoryId: retailAccessories.id,
+      isFeatured: true,
+      termsAndConditions: 'Return with normal wear only.',
+      privacyPolicy: 'Rental details are stored for fulfillment.',
+      categories: { connect: [{ id: catRetailShoes.id }] },
+      brandId: brandArchive.id,
       traderId: trader.id,
-      brandId: retailBrand.id,
-      depositAmount: 150,
-      securityDeposit: 600,
-      termsAndConditions: 'Return with all straps and hardware attached.',
-      privacyPolicy: 'Order data is used only to process and support rentals.',
-      images: {
-        createMany: {
-          data: [{ url: productImages[1], color: 'Black' }],
-        },
-      },
-      colors: {
-        createMany: {
-          data: [{ color: 'Black' }],
-        },
-      },
+      productTypes: { create: [{ type: 'RETAIL' }] },
+      images: { create: [{ url: productImages[2], color: 'White' }] },
+      colors: { create: [{ color: 'White' }] },
       sizes: {
-        createMany: {
-          data: [{ size: 'One Size', quantity: 10, color: 'Black' }],
-        },
+        create: [
+          { size: '41', quantity: 3, color: 'White' },
+          { size: '42', quantity: 3, color: 'White' },
+          { size: '43', quantity: 2, color: 'White' },
+        ],
       },
     },
   });
 
-  await Promise.all([
-    prisma.address.create({
-      data: {
-        country: 'Egypt',
-        city: 'Cairo',
-        area: 'Zamalek',
-        streetAddress: '26 July Street',
-        apartment: '12B',
-        userId: user.id,
-      },
-    }),
-    prisma.frequentlyAskedQuestion.createMany({
-      data: [
-        {
-          question: 'How long does delivery take?',
-          answer: 'Orders inside Cairo usually arrive within 2 to 4 business days.',
-        },
-        {
-          question: 'Can I return a rental item?',
-          answer: 'Rental returns are arranged according to the selected rental window.',
-        },
-        {
-          question: 'Do traders support wholesale orders?',
-          answer: 'Yes, traders can publish wholesale packs with minimum order quantities.',
-        },
-      ],
-    }),
-    prisma.helpCenterCategory.createMany({
-      data: [
-        { name: 'Orders' },
-        { name: 'Rentals' },
-        { name: 'Trader Dashboard' },
-      ],
-    }),
-    prisma.prize.createMany({
-      data: [
-        { name: '10% OFF', weight: 40 },
-        { name: 'Free Shipping', weight: 25 },
-        { name: 'EGP 100 Wallet Credit', weight: 15 },
-        { name: 'Try Again', weight: 20 },
-      ],
-    }),
-    prisma.shopBanner.createMany({
-      data: [
-        {
-          title: 'Summer streetwear drop',
-          description: 'Fresh hoodies, tees, and accessories ready for your next outfit.',
-          buttonText: 'Shop now',
-          buttonLink: '/products',
-          image: productImages[0],
-          backgroundColor: '#C1121F',
-          order: 1,
-          type: 'shop',
-        },
-        {
-          title: 'Rent the look',
-          description: 'Book statement pieces for shoots and events without buying them.',
-          buttonText: 'Browse rentals',
-          buttonLink: '/retail',
-          image: productImages[3],
-          backgroundColor: '#0F766E',
-          order: 2,
-          type: 'shop',
-        },
-        {
-          title: 'Discover Gen-Z Fashion',
-          description: 'Discover fashion that fits your story. step into the spotlight with our latest drop.',
-          buttonText: 'Shop now',
-          buttonLink: '/products',
-          image: productImages[0],
-          backgroundColor: '#1E1B4B',
-          order: 1,
-          type: 'home',
-        },
-      ],
-    }),
-    prisma.blankProduct.create({
-      data: {
-        name: 'Custom Hoodie Blank',
-        description: 'Plain heavyweight hoodie ready for custom design uploads.',
-        price: 700,
-        materials: {
-          createMany: {
-            data: [
-              { material: 'Cotton fleece' },
-              { material: 'Polyester blend' },
-            ],
-          },
-        },
-        colors: {
-          create: [
-            {
-              color: 'Black',
-              images: {
-                create: [
-                  { url: productImages[0], direction: 'FRONT' },
-                  { url: productImages[1], direction: 'BACK' },
-                ],
-              },
-            },
-            {
-              color: 'Gray',
-              images: {
-                create: [
-                  { url: productImages[2], direction: 'FRONT' },
-                  { url: productImages[3], direction: 'BACK' },
-                ],
-              },
-            },
-          ],
-        },
-      },
-    }),
-  ]);
-
-  const [siteCoupon, productCoupon] = await Promise.all([
-    prisma.coupon.create({
-      data: {
-        code: 'WELCOME10',
-        discount: 10,
-        validUntil: futureDate(365),
-        usageLimit: 500,
-        traderId: trader.id,
-        categoryId: streetwear.id,
-      },
-    }),
-    prisma.coupon.create({
-      data: {
-        code: 'HOODIE15',
-        discount: 15,
-        validUntil: futureDate(45),
-        usageLimit: 100,
-        traderId: trader.id,
-        productId: oversizedHoodie.id,
-      },
-    }),
-  ]);
-
-  await Promise.all([
-    prisma.review.create({
-      data: {
-        rating: 5,
-        comment: 'The hoodie feels premium and the fit is exactly oversized.',
-        userId: user.id,
-        productId: oversizedHoodie.id,
-      },
-    }),
-    prisma.review.create({
-      data: {
-        rating: 4,
-        comment: 'Great everyday tee, soft after washing.',
-        userId: secondUser.id,
-        productId: essentialTee.id,
-      },
-    }),
-    prisma.retailProductReview.create({
-      data: {
-        userId: user.id,
-        retailProductId: retailJacket.id,
-        rating: 5,
-      },
-    }),
-    prisma.notifyMeSubscription.create({
-      data: {
-        userId: user.id,
-        targetType: 'RETAIL_RESTOCK',
-        targetId: String(retailBag.id),
-      },
-    }),
-    prisma.userNotification.create({
-      data: {
-        userId: user.id,
-        title: 'Your order is being prepared',
-        message: 'We received your demo order and the trader is preparing it now.',
-        type: 'order',
-        productId: oversizedHoodie.id,
-        imageUrl: productImages[0],
-      },
-    }),
-    prisma.couponUsage.create({
-      data: {
-        couponId: siteCoupon.id,
-        userId: secondUser.id,
-      },
-    }),
-  ]);
-
-  await prisma.cart.create({
+  // 7. Create BLANK Products (for Design Lab)
+  const blankHoodie = await prisma.product.create({
     data: {
-      userId: user.id,
-      items: {
-        createMany: {
-          data: [
-            {
-              productId: String(retailJacket.id),
-              productType: 'RETAIL',
-              title: retailJacket.name,
-              price: retailJacket.price,
-              quantity: 1,
-              size: 'M',
-              color: 'Blue',
-              imageSrc: productImages[3],
-            },
-            {
-              productId: oversizedHoodie.id,
-              productType: 'SHOP',
-              title: oversizedHoodie.name,
-              price: oversizedHoodie.flashDealPrice ?? oversizedHoodie.price,
-              quantity: 2,
-              size: 'M',
-              color: 'Black',
-              imageSrc: productImages[0],
-            },
-          ],
-        },
+      name: 'Customizable Fleece Blank Hoodie',
+      description: 'Blank premium fleece hoodie ready for custom prints and designs.',
+      sku: 'BLANK-HOOD-001',
+      blankPrice: 350,
+      stock: 100,
+      isActive: true,
+      categories: { connect: [{ id: catEssentials.id }] },
+      brandId: brandOriginals.id,
+      traderId: trader.id,
+      productTypes: { create: [{ type: 'BLANK' }] },
+      images: { create: [{ url: productImages[1], color: 'Black' }] },
+      colors: { create: [{ color: 'Black' }] },
+      materials: { create: [{ material: '100% Cotton Fleece' }] },
+      sizes: {
+        create: [
+          { size: 'M', quantity: 50, color: 'Black' },
+          { size: 'L', quantity: 50, color: 'Black' },
+        ],
       },
     },
   });
 
-  await Promise.all([
-    prisma.wishlist.createMany({
-      data: [
-        { userId: user.id, productType: 'RETAIL', productId: String(retailSneakers.id) },
-        { userId: user.id, productType: 'SHOP', productId: crossbodyBag.id },
-        { userId: secondUser.id, productType: 'WHOLESALE', productId: wholesalePack.id },
-      ],
-    }),
-    prisma.recentlyViewedProduct.createMany({
-      data: [
-        { userId: user.id, productType: 'SHOP', productId: essentialTee.id },
-        { userId: user.id, productType: 'RETAIL', productId: String(retailJacket.id) },
-        { userId: secondUser.id, productType: 'SHOP', productId: oversizedHoodie.id },
-      ],
-    }),
-    prisma.recommend.createMany({
-      data: [
-        {
-          userId: user.id,
-          productId: oversizedHoodie.id,
-          categoryId: streetwear.id,
-          type: 'view',
-        },
-        {
-          userId: user.id,
-          productId: essentialTee.id,
-          categoryId: essentials.id,
-          type: 'cart',
-        },
-      ],
-    }),
-  ]);
-
-  await prisma.order.create({
-    data: {
-      userId: user.id,
-      firstName: 'Nasu',
-      lastName: 'User',
-      phone: '+201000000001',
-      email: user.email,
-      country: 'Egypt',
-      city: 'Cairo',
-      area: 'Zamalek',
-      streetAddress: '26 July Street',
-      apartment: '12B',
-      subtotal: 3018,
-      discount: 150,
-      shipping: 60,
-      total: 2928,
-      couponCode: productCoupon.code,
-      status: 'PROCESSING',
-      paymentMethod: 'COD',
-      items: {
-        createMany: {
-          data: [
-            {
-              productId: oversizedHoodie.id,
-              title: oversizedHoodie.name,
-              price: oversizedHoodie.flashDealPrice ?? oversizedHoodie.price,
-              quantity: 2,
-              size: 'M',
-              color: 'Black',
-              imageSrc: productImages[0],
-            },
-            {
-              productId: crossbodyBag.id,
-              title: crossbodyBag.name,
-              price: crossbodyBag.price,
-              quantity: 1,
-              size: 'One Size',
-              color: 'Olive',
-              imageSrc: productImages[1],
-            },
-          ],
-        },
+  // 8. Create Collections
+  await prisma.collection.createMany({
+    data: [
+      {
+        name: 'Color of Summer Outfit',
+        description: '100+ Collections for your outfit inspirations in this summer',
+        image: productImages[0],
+        appearOnHome: true,
       },
-    },
+      {
+        name: 'Outdoor Active',
+        description: 'Get ready for active and outdoor sports in style.',
+        image: productImages[2],
+        appearOnHome: true,
+      },
+      {
+        name: 'Casual Comfort',
+        description: 'Explore our casual and premium comfortable wears.',
+        image: productImages[1],
+        appearOnHome: true,
+      },
+    ],
   });
 
-  await prisma.retailOrder.create({
-    data: {
-      userId: user.id,
-      productId: retailJacket.id,
-      productPrice: retailJacket.price,
-      depositAmount: retailJacket.depositAmount,
-      securityDeposit: retailJacket.securityDeposit,
-      depositPaid: true,
-      paymentId: 'seed-payment-001',
-      idCardImage: '/uploads/votes/2026-07-07_12-24-28-pm_17c742b2bd7f9c6fdd789a368222b3db7b8a6bc6.png',
-      idVerified: true,
-      startDate: futureDate(3),
-      endDate: futureDate(7),
-      status: 'APPROVED',
-    },
+  // 9. Create FAQs & Banners
+  await prisma.frequentlyAskedQuestion.createMany({
+    data: [
+      { question: 'What is the minimum order for wholesale?', answer: 'Minimum order quantities depend on the product, starting from 20 items.' },
+      { question: 'How do rentals work?', answer: 'Select your item, specify rental dates, and pay a security deposit. Return undamaged by the end date for a full deposit refund.' },
+      { question: 'What payment methods are supported?', answer: 'We support Cash on Delivery (COD) and major online credit cards.' },
+    ],
   });
 
-  console.log('Database seeded successfully!');
-  console.log('Demo credentials:');
-  console.log('  user@example.com / password123');
-  console.log('  user2@example.com / password123');
-  console.log('  trader@example.com / password123');
-  console.log('  admin@example.com / password123');
-  console.log(
-    `Created ${[
-      oversizedHoodie,
-      essentialTee,
-      crossbodyBag,
-      wholesalePack,
-      retailJacket,
-      retailSneakers,
-      retailBag,
-      admin,
-    ].length} primary demo records plus supporting data.`
-  );
+  await prisma.shopBanner.createMany({
+    data: [
+      {
+        title: 'New Season Streetwear',
+        description: 'Explore the latest oversized hoodies and graphic tees',
+        image: productImages[0],
+        buttonText: 'Shop Now',
+        buttonLink: '/products',
+      },
+      {
+        title: 'Wholesale Direct Supply',
+        description: 'Bulk apparel pricing directly from verified traders',
+        image: productImages[1],
+        buttonText: 'Explore Wholesale',
+        buttonLink: '/wholesale',
+      },
+    ],
+  });
+
+  console.log('✅ Seeding completed successfully!');
+  console.log('   Users: user@example.com (pass: password123), user2@example.com');
+  console.log('   Trader: trader@example.com (pass: password123)');
+  console.log('   Admin: admin@example.com (pass: password123)');
 }
 
 main()
-  .catch((error) => {
-    console.error(error);
+  .catch((e) => {
+    console.error('❌ Error during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

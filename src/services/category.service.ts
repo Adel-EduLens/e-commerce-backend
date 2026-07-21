@@ -7,6 +7,7 @@ interface CreateCategoryData {
   appearOnHome?: boolean;
   isWholesale?: boolean;
   isRetail?: boolean;
+  isShop?: boolean;
 }
 
 interface UpdateCategoryData {
@@ -15,41 +16,46 @@ interface UpdateCategoryData {
   appearOnHome?: boolean;
   isWholesale?: boolean;
   isRetail?: boolean;
+  isShop?: boolean;
 }
 
 export const categoryService = {
   async create(data: CreateCategoryData) {
-    const exist = await categoryRepository.findByName(data.name);
+    // Unique combination check based on name + isWholesale + isRetail + isShop
+    const isWholesale = data.isWholesale ?? false;
+    const isRetail = data.isRetail ?? false;
+    const isShop = data.isShop ?? false;
 
-    if (exist) {
-      throw new AppError("Category already exists", 409);
+    const exist = await categoryRepository.findAll({ isWholesale, isRetail, isShop });
+    if (exist.some((c) => c.name === data.name)) {
+      throw new AppError("Category with this name and type combination already exists", 409);
     }
 
     return categoryRepository.create(data);
   },
 
-  async getAll(filters?: { isWholesale?: boolean; isRetail?: boolean }) {
+  async getAll(filters?: { isWholesale?: boolean; isRetail?: boolean; isShop?: boolean }) {
     return categoryRepository.findAll(filters);
   },
 
   async getById(id: string) {
     const category = await categoryRepository.findById(id);
-
-    if (!category) {
-      throw new AppError("Category not found", 404);
-    }
-
+    if (!category) throw new AppError("Category not found", 404);
     return category;
   },
 
   async update(id: string, data: UpdateCategoryData) {
-    await this.getById(id);
+    const existing = await this.getById(id);
 
-    if (data.name) {
-      const exist = await categoryRepository.findByName(data.name);
+    if (data.name !== undefined || data.isWholesale !== undefined || data.isRetail !== undefined || data.isShop !== undefined) {
+      const name = data.name ?? existing.name;
+      const isWholesale = data.isWholesale ?? existing.isWholesale;
+      const isRetail = data.isRetail ?? existing.isRetail;
+      const isShop = data.isShop ?? existing.isShop;
 
-      if (exist && exist.id !== id) {
-        throw new AppError("Category already exists", 409);
+      const sameNameAndType = await categoryRepository.findAll({ isWholesale, isRetail, isShop });
+      if (sameNameAndType.some((c) => c.name === name && c.id !== id)) {
+        throw new AppError("Category with this name and type combination already exists", 409);
       }
     }
 
@@ -61,16 +67,13 @@ export const categoryService = {
 
     const usage = await categoryRepository.getCategoryUsage(id);
 
-    if (usage.products > 0 || usage.wholesales > 0 || usage.coupons > 0) {
+    if (usage.products > 0) {
       throw new AppError(
-        `Cannot delete category. It is used by ${
-          usage.products > 0 ? `${usage.products} products, ` : ""
-        }${usage.wholesales > 0 ? `${usage.wholesales} wholesales, ` : ""}${
-          usage.coupons > 0 ? `${usage.coupons} coupons` : ""
-        }`,
+        `Cannot delete category. It has ${usage.products} product(s) assigned to it. Please reassign or delete all products first.`,
         400
       );
     }
+
     return categoryRepository.delete(id);
   },
 };

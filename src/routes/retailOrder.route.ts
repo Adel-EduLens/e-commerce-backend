@@ -1,5 +1,7 @@
-import express from "express";
-
+import { Router } from "express";
+import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
+import { validateRequest } from "../middlewares/validation.middleware.js";
+import { createRetailOrderSchema } from "../schemas/retailOrder.schema.js";
 import {
   createRetailOrder,
   getMyRetailOrders,
@@ -10,50 +12,29 @@ import {
   updateStatus,
 } from "../controllers/retailOrder.controller.js";
 
-import {
-  createRetailOrderSchema,
-  payDepositSchema,
-  updateRetailOrderStatusSchema,
-} from "../schemas/retailOrder.schema.js";
+const router = Router();
 
-import { validateRequest } from "../middlewares/validation.middleware.js";
-
-import {
-  requireAuth,
-  requireRole,
-  requireAdminAuth,
-} from "../middlewares/auth.middleware.js";
-
-const router = express.Router();
-
-// ================= USER =================
-
+// Create retail order (user)
 router.post(
   "/",
   requireAuth,
   requireRole("user"),
   validateRequest(createRetailOrderSchema),
-  createRetailOrder,
+  createRetailOrder
 );
 
-router.get("/my-orders", requireAuth, requireRole("user"), getMyRetailOrders);
+// Get my orders (user)
+router.get("/my", requireAuth, requireRole("user"), getMyRetailOrders);
 
+// Get order by id (user)
 router.get("/:id", requireAuth, requireRole("user"), getRetailOrderById);
 
-//webHook use this route so no middleware auth
-router.post("/:id/pay-deposit", validateRequest(payDepositSchema), payDeposit);
+// Pay deposit
+router.post("/:id/pay", requireAuth, requireRole("user"), payDeposit);
 
-// ================= ADMIN =================
-
-router.get("/trader/all", requireAuth, requireRole("trader"), getAllRetailOrders);
-
-router.patch("/trader/:id/verify-id", requireAuth, requireRole("trader"), verifyId);
-
-router.patch(
-  "/trader/:id/status",
-  requireAuth, requireRole("trader"),
-  validateRequest(updateRetailOrderStatusSchema),
-  updateStatus,
-);
+// Admin routes
+router.get("/", requireAuth, requireRole("trader"), getAllRetailOrders);
+router.post("/:id/verify-id", requireAuth, requireRole("trader"), verifyId);
+router.patch("/:id/status", requireAuth, requireRole("trader"), updateStatus);
 
 export default router;

@@ -15,6 +15,10 @@ export const recommendService = {
     return recommendRepository.getSignals(userId)
   },
 
+  async clearSignals(userId: number) {
+    return recommendRepository.clearSignals(userId)
+  },
+
   async getTopCategories(userId: number, limit = 3) {
     // 1. Fetch user's recently viewed products ordered by viewedAt desc
     const recentlyViewed = await prismaClient.recentlyViewedProduct.findMany({
@@ -28,24 +32,12 @@ export const recommendService = {
     for (const item of recentlyViewed) {
       let categoryId: string | null = null
 
-      if (item.productType === 'RETAIL') {
-        const product = await prismaClient.retailProduct.findUnique({
-          where: { id: Number(item.productId) },
-          select: { categoryId: true },
-        })
-        if (product) categoryId = String(product.categoryId)
-      } else if (item.productType === 'WHOLESALE') {
-        const product = await prismaClient.wholesale.findUnique({
-          where: { id: item.productId },
-          select: { categoryId: true },
-        })
-        if (product) categoryId = product.categoryId
-      } else if (item.productType === 'SHOP') {
-        const product = await prismaClient.product.findUnique({
-          where: { id: item.productId },
-          select: { categoryId: true },
-        })
-        if (product) categoryId = product.categoryId
+      const product = await prismaClient.product.findUnique({
+        where: { id: item.productId },
+        select: { categories: { select: { id: true }, take: 1 } },
+      })
+      if (product?.categories?.[0]?.id) {
+        categoryId = product.categories[0].id
       }
 
       if (categoryId) {
@@ -61,25 +53,23 @@ export const recommendService = {
       return Array.from(categories)
     }
 
-    // 3. Fallback to weights from signal table if recently viewed is empty
+    // 3. Fallback: query user's explicit recommend signals
     const signals = await recommendRepository.getSignals(userId)
-    const weights = new Map<string, number>()
 
-    for (const signal of signals) {
-      const w = SIGNAL_WEIGHTS[signal.type] ?? 0
-      weights.set(
-        signal.categoryId,
-        (weights.get(signal.categoryId) ?? 0) + w
-      )
+    if (!signals.length) {
+      return []
     }
 
-    return [...weights.entries()]
+    const scores: Record<string, number> = {}
+
+    for (const signal of signals) {
+      const weight = SIGNAL_WEIGHTS[signal.type] || 1
+      scores[signal.categoryId] = (scores[signal.categoryId] || 0) + weight
+    }
+
+    return Object.entries(scores)
       .sort((a, b) => b[1] - a[1])
       .slice(0, limit)
-      .map(([categoryId]) => categoryId)
-  },
-
-  async clearSignals(userId: number) {
-    return recommendRepository.clearSignals(userId)
+      .map(([catId]) => catId)
   },
 }

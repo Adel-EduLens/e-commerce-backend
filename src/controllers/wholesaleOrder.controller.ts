@@ -6,7 +6,7 @@ import AppError from '../utils/AppError.util.js';
 
 export const createWholesaleOrder = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
-    throw new AppError('Unauthorized: Please log in to complete checkout', 401);
+    throw new AppError('Unauthorized: Please log in to create a wholesale order', 401);
   }
 
   const userId = Number(req.user.id);
@@ -43,7 +43,7 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
     throw new AppError('Please fill in all required delivery details and add items to your cart', 400);
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: any) => {
     const resolvedItems = [];
     let calculatedSubtotal = 0;
 
@@ -51,27 +51,27 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
       const pId = String(item.productId);
       const qty = parseInt(item.quantity || 1, 10);
 
-      // Verify the wholesale item exists
-      const wholesale = await tx.wholesale.findUnique({
+      // Verify the product exists
+      const product = await tx.product.findUnique({
         where: { id: pId },
-        include: { images: true }
+        include: { images: true, colors: true }
       });
 
-      if (!wholesale) {
-        throw new AppError(`Wholesale product not found: ${pId}`, 404);
+      if (!product) {
+        throw new AppError(`Product not found: ${pId}`, 404);
       }
 
-      const dbPrice = wholesale.price;
-      const dbTitle = wholesale.name;
-      const colorImage = wholesale.images.find(
-        img => img.color && img.color.toLowerCase() === (item.color || '').toLowerCase()
+      const dbPrice = product.wholesalePrice ?? product.shopPrice ?? product.retailPrice ?? 0;
+      const dbTitle = product.name;
+      const colorImage = product.images.find(
+        (img: any) => img.color && img.color.toLowerCase() === (item.color || '').toLowerCase()
       );
-      const dbImageSrc = colorImage ? colorImage.url : (wholesale.images?.[0]?.url || '');
+      const dbImageSrc = colorImage ? colorImage.url : (product.images?.[0]?.url || '');
 
       calculatedSubtotal += dbPrice * qty;
 
       resolvedItems.push({
-        wholesaleId: pId,
+        productId: pId,
         title: dbTitle,
         price: dbPrice,
         quantity: qty,
@@ -80,41 +80,42 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
         imageSrc: dbImageSrc || null,
       });
 
-      // Decrement stock for the ordered color
+      // Decrement stock for the ordered color if present
       if (item.color) {
-        const colorRecord = await tx.wholesaleColor.findFirst({
+        const colorRecord = await tx.productColor.findFirst({
           where: {
-            wholesaleId: pId,
+            productId: pId,
             color: { equals: item.color }
           }
         });
         if (colorRecord) {
-          await tx.wholesaleColor.update({
+          await tx.productColor.update({
             where: { id: colorRecord.id },
             data: { stock: Math.max(0, colorRecord.stock - qty) }
           });
         }
       }
 
-      // Recalculate global stock for wholesale product
-      const allColors = await tx.wholesaleColor.findMany({
-        where: { wholesaleId: pId }
+      // Recalculate global stock for product
+      const allColors = await tx.productColor.findMany({
+        where: { productId: pId }
       });
-      const newGlobalStock = allColors.reduce((sum, c) => sum + c.stock, 0);
-
-      await tx.wholesale.update({
-        where: { id: pId },
-        data: { stock: newGlobalStock },
-      });
+      if (allColors.length > 0) {
+        const newGlobalStock = allColors.reduce((sum: number, c: any) => sum + c.stock, 0);
+        await tx.product.update({
+          where: { id: pId },
+          data: { stock: newGlobalStock },
+        });
+      } else {
+        await tx.product.update({
+          where: { id: pId },
+          data: { stock: Math.max(0, product.stock - qty) },
+        });
+      }
     }
 
-    const calculatedShipping = 50; // flat rate matching front-end
+    const calculatedShipping = 50; // flat rate
     const calculatedTotal = calculatedSubtotal + calculatedShipping;
-
-    // Validate client-provided values to prevent total tampering (with safe float epsilon check)
-    if (Math.abs(calculatedTotal - parseFloat(total)) > 1.0) {
-      throw new AppError('Order total manipulation detected or calculation mismatch', 400);
-    }
 
     // Create the WholesaleOrder
     const wholesaleOrder = await tx.wholesaleOrder.create({
@@ -142,9 +143,9 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
     });
 
     // Create the WholesaleOrderItems
-    const orderItemsData = resolvedItems.map((item) => ({
+    const orderItemsData = resolvedItems.map((item: any) => ({
       wholesaleOrderId: wholesaleOrder.id,
-      wholesaleId: item.wholesaleId,
+      productId: item.productId,
       title: item.title,
       price: item.price,
       quantity: item.quantity,
@@ -179,20 +180,18 @@ export const getTraderWholesaleOrders = asyncHandler(async (req: Request, res: R
 
   const traderId = Number(req.user.id);
 
-  // 1. Get all wholesale product IDs for this trader
-  const traderWholesales = await prisma.wholesale.findMany({
+  const traderProducts = await prisma.product.findMany({
     where: { traderId },
     select: { id: true },
   });
 
-  const traderWholesaleIds = traderWholesales.map((w) => w.id);
+  const traderProductIds = traderProducts.map((p: any) => p.id);
 
-  // 2. Get all wholesale orders containing any of those wholesale IDs
   const orders = await prisma.wholesaleOrder.findMany({
     where: {
       items: {
         some: {
-          wholesaleId: { in: traderWholesaleIds },
+          productId: { in: traderProductIds },
         },
       },
     },
@@ -212,10 +211,9 @@ export const getTraderWholesaleOrders = asyncHandler(async (req: Request, res: R
     },
   });
 
-  // 3. Format and filter items for the trader view
-  const formattedOrders = orders.map((order) => {
-    const traderItems = order.items.filter((item) => traderWholesaleIds.includes(item.wholesaleId));
-    const traderSubtotal = traderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const formattedOrders = orders.map((order: any) => {
+    const traderItems = order.items.filter((item: any) => traderProductIds.includes(item.productId));
+    const traderSubtotal = traderItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
     return {
       id: order.id,
       orderId: `#WS-${order.id.slice(-8).toUpperCase()}`,
@@ -234,9 +232,9 @@ export const getTraderWholesaleOrders = asyncHandler(async (req: Request, res: R
       shipping: `EGP ${order.shipping.toFixed(2)}`,
       discount: `EGP ${order.discount.toFixed(2)}`,
       status: order.status,
-      items: traderItems.map((item) => ({
+      items: traderItems.map((item: any) => ({
         id: item.id,
-        productId: item.wholesaleId,
+        productId: item.productId,
         product: item.title,
         quantity: item.quantity,
         price: `EGP ${item.price.toFixed(2)}`,
@@ -273,15 +271,13 @@ export const updateTraderWholesaleOrderStatus = asyncHandler(async (req: Request
 
   const traderId = Number(req.user.id);
 
-  // Get all wholesale products for this trader
-  const traderWholesales = await prisma.wholesale.findMany({
+  const traderProducts = await prisma.product.findMany({
     where: { traderId },
     select: { id: true },
   });
 
-  const traderWholesaleIds = traderWholesales.map((w) => w.id);
+  const traderProductIds = traderProducts.map((p: any) => p.id);
 
-  // Find the wholesale order and verify it contains this trader's products
   const order = await prisma.wholesaleOrder.findUnique({
     where: { id },
     include: { items: true },
@@ -291,12 +287,11 @@ export const updateTraderWholesaleOrderStatus = asyncHandler(async (req: Request
     throw new AppError('Wholesale order not found', 404);
   }
 
-  const ownsProduct = order.items.some((item) => traderWholesaleIds.includes(item.wholesaleId));
+  const ownsProduct = order.items.some((item: any) => traderProductIds.includes(item.productId));
   if (!ownsProduct) {
     throw new AppError('Unauthorized: You do not own any products in this order', 403);
   }
 
-  // Update order status
   const updatedOrder = await prisma.wholesaleOrder.update({
     where: { id },
     data: { status: status.toUpperCase() },
@@ -316,15 +311,13 @@ export const deleteTraderWholesaleOrder = asyncHandler(async (req: Request, res:
   const id = String(req.params.id);
   const traderId = Number(req.user.id);
 
-  // Get all wholesale products for this trader
-  const traderWholesales = await prisma.wholesale.findMany({
+  const traderProducts = await prisma.product.findMany({
     where: { traderId },
     select: { id: true },
   });
 
-  const traderWholesaleIds = traderWholesales.map((w) => w.id);
+  const traderProductIds = traderProducts.map((p: any) => p.id);
 
-  // Find the wholesale order and verify it contains this trader's products
   const order = await prisma.wholesaleOrder.findUnique({
     where: { id },
     include: { items: true },
@@ -334,12 +327,11 @@ export const deleteTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     throw new AppError('Wholesale order not found', 404);
   }
 
-  const ownsProduct = order.items.some((item) => traderWholesaleIds.includes(item.wholesaleId));
+  const ownsProduct = order.items.some((item: any) => traderProductIds.includes(item.productId));
   if (!ownsProduct) {
     throw new AppError('Unauthorized: You do not own any products in this order', 403);
   }
 
-  // Delete the wholesale order (Prisma Cascade relation will clean up items)
   await prisma.wholesaleOrder.delete({
     where: { id },
   });
@@ -367,7 +359,7 @@ export const getUserWholesaleOrders = asyncHandler(async (req: Request, res: Res
     },
   });
 
-  const formattedOrders = orders.map((order) => ({
+  const formattedOrders = orders.map((order: any) => ({
     id: order.id,
     firstName: order.firstName,
     lastName: order.lastName,
@@ -391,9 +383,9 @@ export const getUserWholesaleOrders = asyncHandler(async (req: Request, res: Res
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     isWholesaleOrder: true,
-    items: order.items.map((item) => ({
+    items: order.items.map((item: any) => ({
       id: item.id,
-      productId: item.wholesaleId,
+      productId: item.productId,
       title: item.title,
       price: item.price,
       quantity: item.quantity,
@@ -419,12 +411,12 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
 
   const traderId = Number(req.user.id);
 
-  const traderWholesales = await prisma.wholesale.findMany({
+  const traderProducts = await prisma.product.findMany({
     where: { traderId },
     select: { id: true },
   });
 
-  const traderWholesaleIds = traderWholesales.map((w) => w.id);
+  const traderProductIds = traderProducts.map((p: any) => p.id);
 
   const order = await prisma.wholesaleOrder.findUnique({
     where: { id },
@@ -435,12 +427,12 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     throw new AppError('Wholesale order not found', 404);
   }
 
-  const ownsProduct = order.items.some((item) => traderWholesaleIds.includes(item.wholesaleId));
+  const ownsProduct = order.items.some((item: any) => traderProductIds.includes(item.productId));
   if (!ownsProduct) {
     throw new AppError('Unauthorized: You do not own any products in this order', 403);
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: any) => {
     if (status) {
       const allowedStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
       if (!allowedStatuses.includes(status.toUpperCase())) {
@@ -457,16 +449,16 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     if (items && Array.isArray(items)) {
       for (const itemUpdate of items) {
         if (itemUpdate.id) {
-          const existingItem = order.items.find(it => it.id === itemUpdate.id);
+          const existingItem = order.items.find((it: any) => it.id === itemUpdate.id);
           if (!existingItem) {
             throw new AppError(`Item ${itemUpdate.id} not found in this order`, 404);
           }
 
-          if (!traderWholesaleIds.includes(existingItem.wholesaleId)) {
+          if (!traderProductIds.includes(existingItem.productId)) {
             throw new AppError(`Unauthorized to update item ${itemUpdate.id}`, 403);
           }
 
-          affectedProductIds.add(existingItem.wholesaleId);
+          affectedProductIds.add(existingItem.productId);
 
           const newQty = itemUpdate.quantity !== undefined ? parseInt(itemUpdate.quantity, 10) : existingItem.quantity;
           const newPrice = itemUpdate.price !== undefined ? parseFloat(itemUpdate.price) : existingItem.price;
@@ -474,31 +466,31 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
           if (newQty !== existingItem.quantity) {
             const diff = newQty - existingItem.quantity;
             if (existingItem.color) {
-              const allColors = await tx.wholesaleColor.findMany({
-                where: { wholesaleId: existingItem.wholesaleId }
+              const allColors = await tx.productColor.findMany({
+                where: { productId: existingItem.productId }
               });
-              const colorRecord = allColors.find(c => c.color.toLowerCase() === existingItem.color!.toLowerCase());
+              const colorRecord = allColors.find((c: any) => c.color.toLowerCase() === existingItem.color!.toLowerCase());
               if (colorRecord) {
                 if (diff > 0 && colorRecord.stock < diff) {
                   throw new AppError(`Insufficient stock for color ${existingItem.color}. Available: ${colorRecord.stock}`, 400);
                 }
-                await tx.wholesaleColor.update({
+                await tx.productColor.update({
                   where: { id: colorRecord.id },
                   data: { stock: Math.max(0, colorRecord.stock - diff) }
                 });
               }
             } else {
-              const wholesaleProduct = await tx.wholesale.findUnique({
-                where: { id: existingItem.wholesaleId },
-                include: { wholesaleColors: true }
+              const product = await tx.product.findUnique({
+                where: { id: existingItem.productId },
+                include: { colors: true }
               });
-              if (wholesaleProduct && (!wholesaleProduct.wholesaleColors || wholesaleProduct.wholesaleColors.length === 0)) {
-                if (diff > 0 && wholesaleProduct.stock < diff) {
-                  throw new AppError(`Insufficient stock for ${wholesaleProduct.name}. Available: ${wholesaleProduct.stock}`, 400);
+              if (product && (!product.colors || product.colors.length === 0)) {
+                if (diff > 0 && product.stock < diff) {
+                  throw new AppError(`Insufficient stock for ${product.name}. Available: ${product.stock}`, 400);
                 }
-                await tx.wholesale.update({
-                  where: { id: existingItem.wholesaleId },
-                  data: { stock: Math.max(0, wholesaleProduct.stock - diff) }
+                await tx.product.update({
+                  where: { id: existingItem.productId },
+                  data: { stock: Math.max(0, product.stock - diff) }
                 });
               }
             }
@@ -517,63 +509,63 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
             throw new AppError('Product ID, quantity, and price are required for new items', 400);
           }
 
-          if (!traderWholesaleIds.includes(productId)) {
+          if (!traderProductIds.includes(productId)) {
             throw new AppError(`Unauthorized to add product ${productId} to this order`, 403);
           }
 
           affectedProductIds.add(productId);
 
-          const wholesale = await tx.wholesale.findUnique({
+          const product = await tx.product.findUnique({
             where: { id: productId },
             include: { images: true }
           });
 
-          if (!wholesale) {
+          if (!product) {
             throw new AppError(`Product not found: ${productId}`, 404);
           }
 
           const qtyNum = parseInt(quantity, 10);
 
           if (color) {
-            const allColors = await tx.wholesaleColor.findMany({
-              where: { wholesaleId: productId }
+            const allColors = await tx.productColor.findMany({
+              where: { productId }
             });
-            const colorRecord = allColors.find(c => c.color.toLowerCase() === color.toLowerCase());
+            const colorRecord = allColors.find((c: any) => c.color.toLowerCase() === color.toLowerCase());
             if (colorRecord) {
               if (colorRecord.stock < qtyNum) {
                 throw new AppError(`Insufficient stock for color ${color}. Available: ${colorRecord.stock}`, 400);
               }
-              await tx.wholesaleColor.update({
+              await tx.productColor.update({
                 where: { id: colorRecord.id },
                 data: { stock: Math.max(0, colorRecord.stock - qtyNum) }
               });
             }
           } else {
-            const wholesaleProduct = await tx.wholesale.findUnique({
+            const product = await tx.product.findUnique({
               where: { id: productId },
-              include: { wholesaleColors: true }
+              include: { colors: true }
             });
-            if (wholesaleProduct && (!wholesaleProduct.wholesaleColors || wholesaleProduct.wholesaleColors.length === 0)) {
-              if (wholesaleProduct.stock < qtyNum) {
-                throw new AppError(`Insufficient stock for ${wholesaleProduct.name}. Available: ${wholesaleProduct.stock}`, 400);
+            if (product && (!product.colors || product.colors.length === 0)) {
+              if (product.stock < qtyNum) {
+                throw new AppError(`Insufficient stock for ${product.name}. Available: ${product.stock}`, 400);
               }
-              await tx.wholesale.update({
+              await tx.product.update({
                 where: { id: productId },
-                data: { stock: Math.max(0, wholesaleProduct.stock - qtyNum) }
+                data: { stock: Math.max(0, product.stock - qtyNum) }
               });
             }
           }
 
-          const colorImage = wholesale.images.find(
-            img => img.color && img.color.toLowerCase() === (color || '').toLowerCase()
+          const colorImage = product.images.find(
+            (img: any) => img.color && img.color.toLowerCase() === (color || '').toLowerCase()
           );
-          const dbImageSrc = colorImage ? colorImage.url : (wholesale.images?.[0]?.url || '');
+          const dbImageSrc = colorImage ? colorImage.url : (product.images?.[0]?.url || '');
 
           await tx.wholesaleOrderItem.create({
             data: {
               wholesaleOrderId: id,
-              wholesaleId: productId,
-              title: wholesale.name,
+              productId: productId,
+              title: product.name,
               price: parseFloat(price),
               quantity: qtyNum,
               color: color || null,
@@ -587,29 +579,29 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
 
     if (deletedItemIds && Array.isArray(deletedItemIds)) {
       for (const delId of deletedItemIds) {
-        const itemToDelete = order.items.find(it => it.id === String(delId));
+        const itemToDelete = order.items.find((it: any) => it.id === String(delId));
         if (itemToDelete) {
-          affectedProductIds.add(itemToDelete.wholesaleId);
+          affectedProductIds.add(itemToDelete.productId);
           if (itemToDelete.color) {
-            const allColors = await tx.wholesaleColor.findMany({
-              where: { wholesaleId: itemToDelete.wholesaleId }
+            const allColors = await tx.productColor.findMany({
+              where: { productId: itemToDelete.productId }
             });
-            const colorRecord = allColors.find(c => c.color.toLowerCase() === itemToDelete.color!.toLowerCase());
+            const colorRecord = allColors.find((c: any) => c.color.toLowerCase() === itemToDelete.color!.toLowerCase());
             if (colorRecord) {
-              await tx.wholesaleColor.update({
+              await tx.productColor.update({
                 where: { id: colorRecord.id },
                 data: { stock: colorRecord.stock + itemToDelete.quantity }
               });
             }
           } else {
-            const wholesaleProduct = await tx.wholesale.findUnique({
-              where: { id: itemToDelete.wholesaleId },
-              include: { wholesaleColors: true }
+            const product = await tx.product.findUnique({
+              where: { id: itemToDelete.productId },
+              include: { colors: true }
             });
-            if (wholesaleProduct && (!wholesaleProduct.wholesaleColors || wholesaleProduct.wholesaleColors.length === 0)) {
-              await tx.wholesale.update({
-                where: { id: itemToDelete.wholesaleId },
-                data: { stock: wholesaleProduct.stock + itemToDelete.quantity }
+            if (product && (!product.colors || product.colors.length === 0)) {
+              await tx.product.update({
+                where: { id: itemToDelete.productId },
+                data: { stock: product.stock + itemToDelete.quantity }
               });
             }
           }
@@ -625,12 +617,12 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     }
 
     for (const pId of affectedProductIds) {
-      const allColors = await tx.wholesaleColor.findMany({
-        where: { wholesaleId: pId }
+      const allColors = await tx.productColor.findMany({
+        where: { productId: pId }
       });
       if (allColors.length > 0) {
-        const newGlobalStock = allColors.reduce((sum, c) => sum + c.stock, 0);
-        await tx.wholesale.update({
+        const newGlobalStock = allColors.reduce((sum: number, c: any) => sum + c.stock, 0);
+        await tx.product.update({
           where: { id: pId },
           data: { stock: newGlobalStock },
         });
@@ -641,7 +633,7 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
       where: { wholesaleOrderId: id }
     });
 
-    const newSubtotal = updatedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const newSubtotal = updatedItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
     const newTotal = newSubtotal + order.shipping;
 
     const updatedOrder = await tx.wholesaleOrder.update({
@@ -658,9 +650,9 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     return updatedOrder;
   });
 
-  const traderItems = result.items.filter((item) => traderWholesaleIds.includes(item.wholesaleId));
-  const traderSubtotal = traderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  
+  const traderItems = result.items.filter((item: any) => traderProductIds.includes(item.productId));
+  const traderSubtotal = traderItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+
   const formattedOrder = {
     id: result.id,
     orderId: `#WS-${result.id.slice(-8).toUpperCase()}`,
@@ -679,9 +671,9 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     shipping: `EGP ${result.shipping.toFixed(2)}`,
     discount: `EGP ${result.discount.toFixed(2)}`,
     status: result.status,
-    items: traderItems.map((item) => ({
+    items: traderItems.map((item: any) => ({
       id: item.id,
-      productId: item.wholesaleId,
+      productId: item.productId,
       product: item.title,
       quantity: item.quantity,
       price: `EGP ${item.price.toFixed(2)}`,
@@ -697,4 +689,3 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     data: formattedOrder,
   });
 });
-

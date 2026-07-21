@@ -43,5 +43,5 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
   },
-  "exclude": ["src/db", "dist", "check_notifs.ts"]
+  "exclude": ["src/db", "dist", "check_notifs.ts", "prisma"]
 }

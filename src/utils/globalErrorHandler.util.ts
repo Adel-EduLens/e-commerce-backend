@@ -25,9 +25,10 @@ export function globalErrorHandler(
       const targetStr = Array.isArray(err.meta?.target)
         ? (err.meta.target as string[]).join(', ')
         : err.meta?.target
-        ? String(err.meta.target)
-        : '';
+          ? String(err.meta.target)
+          : '';
       const target = targetStr ? ` on ${targetStr}` : '';
+
       err = new AppError(`Duplicate field value entered${target}`, 400);
     } else if (err.code === 'P2025') {
       err = new AppError('Record not found', 404);

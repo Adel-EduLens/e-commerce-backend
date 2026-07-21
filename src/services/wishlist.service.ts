@@ -1,28 +1,15 @@
 import { wishlistRepository } from '../repositories/wishlist.repository.js'
 import prismaClient from '../utils/prismaClient.js'
 
-const RETAIL_INCLUDE = {
+const PRODUCT_INCLUDE = {
   images: true,
-  colors: true,
-  sizes: true,
-  category: true,
-}
-
-const WHOLESALE_INCLUDE = {
-  images: true,
-  wholesaleColors: {
+  colors: {
     include: {
       sizes: true,
     },
   },
-  category: true,
-}
-
-const SHOP_INCLUDE = {
-  images: true,
-  colors: true,
   sizes: true,
-  category: true,
+  categories: true,
   brand: true,
 }
 
@@ -32,30 +19,24 @@ export class WishlistService {
 
     const enriched = await Promise.all(
       items.map(async (item) => {
-        let product = null
+        const product = await prismaClient.product.findUnique({
+          where: { id: item.productId },
+          include: PRODUCT_INCLUDE,
+        })
 
-        if (item.productType === 'RETAIL') {
-          product = await prismaClient.retailProduct.findUnique({
-            where: { id: Number(item.productId) },
-            include: RETAIL_INCLUDE,
-          })
-        } else if (item.productType === 'WHOLESALE') {
-          product = await prismaClient.wholesale.findUnique({
-            where: { id: item.productId },
-            include: WHOLESALE_INCLUDE,
-          })
-        } else if (item.productType === 'SHOP') {
-          product = await prismaClient.product.findUnique({
-            where: { id: item.productId },
-            include: SHOP_INCLUDE,
-          })
-        }
+        // Map unified 'categories' back to 'category' and 'colors' to 'wholesaleColors' 
+        // to maintain frontend compatibility until FavoritesPage is fully refactored.
+        const mappedProduct = product ? {
+          ...product,
+          category: product.categories?.[0] || null,
+          wholesaleColors: product.colors || [],
+        } : null;
 
         return {
           id: item.id,
           productType: item.productType,
           productId: item.productId,
-          product,
+          product: mappedProduct,
           createdAt: item.createdAt,
         }
       })
@@ -65,15 +46,15 @@ export class WishlistService {
   }
 
   async getStatus(userId: number, productType: string, productId: string) {
-    const item = await wishlistRepository.findOne(userId, productType, productId)
+    const item = await wishlistRepository.findByProductId(userId, productId)
     return { isWishlisted: !!item }
   }
 
   async toggle(userId: number, productType: string, productId: string) {
-    const existing = await wishlistRepository.findOne(userId, productType, productId)
+    const existing = await wishlistRepository.findByProductId(userId, productId)
 
     if (existing) {
-      await wishlistRepository.delete(userId, productType, productId)
+      await wishlistRepository.deleteByProductId(userId, productId)
       return { isWishlisted: false, action: 'removed' }
     }
 
