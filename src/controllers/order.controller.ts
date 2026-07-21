@@ -4,6 +4,8 @@ import { successResponse } from '../utils/response.util.js';
 import prisma from '../utils/prismaClient.js';
 import AppError from '../utils/AppError.util.js';
 
+const INFLUENCER_COMMISSION_HOLD_DAYS = 15;
+
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError('Unauthorized: Please log in to complete checkout', 401);
@@ -392,11 +394,10 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       }
     }
 
-    // 6. If influencer coupon was used, create usage and commission records
+    // 6. If influencer coupon was used, record usage now.
+    // The actual commission is created only when the order is completed.
     if (isInfluencerCoupon && influencerCouponData) {
       const commissionAmt = calculatedTotal * (influencerCouponData.commissionPercent / 100);
-      const eligibleAt = new Date();
-      eligibleAt.setDate(eligibleAt.getDate() + 15);
 
       await tx.influencerCouponUsage.create({
         data: {
@@ -406,17 +407,6 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
           orderTotal: calculatedTotal,
           discountAmount: calculatedDiscount,
           commissionAmount: commissionAmt,
-        },
-      });
-
-      await tx.influencerCommission.create({
-        data: {
-          influencerId: influencerCouponData.influencerId,
-          orderId: order.id,
-          orderTotal: calculatedTotal,
-          commissionPercent: influencerCouponData.commissionPercent,
-          commissionAmount: commissionAmt,
-          eligibleAt: eligibleAt,
         },
       });
     }
@@ -585,10 +575,80 @@ export const updateTraderOrderStatus = asyncHandler(async (req: Request, res: Re
     throw new AppError('Unauthorized: You do not own any products in this order', 403);
   }
 
-  // 3. Update the order status
-  const updatedOrder = await prisma.order.update({
-    where: { id },
-    data: { status: status.toUpperCase() },
+  const nextStatus = status.toUpperCase();
+
+  // 3. Update the order status and sync influencer commission lifecycle
+  const updatedOrder = await prisma.$transaction(async (tx) => {
+    const updated = await tx.order.update({
+      where: { id },
+      data: { status: nextStatus },
+    });
+
+    const influencerUsage = await tx.influencerCouponUsage.findUnique({
+      where: { orderId: id },
+      include: {
+        coupon: {
+          select: {
+            influencerId: true,
+            commissionPercent: true,
+          },
+        },
+      },
+    });
+
+    if (!influencerUsage) {
+      return updated;
+    }
+
+    if (nextStatus === 'COMPLETED') {
+      const existingCommission = await tx.influencerCommission.findFirst({
+        where: { orderId: id },
+      });
+
+      const eligibleAt = new Date();
+      eligibleAt.setDate(eligibleAt.getDate() + INFLUENCER_COMMISSION_HOLD_DAYS);
+
+      if (!existingCommission) {
+        await tx.influencerCommission.create({
+          data: {
+            influencerId: influencerUsage.coupon.influencerId,
+            orderId: id,
+            orderTotal: influencerUsage.orderTotal,
+            commissionPercent: influencerUsage.coupon.commissionPercent,
+            commissionAmount: influencerUsage.commissionAmount,
+            eligibleAt,
+          },
+        });
+      } else if (order.status !== 'COMPLETED' && existingCommission.status !== 'SETTLED') {
+        await tx.influencerCommission.update({
+          where: { id: existingCommission.id },
+          data: {
+            influencerId: influencerUsage.coupon.influencerId,
+            orderTotal: influencerUsage.orderTotal,
+            commissionPercent: influencerUsage.coupon.commissionPercent,
+            commissionAmount: influencerUsage.commissionAmount,
+            eligibleAt,
+            status: 'PENDING',
+            settlementId: null,
+          },
+        });
+      }
+    }
+
+    if (nextStatus === 'CANCELLED') {
+      await tx.influencerCommission.updateMany({
+        where: {
+          orderId: id,
+          status: { in: ['PENDING', 'ELIGIBLE'] },
+        },
+        data: {
+          status: 'CANCELLED',
+          settlementId: null,
+        },
+      });
+    }
+
+    return updated;
   });
 
   successResponse(res, {

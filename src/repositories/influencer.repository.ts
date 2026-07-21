@@ -145,7 +145,11 @@ class InfluencerRepository {
 
   async getCommissions(influencerId: number) {
     return prisma.influencerCommission.findMany({
-      where: { influencerId },
+      where: {
+        influencerId,
+        status: { in: ["PENDING", "ELIGIBLE", "SETTLED"] },
+        order: { status: "COMPLETED" },
+      },
       include: {
         order: { select: { id: true, status: true, createdAt: true } },
         settlement: { select: { id: true, periodStart: true, periodEnd: true } },
@@ -159,17 +163,28 @@ class InfluencerRepository {
       where: {
         status: "PENDING",
         eligibleAt: { lte: new Date() },
+        order: { status: "COMPLETED" },
       },
       data: { status: "ELIGIBLE" },
     });
   }
 
-  async getEligibleCommissions() {
+  async getEligibleCommissions(period?: { periodStart: Date; periodEnd: Date }) {
+    const where: any = {
+      status: "ELIGIBLE",
+      settlementId: null,
+      order: { status: "COMPLETED" },
+    };
+
+    if (period) {
+      where.eligibleAt = {
+        gte: period.periodStart,
+        lte: period.periodEnd,
+      };
+    }
+
     return prisma.influencerCommission.findMany({
-      where: {
-        status: "ELIGIBLE",
-        settlementId: null,
-      },
+      where,
     });
   }
 
@@ -221,22 +236,30 @@ class InfluencerRepository {
   // ── Dashboard Stats ──
 
   async getDashboardStats(influencerId: number) {
+    const payableCommissionFilter = {
+      influencerId,
+      order: { status: "COMPLETED" },
+    };
+
     const [totalEarnings, pendingEarnings, eligibleEarnings, settledEarnings] =
       await Promise.all([
         prisma.influencerCommission.aggregate({
-          where: { influencerId },
+          where: {
+            ...payableCommissionFilter,
+            status: { in: ["PENDING", "ELIGIBLE", "SETTLED"] },
+          },
           _sum: { commissionAmount: true },
         }),
         prisma.influencerCommission.aggregate({
-          where: { influencerId, status: "PENDING" },
+          where: { ...payableCommissionFilter, status: "PENDING" },
           _sum: { commissionAmount: true },
         }),
         prisma.influencerCommission.aggregate({
-          where: { influencerId, status: "ELIGIBLE" },
+          where: { ...payableCommissionFilter, status: "ELIGIBLE" },
           _sum: { commissionAmount: true },
         }),
         prisma.influencerCommission.aggregate({
-          where: { influencerId, status: "SETTLED" },
+          where: { ...payableCommissionFilter, status: "SETTLED" },
           _sum: { commissionAmount: true },
         }),
       ]);
@@ -245,7 +268,8 @@ class InfluencerRepository {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const currentMonthEarnings = await prisma.influencerCommission.aggregate({
       where: {
-        influencerId,
+        ...payableCommissionFilter,
+        status: { in: ["PENDING", "ELIGIBLE", "SETTLED"] },
         createdAt: { gte: startOfMonth },
       },
       _sum: { commissionAmount: true },

@@ -671,14 +671,14 @@ model InfluencerCommission {
   influencerId Int
   influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
-  orderId String
+  orderId String @unique
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   orderTotal        Float
   commissionPercent Float
   commissionAmount  Float
 
-  status String @default("PENDING") // PENDING, ELIGIBLE, SETTLED
+  status String @default("PENDING") // PENDING, ELIGIBLE, SETTLED, CANCELLED
 
   eligibleAt DateTime
 
