@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, ProductType } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -51,10 +51,16 @@ async function main() {
     })
   }
 
-  await prisma.retailProductImage.deleteMany()
-  await prisma.retailProductColor.deleteMany()
-  await prisma.retailProductSize.deleteMany()
-  await prisma.retailProduct.deleteMany()
+  await prisma.productImage.deleteMany()
+  await prisma.productColor.deleteMany()
+  await prisma.productSize.deleteMany()
+  await prisma.product.deleteMany({
+    where: {
+      productTypes: {
+        some: { type: ProductType.RETAIL }
+      }
+    }
+  })
 
   const clothing = await prisma.category.create({
     data: {
@@ -77,16 +83,23 @@ async function main() {
     }
   })
 
-  await prisma.retailProduct.create({
+  await prisma.product.create({
     data: {
       name: 'Black Hoodie',
       description: 'Premium black hoodie for everyday comfort',
-      price: 850,
+      retailPrice: 850,
       stock: 10,
       sku: 'BH-001',
       isFeatured: true,
-      categoryId: clothing.id,
-      traderId: trader.id,
+      categories: {
+        connect: [{ id: clothing.id }]
+      },
+      trader: {
+        connect: { id: trader.id }
+      },
+      productTypes: {
+        create: [{ type: ProductType.RETAIL }]
+      },
       depositAmount: 0,
       securityDeposit: 0,
       images: {
@@ -118,16 +131,23 @@ async function main() {
     }
   })
 
-  await prisma.retailProduct.create({
+  await prisma.product.create({
     data: {
       name: 'White Sneakers',
       description: 'Comfortable white sneakers with modern design',
-      price: 1200,
+      retailPrice: 1200,
       stock: 15,
       sku: 'WS-001',
       isFeatured: true,
-      categoryId: shoes.id,
-      traderId: trader.id,
+      categories: {
+        connect: [{ id: shoes.id }]
+      },
+      trader: {
+        connect: { id: trader.id }
+      },
+      productTypes: {
+        create: [{ type: ProductType.RETAIL }]
+      },
       depositAmount: 0,
       securityDeposit: 0,
       images: {
@@ -159,16 +179,23 @@ async function main() {
     }
   })
 
-  await prisma.retailProduct.create({
+  await prisma.product.create({
     data: {
       name: 'Retail Cap',
       description: 'Stylish cap for everyday wear',
-      price: 350,
+      retailPrice: 350,
       stock: 20,
       sku: 'RC-001',
       isFeatured: false,
-      categoryId: accessories.id,
-      traderId: trader.id,
+      categories: {
+        connect: [{ id: accessories.id }]
+      },
+      trader: {
+        connect: { id: trader.id }
+      },
+      productTypes: {
+        create: [{ type: ProductType.RETAIL }]
+      },
       depositAmount: 0,
       securityDeposit: 0,
       images: {

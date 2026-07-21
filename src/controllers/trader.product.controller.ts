@@ -77,12 +77,20 @@ export const createTraderProduct = asyncHandler(
 
     for (const c of parsedColors) {
       const colorName = c.name || c.color;
-      colors.push({
+      const colorInput: {
+        color: string;
+        minOrder?: number;
+        stock?: number;
+        sizes?: { size: string }[];
+      } = {
         color: colorName,
-        minOrder: c.minOrder,
-        stock: c.stock,
-        sizes: c.sizes?.map((s) => ({ size: String(s.size) })),
-      });
+      };
+
+      if (c.minOrder !== undefined) colorInput.minOrder = c.minOrder;
+      if (c.stock !== undefined) colorInput.stock = c.stock;
+      if (c.sizes) colorInput.sizes = c.sizes.map((s) => ({ size: String(s.size) }));
+
+      colors.push(colorInput);
       for (const s of c.sizes || []) {
         if (s.size) {
           sizes.push({
@@ -103,7 +111,13 @@ export const createTraderProduct = asyncHandler(
       name: body.name,
       description: body.description || "",
       sku: body.sku ? String(body.sku) : `SKU-${Date.now()}`,
-      categoryId: String(body.categoryId),
+      categoryIds: body.categoryIds
+        ? typeof body.categoryIds === "string"
+          ? JSON.parse(body.categoryIds)
+          : body.categoryIds
+        : body.categoryId
+          ? [String(body.categoryId)]
+          : [],
       brandId: body.brandId ? String(body.brandId) : undefined,
       stock: body.stock ? Number(body.stock) : 0,
       rating: 0,
@@ -220,7 +234,7 @@ export const addProductColor = asyncHandler(
         colors: { include: { sizes: true } },
         images: true,
         sizes: true,
-        category: true,
+        categories: true,
         brand: true,
         materials: true,
       },
@@ -294,7 +308,7 @@ export const replaceProductColorImages = asyncHandler(
         images: true,
         colors: { include: { sizes: true } },
         sizes: true,
-        category: true,
+        categories: true,
         brand: true,
         materials: true,
       },
@@ -338,7 +352,7 @@ export const addProductColorImages = asyncHandler(
         images: true,
         colors: { include: { sizes: true } },
         sizes: true,
-        category: true,
+        categories: true,
         brand: true,
         materials: true,
       },
@@ -406,7 +420,7 @@ export const updateProductVariant = asyncHandler(
         sizes: true,
         colors: { include: { sizes: true } },
         images: true,
-        category: true,
+        categories: true,
         brand: true,
         materials: true,
       },
@@ -462,7 +476,7 @@ export const addProductSize = asyncHandler(
         sizes: true,
         colors: { include: { sizes: true } },
         images: true,
-        category: true,
+        categories: true,
         brand: true,
         materials: true,
       },

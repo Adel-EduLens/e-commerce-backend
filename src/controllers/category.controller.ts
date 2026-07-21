@@ -31,7 +31,17 @@ export const getCategories = asyncHandler(
     if (req.query.type === "RETAIL") isRetail = true;
     if (req.query.type === "SHOP") isShop = true;
 
-    const result = await categoryService.getAll({ isWholesale, isRetail, isShop });
+    const filters: {
+      isWholesale?: boolean;
+      isRetail?: boolean;
+      isShop?: boolean;
+    } = {};
+
+    if (isWholesale !== undefined) filters.isWholesale = isWholesale;
+    if (isRetail !== undefined) filters.isRetail = isRetail;
+    if (isShop !== undefined) filters.isShop = isShop;
+
+    const result = await categoryService.getAll(filters);
     successResponse(res, {
       message: "Categories fetched successfully",
       data: result,

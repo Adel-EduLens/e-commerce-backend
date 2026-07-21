@@ -37,7 +37,7 @@ async function populateCartCategories(cart: CartWithItems | null) {
 
     const itemsWithCategory = cart.items.map((item) => {
       const prod = productMap.get(String(item.productId));
-      const categoryId = prod && prod.categories && prod.categories.length > 0 ? String(prod.categories[0].id) : null;
+      const categoryId = prod?.categories[0]?.id ? String(prod.categories[0].id) : null;
       const minOrder = prod ? prod.minOrder : null;
 
       const rawItem = item as unknown as { toJSON?: () => Record<string, unknown> } & CartItem;

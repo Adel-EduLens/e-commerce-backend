@@ -20,13 +20,14 @@ class RetailOrderService {
   async createOrder(
     userId: number,
     data: {
-      productId: number;
+      productId: string | number;
       idCardImage: string;
       startDate: Date;
       endDate: Date;
     },
   ) {
-    const product = await retailOrderRepository.productExists(data.productId);
+    const productId = String(data.productId);
+    const product = await retailOrderRepository.productExists(productId);
 
     if (!product) {
       throw new AppError("Product not found", 404);
@@ -39,9 +40,14 @@ class RetailOrderService {
     return retailOrderRepository.create({
       userId,
 
-      productId: data.productId,
+      productId,
 
-      productPrice: product.price,
+      productPrice:
+        product.retailPrice ??
+        product.shopPrice ??
+        product.wholesalePrice ??
+        product.blankPrice ??
+        0,
 
       depositAmount: product.depositAmount ?? 0,
 

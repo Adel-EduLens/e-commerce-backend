@@ -1,4 +1,5 @@
 import prismaClient from "../utils/prismaClient.js";
+import { ProductType } from "@prisma/client";
 
 class RetailOrderRepository {
   async create(data: any) {
@@ -56,10 +57,11 @@ class RetailOrderRepository {
     });
   }
 
-  async productExists(id: number) {
-    return prismaClient.retailProduct.findUnique({
+  async productExists(id: string) {
+    return prismaClient.product.findFirst({
       where: {
         id,
+        productTypes: { some: { type: ProductType.RETAIL } },
       },
     });
   }
