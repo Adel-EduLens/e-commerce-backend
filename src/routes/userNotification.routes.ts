@@ -1,5 +1,5 @@
 import express from 'express'
-import { requireAuth } from '../middlewares/auth.middleware.js'
+import { requireAuth, requireRole } from '../middlewares/auth.middleware.js'
 import {
   getNotifications,
   getUnreadCount,
@@ -11,7 +11,7 @@ import {
 const router = express.Router()
 
 // All routes require authentication
-router.use(requireAuth)
+router.use(requireAuth, requireRole('user'))
 
 // Get all notifications for the authenticated user
 router.get('/', getNotifications)

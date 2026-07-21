@@ -1,5 +1,5 @@
 import express from 'express'
-import { requireAuth } from '../middlewares/auth.middleware.js'
+import { requireAuth, requireRole } from '../middlewares/auth.middleware.js'
 import {
   getSubscriptions,
   checkSubscription,
@@ -9,7 +9,7 @@ import {
 
 const router = express.Router()
 
-router.use(requireAuth)
+router.use(requireAuth, requireRole('user'))
 
 // GET /api/notify-me — all active subscriptions for user
 router.get('/', getSubscriptions)

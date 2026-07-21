@@ -10,20 +10,29 @@ export class RecentlyViewedRepository {
   }
 
   async addOrUpdate(userId: number, productType: string, productId: string) {
-    // Upsert isn't directly possible based on a complex unique if it's not handled easily, but we have @@unique([userId, productType, productId])
-    return prismaClient.recentlyViewedProduct.upsert({
-      where: {
-        userId_productType_productId: { userId, productType, productId },
-      },
-      update: {
-        viewedAt: new Date(),
-      },
-      create: {
-        userId,
-        productType,
-        productId,
-      },
-    })
+    try {
+      return await prismaClient.recentlyViewedProduct.upsert({
+        where: {
+          userId_productType_productId: { userId, productType, productId },
+        },
+        update: {
+          viewedAt: new Date(),
+        },
+        create: {
+          userId,
+          productType,
+          productId,
+        },
+      })
+    } catch {
+      await prismaClient.recentlyViewedProduct.updateMany({
+        where: { userId, productType, productId },
+        data: { viewedAt: new Date() },
+      })
+      return prismaClient.recentlyViewedProduct.findFirst({
+        where: { userId, productType, productId },
+      })
+    }
   }
 }
 

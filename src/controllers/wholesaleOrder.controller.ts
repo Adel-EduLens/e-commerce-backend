@@ -452,6 +452,8 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
       });
     }
 
+    const affectedProductIds = new Set<string>();
+
     if (items && Array.isArray(items)) {
       for (const itemUpdate of items) {
         if (itemUpdate.id) {
@@ -464,8 +466,43 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
             throw new AppError(`Unauthorized to update item ${itemUpdate.id}`, 403);
           }
 
+          affectedProductIds.add(existingItem.wholesaleId);
+
           const newQty = itemUpdate.quantity !== undefined ? parseInt(itemUpdate.quantity, 10) : existingItem.quantity;
           const newPrice = itemUpdate.price !== undefined ? parseFloat(itemUpdate.price) : existingItem.price;
+
+          if (newQty !== existingItem.quantity) {
+            const diff = newQty - existingItem.quantity;
+            if (existingItem.color) {
+              const allColors = await tx.wholesaleColor.findMany({
+                where: { wholesaleId: existingItem.wholesaleId }
+              });
+              const colorRecord = allColors.find(c => c.color.toLowerCase() === existingItem.color!.toLowerCase());
+              if (colorRecord) {
+                if (diff > 0 && colorRecord.stock < diff) {
+                  throw new AppError(`Insufficient stock for color ${existingItem.color}. Available: ${colorRecord.stock}`, 400);
+                }
+                await tx.wholesaleColor.update({
+                  where: { id: colorRecord.id },
+                  data: { stock: Math.max(0, colorRecord.stock - diff) }
+                });
+              }
+            } else {
+              const wholesaleProduct = await tx.wholesale.findUnique({
+                where: { id: existingItem.wholesaleId },
+                include: { wholesaleColors: true }
+              });
+              if (wholesaleProduct && (!wholesaleProduct.wholesaleColors || wholesaleProduct.wholesaleColors.length === 0)) {
+                if (diff > 0 && wholesaleProduct.stock < diff) {
+                  throw new AppError(`Insufficient stock for ${wholesaleProduct.name}. Available: ${wholesaleProduct.stock}`, 400);
+                }
+                await tx.wholesale.update({
+                  where: { id: existingItem.wholesaleId },
+                  data: { stock: Math.max(0, wholesaleProduct.stock - diff) }
+                });
+              }
+            }
+          }
 
           await tx.wholesaleOrderItem.update({
             where: { id: itemUpdate.id },
@@ -484,6 +521,8 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
             throw new AppError(`Unauthorized to add product ${productId} to this order`, 403);
           }
 
+          affectedProductIds.add(productId);
+
           const wholesale = await tx.wholesale.findUnique({
             where: { id: productId },
             include: { images: true }
@@ -491,6 +530,38 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
 
           if (!wholesale) {
             throw new AppError(`Product not found: ${productId}`, 404);
+          }
+
+          const qtyNum = parseInt(quantity, 10);
+
+          if (color) {
+            const allColors = await tx.wholesaleColor.findMany({
+              where: { wholesaleId: productId }
+            });
+            const colorRecord = allColors.find(c => c.color.toLowerCase() === color.toLowerCase());
+            if (colorRecord) {
+              if (colorRecord.stock < qtyNum) {
+                throw new AppError(`Insufficient stock for color ${color}. Available: ${colorRecord.stock}`, 400);
+              }
+              await tx.wholesaleColor.update({
+                where: { id: colorRecord.id },
+                data: { stock: Math.max(0, colorRecord.stock - qtyNum) }
+              });
+            }
+          } else {
+            const wholesaleProduct = await tx.wholesale.findUnique({
+              where: { id: productId },
+              include: { wholesaleColors: true }
+            });
+            if (wholesaleProduct && (!wholesaleProduct.wholesaleColors || wholesaleProduct.wholesaleColors.length === 0)) {
+              if (wholesaleProduct.stock < qtyNum) {
+                throw new AppError(`Insufficient stock for ${wholesaleProduct.name}. Available: ${wholesaleProduct.stock}`, 400);
+              }
+              await tx.wholesale.update({
+                where: { id: productId },
+                data: { stock: Math.max(0, wholesaleProduct.stock - qtyNum) }
+              });
+            }
           }
 
           const colorImage = wholesale.images.find(
@@ -504,7 +575,7 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
               wholesaleId: productId,
               title: wholesale.name,
               price: parseFloat(price),
-              quantity: parseInt(quantity, 10),
+              quantity: qtyNum,
               color: color || null,
               size: size || null,
               imageSrc: dbImageSrc || null,
@@ -515,12 +586,55 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     }
 
     if (deletedItemIds && Array.isArray(deletedItemIds)) {
+      for (const delId of deletedItemIds) {
+        const itemToDelete = order.items.find(it => it.id === String(delId));
+        if (itemToDelete) {
+          affectedProductIds.add(itemToDelete.wholesaleId);
+          if (itemToDelete.color) {
+            const allColors = await tx.wholesaleColor.findMany({
+              where: { wholesaleId: itemToDelete.wholesaleId }
+            });
+            const colorRecord = allColors.find(c => c.color.toLowerCase() === itemToDelete.color!.toLowerCase());
+            if (colorRecord) {
+              await tx.wholesaleColor.update({
+                where: { id: colorRecord.id },
+                data: { stock: colorRecord.stock + itemToDelete.quantity }
+              });
+            }
+          } else {
+            const wholesaleProduct = await tx.wholesale.findUnique({
+              where: { id: itemToDelete.wholesaleId },
+              include: { wholesaleColors: true }
+            });
+            if (wholesaleProduct && (!wholesaleProduct.wholesaleColors || wholesaleProduct.wholesaleColors.length === 0)) {
+              await tx.wholesale.update({
+                where: { id: itemToDelete.wholesaleId },
+                data: { stock: wholesaleProduct.stock + itemToDelete.quantity }
+              });
+            }
+          }
+        }
+      }
+
       await tx.wholesaleOrderItem.deleteMany({
         where: {
           id: { in: deletedItemIds.map(String) },
           wholesaleOrderId: id,
         },
       });
+    }
+
+    for (const pId of affectedProductIds) {
+      const allColors = await tx.wholesaleColor.findMany({
+        where: { wholesaleId: pId }
+      });
+      if (allColors.length > 0) {
+        const newGlobalStock = allColors.reduce((sum, c) => sum + c.stock, 0);
+        await tx.wholesale.update({
+          where: { id: pId },
+          data: { stock: newGlobalStock },
+        });
+      }
     }
 
     const updatedItems = await tx.wholesaleOrderItem.findMany({

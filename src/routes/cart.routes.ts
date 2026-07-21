@@ -1,10 +1,10 @@
 import express from 'express';
 import { getCart, addItem, updateItem, removeItem, clearCart } from '../controllers/cart.controller.js';
-import { requireAuth } from '../middlewares/auth.middleware.js';
+import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requireRole('user'));
 
 router.get('/', getCart);
 router.post('/items', addItem);

@@ -64,7 +64,7 @@ export class RetailCategoryRepository {
     });
   }
 
-  async getCategoryUsage(id: number) {
+  async getCategoryUsage(id: string) {
     const products = await prismaClient.retailProduct.count({
       where: {
         categoryId: id.toString(),

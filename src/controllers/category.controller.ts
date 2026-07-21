@@ -23,10 +23,14 @@ export const getCategories = asyncHandler(async (req: Request, res: Response) =>
     });
   }
 
-  const result = await categoryService.getAll({
-    isWholesale: req.query.isWholesale === 'true',
-    isRetail: req.query.isRetail === 'true',
-  });
+  const isWholesale = req.query.type === 'WHOLESALE' || req.query.isWholesale === 'true';
+  const isRetail = req.query.type === 'RETAIL' || req.query.isRetail === 'true';
+
+  const filters: { isWholesale?: boolean; isRetail?: boolean } = {};
+  if (isWholesale) filters.isWholesale = true;
+  if (isRetail) filters.isRetail = true;
+
+  const result = await categoryService.getAll(filters);
 
   successResponse(res, {
     message: "Categories fetched successfully",
