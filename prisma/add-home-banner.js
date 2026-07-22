@@ -1,4 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.development', override: true });
+dotenv.config({ path: '.env', override: false });
+
 const prisma = new PrismaClient();
 
 async function main() {
