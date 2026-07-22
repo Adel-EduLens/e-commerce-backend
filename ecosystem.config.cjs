@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "nasu-ecommerce",
+      name: "ecommerce-backend",
       script: "dist/index.js",
       exec_mode: "fork",
       instances: 1,
