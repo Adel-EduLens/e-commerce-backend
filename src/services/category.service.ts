@@ -21,14 +21,9 @@ interface UpdateCategoryData {
 
 export const categoryService = {
   async create(data: CreateCategoryData) {
-    // Unique combination check based on name + isWholesale + isRetail + isShop
-    const isWholesale = data.isWholesale ?? false;
-    const isRetail = data.isRetail ?? false;
-    const isShop = data.isShop ?? false;
-
-    const exist = await categoryRepository.findAll({ isWholesale, isRetail, isShop });
-    if (exist.some((c) => c.name === data.name)) {
-      throw new AppError("Category with this name and type combination already exists", 409);
+    const existing = await categoryRepository.findByName(data.name);
+    if (existing) {
+      throw new AppError("Category with this name already exists", 409);
     }
 
     return categoryRepository.create(data);
@@ -45,17 +40,12 @@ export const categoryService = {
   },
 
   async update(id: string, data: UpdateCategoryData) {
-    const existing = await this.getById(id);
+    await this.getById(id);
 
-    if (data.name !== undefined || data.isWholesale !== undefined || data.isRetail !== undefined || data.isShop !== undefined) {
-      const name = data.name ?? existing.name;
-      const isWholesale = data.isWholesale ?? existing.isWholesale;
-      const isRetail = data.isRetail ?? existing.isRetail;
-      const isShop = data.isShop ?? existing.isShop;
-
-      const sameNameAndType = await categoryRepository.findAll({ isWholesale, isRetail, isShop });
-      if (sameNameAndType.some((c) => c.name === name && c.id !== id)) {
-        throw new AppError("Category with this name and type combination already exists", 409);
+    if (data.name !== undefined) {
+      const existing = await categoryRepository.findByName(data.name);
+      if (existing && existing.id !== id) {
+        throw new AppError("Category with this name already exists", 409);
       }
     }
 

@@ -35,7 +35,6 @@ async function main() {
     }
   })
 
-  console.info('✅ Seeded default test users (user@example.com / user2@example.com)')
 
   let trader = await prisma.trader.findFirst()
   if (!trader) {
