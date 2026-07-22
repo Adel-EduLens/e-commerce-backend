@@ -80,53 +80,109 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
         imageSrc: dbImageSrc || null,
       });
 
-      // Decrement stock for the ordered color if present
-      if (item.color) {
-        const colorRecord = await tx.productColor.findFirst({
-          where: {
-            productId: pId,
-            color: { equals: item.color }
-          },
-          include: { sizes: true }
+      // Helper to match sizes
+      const matchSizes = (allSizes: any[], targetSizeStr?: string | null) => {
+        if (!targetSizeStr) return allSizes;
+        const normalized = targetSizeStr.trim().toLowerCase();
+        if (normalized === 'all sizes' || normalized === 'all' || normalized === '') {
+          return allSizes;
+        }
+        const targetList = normalized.split(',').map((s) => s.trim()).filter(Boolean);
+        const matched = allSizes.filter((sz) => targetList.includes(sz.size.toLowerCase()));
+        return matched.length > 0 ? matched : allSizes;
+      };
+
+      const isAllColors =
+        !item.color ||
+        item.color.trim().toLowerCase() === 'all colors' ||
+        item.color.trim().toLowerCase() === 'all';
+
+      const allColors = await tx.productColor.findMany({
+        where: { productId: pId },
+        include: { sizes: true },
+      });
+
+      const colorRecord = !isAllColors
+        ? allColors.find(
+            (c: any) => c.color.toLowerCase() === (item.color || '').trim().toLowerCase()
+          )
+        : null;
+
+      if (colorRecord) {
+        const sizesToUpdate = matchSizes(colorRecord.sizes, item.size);
+        for (const sz of sizesToUpdate) {
+          await tx.productSize.update({
+            where: { id: sz.id },
+            data: { quantity: Math.max(0, sz.quantity - qty) },
+          });
+        }
+        const refreshedSizes = await tx.productSize.findMany({
+          where: { productColorId: colorRecord.id },
         });
-        if (colorRecord) {
+        if (refreshedSizes.length > 0) {
+          const newColorStock = refreshedSizes.reduce((sum: number, s: any) => sum + s.quantity, 0);
           await tx.productColor.update({
             where: { id: colorRecord.id },
-            data: { stock: Math.max(0, colorRecord.stock - qty) }
+            data: { stock: newColorStock },
           });
-          for (const sz of colorRecord.sizes) {
+        } else {
+          await tx.productColor.update({
+            where: { id: colorRecord.id },
+            data: { stock: Math.max(0, colorRecord.stock - qty) },
+          });
+        }
+      } else if (allColors.length > 0) {
+        for (const c of allColors) {
+          const sizesToUpdate = matchSizes(c.sizes, item.size);
+          for (const sz of sizesToUpdate) {
             await tx.productSize.update({
               where: { id: sz.id },
-              data: { quantity: Math.max(0, sz.quantity - qty) }
+              data: { quantity: Math.max(0, sz.quantity - qty) },
+            });
+          }
+          const refreshedSizes = await tx.productSize.findMany({
+            where: { productColorId: c.id },
+          });
+          if (refreshedSizes.length > 0) {
+            const newColorStock = refreshedSizes.reduce((sum: number, s: any) => sum + s.quantity, 0);
+            await tx.productColor.update({
+              where: { id: c.id },
+              data: { stock: newColorStock },
+            });
+          } else {
+            await tx.productColor.update({
+              where: { id: c.id },
+              data: { stock: Math.max(0, c.stock - qty) },
             });
           }
         }
-      }
-
-      // Recalculate global stock for product
-      const allColors = await tx.productColor.findMany({
-        where: { productId: pId }
-      });
-      if (allColors.length > 0) {
-        const newGlobalStock = allColors.reduce((sum: number, c: any) => sum + c.stock, 0);
-        await tx.product.update({
-          where: { id: pId },
-          data: { stock: newGlobalStock },
-        });
       } else {
         await tx.product.update({
           where: { id: pId },
           data: { stock: Math.max(0, product.stock - qty) },
         });
         const productSizes = await tx.productSize.findMany({
-          where: { productId: pId }
+          where: { productId: pId },
         });
-        for (const sz of productSizes) {
+        const sizesToUpdate = matchSizes(productSizes, item.size);
+        for (const sz of sizesToUpdate) {
           await tx.productSize.update({
             where: { id: sz.id },
-            data: { quantity: Math.max(0, sz.quantity - qty) }
+            data: { quantity: Math.max(0, sz.quantity - qty) },
           });
         }
+      }
+
+      // Recalculate global stock for product
+      const updatedColors = await tx.productColor.findMany({
+        where: { productId: pId },
+      });
+      if (updatedColors.length > 0) {
+        const newGlobalStock = updatedColors.reduce((sum: number, c: any) => sum + c.stock, 0);
+        await tx.product.update({
+          where: { id: pId },
+          data: { stock: newGlobalStock },
+        });
       }
     }
 
@@ -145,7 +201,7 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
         city,
         area,
         streetAddress,
-        apartment,
+        apartment: apartment || '',
         mapAddress: mapAddress || null,
         latitude: latitude ? String(latitude) : null,
         longitude: longitude ? String(longitude) : null,
@@ -443,10 +499,25 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
     throw new AppError('Wholesale order not found', 404);
   }
 
-  const ownsProduct = order.items.some((item: any) => traderProductIds.includes(item.productId));
+  const ownsProduct =
+    order.items.length === 0 ||
+    order.items.some((item: any) => traderProductIds.includes(item.productId)) ||
+    (items && items.some((item: any) => item.productId && traderProductIds.includes(item.productId)));
+
   if (!ownsProduct) {
     throw new AppError('Unauthorized: You do not own any products in this order', 403);
   }
+
+  const matchSizes = (allSizes: any[], targetSizeStr?: string | null) => {
+    if (!targetSizeStr) return allSizes;
+    const normalized = targetSizeStr.trim().toLowerCase();
+    if (normalized === 'all sizes' || normalized === 'all' || normalized === '') {
+      return allSizes;
+    }
+    const targetList = normalized.split(',').map((s) => s.trim()).filter(Boolean);
+    const matched = allSizes.filter((sz) => targetList.includes(sz.size.toLowerCase()));
+    return matched.length > 0 ? matched : allSizes;
+  };
 
   const result = await prisma.$transaction(async (tx: any) => {
     if (status) {
@@ -491,14 +562,26 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
                 if (diff > 0 && colorRecord.stock < diff) {
                   throw new AppError(`Insufficient stock for color ${existingItem.color}. Available: ${colorRecord.stock}`, 400);
                 }
-                await tx.productColor.update({
-                  where: { id: colorRecord.id },
-                  data: { stock: Math.max(0, colorRecord.stock - diff) }
-                });
-                for (const sz of colorRecord.sizes) {
+                const sizesToUpdate = matchSizes(colorRecord.sizes, existingItem.size);
+                for (const sz of sizesToUpdate) {
                   await tx.productSize.update({
                     where: { id: sz.id },
                     data: { quantity: Math.max(0, sz.quantity - diff) }
+                  });
+                }
+                const refreshedSizes = await tx.productSize.findMany({
+                  where: { productColorId: colorRecord.id }
+                });
+                if (refreshedSizes.length > 0) {
+                  const newColorStock = refreshedSizes.reduce((sum: number, s: any) => sum + s.quantity, 0);
+                  await tx.productColor.update({
+                    where: { id: colorRecord.id },
+                    data: { stock: newColorStock }
+                  });
+                } else {
+                  await tx.productColor.update({
+                    where: { id: colorRecord.id },
+                    data: { stock: Math.max(0, colorRecord.stock - diff) }
                   });
                 }
               }
@@ -511,19 +594,20 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
                 if (diff > 0 && product.stock < diff) {
                   throw new AppError(`Insufficient stock for ${product.name}. Available: ${product.stock}`, 400);
                 }
-                await tx.product.update({
-                  where: { id: existingItem.productId },
-                  data: { stock: Math.max(0, product.stock - diff) }
-                });
                 const productSizes = await tx.productSize.findMany({
                   where: { productId: existingItem.productId }
                 });
-                for (const sz of productSizes) {
+                const sizesToUpdate = matchSizes(productSizes, existingItem.size);
+                for (const sz of sizesToUpdate) {
                   await tx.productSize.update({
                     where: { id: sz.id },
                     data: { quantity: Math.max(0, sz.quantity - diff) }
                   });
                 }
+                await tx.product.update({
+                  where: { id: existingItem.productId },
+                  data: { stock: Math.max(0, product.stock - diff) }
+                });
               }
             }
           }
@@ -568,14 +652,26 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
               if (colorRecord.stock < qtyNum) {
                 throw new AppError(`Insufficient stock for color ${color}. Available: ${colorRecord.stock}`, 400);
               }
-              await tx.productColor.update({
-                where: { id: colorRecord.id },
-                data: { stock: Math.max(0, colorRecord.stock - qtyNum) }
-              });
-              for (const sz of colorRecord.sizes) {
+              const sizesToUpdate = matchSizes(colorRecord.sizes, size);
+              for (const sz of sizesToUpdate) {
                 await tx.productSize.update({
                   where: { id: sz.id },
                   data: { quantity: Math.max(0, sz.quantity - qtyNum) }
+                });
+              }
+              const refreshedSizes = await tx.productSize.findMany({
+                where: { productColorId: colorRecord.id }
+              });
+              if (refreshedSizes.length > 0) {
+                const newColorStock = refreshedSizes.reduce((sum: number, s: any) => sum + s.quantity, 0);
+                await tx.productColor.update({
+                  where: { id: colorRecord.id },
+                  data: { stock: newColorStock }
+                });
+              } else {
+                await tx.productColor.update({
+                  where: { id: colorRecord.id },
+                  data: { stock: Math.max(0, colorRecord.stock - qtyNum) }
                 });
               }
             }
@@ -588,19 +684,20 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
               if (product.stock < qtyNum) {
                 throw new AppError(`Insufficient stock for ${product.name}. Available: ${product.stock}`, 400);
               }
-              await tx.product.update({
-                where: { id: productId },
-                data: { stock: Math.max(0, product.stock - qtyNum) }
-              });
               const productSizes = await tx.productSize.findMany({
                 where: { productId }
               });
-              for (const sz of productSizes) {
+              const sizesToUpdate = matchSizes(productSizes, size);
+              for (const sz of sizesToUpdate) {
                 await tx.productSize.update({
                   where: { id: sz.id },
                   data: { quantity: Math.max(0, sz.quantity - qtyNum) }
                 });
               }
+              await tx.product.update({
+                where: { id: productId },
+                data: { stock: Math.max(0, product.stock - qtyNum) }
+              });
             }
           }
 
@@ -637,14 +734,26 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
             });
             const colorRecord = allColors.find((c: any) => c.color.toLowerCase() === itemToDelete.color!.toLowerCase());
             if (colorRecord) {
-              await tx.productColor.update({
-                where: { id: colorRecord.id },
-                data: { stock: colorRecord.stock + itemToDelete.quantity }
-              });
-              for (const sz of colorRecord.sizes) {
+              const sizesToUpdate = matchSizes(colorRecord.sizes, itemToDelete.size);
+              for (const sz of sizesToUpdate) {
                 await tx.productSize.update({
                   where: { id: sz.id },
                   data: { quantity: sz.quantity + itemToDelete.quantity }
+                });
+              }
+              const refreshedSizes = await tx.productSize.findMany({
+                where: { productColorId: colorRecord.id }
+              });
+              if (refreshedSizes.length > 0) {
+                const newColorStock = refreshedSizes.reduce((sum: number, s: any) => sum + s.quantity, 0);
+                await tx.productColor.update({
+                  where: { id: colorRecord.id },
+                  data: { stock: newColorStock }
+                });
+              } else {
+                await tx.productColor.update({
+                  where: { id: colorRecord.id },
+                  data: { stock: colorRecord.stock + itemToDelete.quantity }
                 });
               }
             }
@@ -654,19 +763,20 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
               include: { colors: true }
             });
             if (product && (!product.colors || product.colors.length === 0)) {
-              await tx.product.update({
-                where: { id: itemToDelete.productId },
-                data: { stock: product.stock + itemToDelete.quantity }
-              });
               const productSizes = await tx.productSize.findMany({
                 where: { productId: itemToDelete.productId }
               });
-              for (const sz of productSizes) {
+              const sizesToUpdate = matchSizes(productSizes, itemToDelete.size);
+              for (const sz of sizesToUpdate) {
                 await tx.productSize.update({
                   where: { id: sz.id },
                   data: { quantity: sz.quantity + itemToDelete.quantity }
                 });
               }
+              await tx.product.update({
+                where: { id: itemToDelete.productId },
+                data: { stock: product.stock + itemToDelete.quantity }
+              });
             }
           }
         }
