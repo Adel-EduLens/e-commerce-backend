@@ -555,12 +555,18 @@ class ProductRepository {
 
       // Create new colors (after deleting old ones)
       if (data.colors && data.colors.length > 0) {
+        let totalProductStock = 0;
         for (const col of data.colors as ProductColorInput[]) {
+          const colStock = (col.sizes && col.sizes.length > 0)
+            ? col.sizes.reduce((s, sz) => s + (sz.quantity ?? sz.stock ?? 0), 0)
+            : (col.stock ?? 0);
+          totalProductStock += colStock;
+
           await tx.productColor.create({
             data: {
               color: col.color,
               minOrder: col.minOrder ?? 1,
-              stock: col.stock ?? 0,
+              stock: colStock,
               productId: id,
               ...(col.sizes && col.sizes.length > 0 ? {
                 sizes: {
@@ -574,13 +580,18 @@ class ProductRepository {
             },
           });
         }
+
+        await tx.product.update({
+          where: { id },
+          data: { stock: totalProductStock },
+        });
       }
 
       return tx.product.findUnique({
         where: { id },
         include: PRODUCT_INCLUDE,
       });
-    });
+    }, { timeout: 20000, maxWait: 10000 });
   }
 
   // ── DELETE ────────────────────────────────────────────────────────────────
