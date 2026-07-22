@@ -29,7 +29,7 @@ async function populateCartCategories(cart: CartWithItems | null) {
       select: {
         id: true,
         minOrder: true,
-        categories: { select: { id: true }, take: 1 }
+        categories: { select: { id: true, name: true } }
       }
     });
 
@@ -38,12 +38,18 @@ async function populateCartCategories(cart: CartWithItems | null) {
     const itemsWithCategory = cart.items.map((item) => {
       const prod = productMap.get(String(item.productId));
       const categoryId = prod?.categories[0]?.id ? String(prod.categories[0].id) : null;
+      const categoryIds = prod?.categories ? prod.categories.map((c) => String(c.id)) : [];
+      const category = prod?.categories[0] || null;
+      const categories = prod?.categories || [];
       const minOrder = prod ? prod.minOrder : null;
 
       const rawItem = item as unknown as { toJSON?: () => Record<string, unknown> } & CartItem;
       return {
         ...(rawItem.toJSON ? rawItem.toJSON() : rawItem),
         categoryId,
+        categoryIds,
+        category,
+        categories,
         minOrder
       };
     });

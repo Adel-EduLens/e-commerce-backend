@@ -60,6 +60,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       color: string | null;
       imageSrc: string | null;
       categoryId: string | null;
+      categoryIds?: string[];
     }
     const resolvedItems: ResolvedOrderItem[] = [];
     let calculatedSubtotal = 0;
@@ -98,6 +99,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       );
       dbImageSrc = colorImage ? colorImage.url : (product.images?.[0]?.url || '');
       dbCategoryId = product.categories?.[0]?.id ? String(product.categories[0].id) : null;
+      const dbCategoryIds = product.categories ? product.categories.map((c: any) => String(c.id)) : [];
 
       calculatedSubtotal += dbPrice * qty;
 
@@ -109,7 +111,8 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
         size: item.size || null,
         color: item.color || null,
         imageSrc: dbImageSrc || null,
-        categoryId: dbCategoryId
+        categoryId: dbCategoryId,
+        categoryIds: dbCategoryIds,
       });
     }
 
@@ -177,7 +180,11 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
               applies = true;
             } else if (coupon.productId && String(orderItem.productId) === String(coupon.productId)) {
               applies = true;
-            } else if (coupon.categoryId && String(orderItem.categoryId) === String(coupon.categoryId)) {
+            } else if (
+              coupon.categoryId &&
+              (String(orderItem.categoryId) === String(coupon.categoryId) ||
+                (orderItem.categoryIds && orderItem.categoryIds.some((id: any) => String(id) === String(coupon.categoryId))))
+            ) {
               applies = true;
             }
 
