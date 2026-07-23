@@ -24,3 +24,6 @@ tsbuildinfo
 
 # Uploaded files
 public/
+
+# Local seed test files
+prisma/seed-orders-test.js
