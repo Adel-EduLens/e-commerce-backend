@@ -324,6 +324,7 @@ export const getTraderWholesaleOrders = asyncHandler(async (req: Request, res: R
       latitude: order.latitude,
       longitude: order.longitude,
       date: new Date(order.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }),
+      createdAt: order.createdAt,
       time: new Date(order.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
       payment: order.paymentMethod === "COD" ? "Cash" : "Card",
       total: `EGP ${order.total.toFixed(2)}`,

@@ -28,3 +28,5 @@ public/
 # Local seed test files
 prisma/seed-orders-test.js
 prisma/seed-coupons.ts
+prisma/seed-three-orders.ts
+
