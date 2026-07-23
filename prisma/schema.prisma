@@ -341,9 +341,9 @@ model ProductColor {
 // - productColorId: optional, for WHOLESALE (sizes nested under a color)
 
 model ProductSize {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   size     String
-  quantity Int    @default(0)
+  quantity Int     @default(0)
   color    String?
 
   productId String
@@ -707,19 +707,19 @@ model InfluencerSettlement {
 }
 
 model ShippingCountry {
-  id        String @id @default(cuid())
-  name      String @unique
-  code      String? // EG, SA, AE ...
+  id   String  @id @default(cuid())
+  name String  @unique
+  code String? // EG, SA, AE ...
 
-  cities    ShippingCity[]
+  cities ShippingCity[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ShippingCity {
-  id        String @id @default(cuid())
-  name      String
+  id   String @id @default(cuid())
+  name String
 
   shippingCost Float @default(0)
 
@@ -731,4 +731,3 @@ model ShippingCity {
 
   @@unique([name, countryId])
 }
-
