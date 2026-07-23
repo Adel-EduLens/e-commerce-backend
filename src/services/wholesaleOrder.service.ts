@@ -137,7 +137,10 @@ class WholesaleOrderService {
               400
             );
           }
-          const sizesToUpdate = this.matchSizes(colorRecord.sizes, item.size);
+          const matchingSizes = item.size
+            ? colorRecord.sizes.filter((sz: any) => sz.size.trim().toLowerCase() === String(item.size).trim().toLowerCase())
+            : [];
+          const sizesToUpdate = matchingSizes.length > 0 ? matchingSizes : colorRecord.sizes;
           for (const sz of sizesToUpdate) {
             if (sz.quantity < qty) {
               throw new AppError(
@@ -176,7 +179,10 @@ class WholesaleOrderService {
                 400
               );
             }
-            const sizesToUpdate = c.sizes;
+            const matchingSizes = item.size
+              ? c.sizes.filter((sz: any) => sz.size.trim().toLowerCase() === String(item.size).trim().toLowerCase())
+              : [];
+            const sizesToUpdate = matchingSizes.length > 0 ? matchingSizes : c.sizes;
             for (const sz of sizesToUpdate) {
               if (sz.quantity < qty) {
                 throw new AppError(
@@ -216,7 +222,10 @@ class WholesaleOrderService {
             );
           }
           const productSizes = await wholesaleOrderRepository.findProductSizes({ productId: pId }, tx);
-          const sizesToUpdate = this.matchSizes(productSizes, item.size);
+          const matchingSizes = item.size
+            ? productSizes.filter((sz: any) => sz.size.trim().toLowerCase() === String(item.size).trim().toLowerCase())
+            : [];
+          const sizesToUpdate = matchingSizes.length > 0 ? matchingSizes : productSizes;
           for (const sz of sizesToUpdate) {
             if (sz.quantity < qty) {
               throw new AppError(
@@ -504,7 +513,10 @@ class WholesaleOrderService {
                       400
                     );
                   }
-                  const sizesToUpdate = colorRecord.sizes;
+                  const matchingSizes = existingItem.size
+                    ? colorRecord.sizes.filter((sz: any) => sz.size.trim().toLowerCase() === existingItem.size!.trim().toLowerCase())
+                    : [];
+                  const sizesToUpdate = matchingSizes.length > 0 ? matchingSizes : colorRecord.sizes;
                   if (diff > 0) {
                     for (const sz of sizesToUpdate) {
                       if (sz.quantity < diff) {
@@ -560,7 +572,10 @@ class WholesaleOrderService {
                     { productId: existingItem.productId },
                     tx
                   );
-                  const sizesToUpdate = this.matchSizes(productSizes, existingItem.size);
+                  const matchingSizes = existingItem.size
+                    ? productSizes.filter((sz: any) => sz.size.trim().toLowerCase() === existingItem.size!.trim().toLowerCase())
+                    : [];
+                  const sizesToUpdate = matchingSizes.length > 0 ? matchingSizes : productSizes;
                   if (diff > 0) {
                     for (const sz of sizesToUpdate) {
                       if (sz.quantity < diff) {
@@ -631,7 +646,7 @@ class WholesaleOrderService {
                     400
                   );
                 }
-                const sizesToUpdate = this.matchSizes(colorRecord.sizes, size);
+                const sizesToUpdate = colorRecord.sizes;
                 for (const sz of sizesToUpdate) {
                   if (sz.quantity < qtyNum) {
                     throw new AppError(
@@ -682,7 +697,7 @@ class WholesaleOrderService {
                   { productId: pIdStr },
                   tx
                 );
-                const sizesToUpdate = this.matchSizes(productSizes, size);
+                const sizesToUpdate = productSizes;
                 for (const sz of sizesToUpdate) {
                   if (sz.quantity < qtyNum) {
                     throw new AppError(
@@ -742,7 +757,10 @@ class WholesaleOrderService {
                 (c: any) => c.color.toLowerCase() === itemToDelete.color!.toLowerCase()
               );
               if (colorRecord) {
-                const sizesToUpdate = this.matchSizes(colorRecord.sizes, itemToDelete.size);
+                const matchingSizes = itemToDelete.size
+                  ? colorRecord.sizes.filter((sz: any) => sz.size.trim().toLowerCase() === itemToDelete.size!.trim().toLowerCase())
+                  : [];
+                const sizesToUpdate = matchingSizes.length > 0 ? matchingSizes : colorRecord.sizes;
                 for (const sz of sizesToUpdate) {
                   await wholesaleOrderRepository.updateProductSizeQuantity(
                     sz.id,
@@ -782,7 +800,10 @@ class WholesaleOrderService {
                   { productId: itemToDelete.productId },
                   tx
                 );
-                const sizesToUpdate = this.matchSizes(productSizes, itemToDelete.size);
+                const matchingSizes = itemToDelete.size
+                  ? productSizes.filter((sz: any) => sz.size.trim().toLowerCase() === itemToDelete.size!.trim().toLowerCase())
+                  : [];
+                const sizesToUpdate = matchingSizes.length > 0 ? matchingSizes : productSizes;
                 for (const sz of sizesToUpdate) {
                   await wholesaleOrderRepository.updateProductSizeQuantity(
                     sz.id,

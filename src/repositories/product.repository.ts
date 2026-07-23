@@ -185,7 +185,7 @@ class ProductRepository {
               ...(col.sizes && col.sizes.length > 0 ? {
                 sizes: {
                   create: (() => {
-                    const map = new Map<string, { size: string; quantity: number; productId: string }>();
+                    const map = new Map<string, { size: string; quantity: number; productId: string; color: string }>();
                     for (const sz of col.sizes) {
                       const key = String(sz.size).trim().toLowerCase();
                       if (!map.has(key)) {
@@ -193,6 +193,7 @@ class ProductRepository {
                           size: String(sz.size).trim(),
                           quantity: sz.quantity ?? sz.stock ?? 0,
                           productId: product.id,
+                          color: col.color,
                         });
                       }
                     }
@@ -434,9 +435,9 @@ class ProductRepository {
         await tx.productImage.deleteMany({ where: { productId: id } });
       }
 
-      // Replace sizes if provided
-      if (data.sizes) {
-        await tx.productSize.deleteMany({ where: { productId: id } });
+      // Replace standalone sizes if provided and no colors provided
+      if (data.sizes && (!data.colors || data.colors.length === 0)) {
+        await tx.productSize.deleteMany({ where: { productId: id, productColorId: null } });
       }
 
       // Replace colors if provided
@@ -582,7 +583,7 @@ class ProductRepository {
               ...(col.sizes && col.sizes.length > 0 ? {
                 sizes: {
                   create: (() => {
-                    const map = new Map<string, { size: string; quantity: number; productId: string }>();
+                    const map = new Map<string, { size: string; quantity: number; productId: string; color: string }>();
                     for (const sz of col.sizes) {
                       const key = String(sz.size).trim().toLowerCase();
                       if (!map.has(key)) {
@@ -590,6 +591,7 @@ class ProductRepository {
                           size: String(sz.size).trim(),
                           quantity: sz.quantity ?? sz.stock ?? 0,
                           productId: id,
+                          color: col.color,
                         });
                       }
                     }
