@@ -154,8 +154,8 @@ class ProductRepository {
             },
           }),
 
-          // Sizes (non-wholesale — wholesale sizes go under colors)
-          ...(data.sizes && data.sizes.length > 0 && {
+          // Sizes (standalone sizes only if colors are not provided)
+          ...((!data.colors || data.colors.length === 0) && data.sizes && data.sizes.length > 0 && {
             sizes: {
               create: data.sizes.map((s: ProductSizeInput) =>
                 typeof s === "string"
@@ -184,11 +184,20 @@ class ProductRepository {
               productId: product.id,
               ...(col.sizes && col.sizes.length > 0 ? {
                 sizes: {
-                  create: col.sizes.map((sz) => ({
-                    size: sz.size,
-                    quantity: sz.quantity ?? sz.stock ?? 0,
-                    productId: product.id,
-                  })),
+                  create: (() => {
+                    const map = new Map<string, { size: string; quantity: number; productId: string }>();
+                    for (const sz of col.sizes) {
+                      const key = String(sz.size).trim().toLowerCase();
+                      if (!map.has(key)) {
+                        map.set(key, {
+                          size: String(sz.size).trim(),
+                          quantity: sz.quantity ?? sz.stock ?? 0,
+                          productId: product.id,
+                        });
+                      }
+                    }
+                    return Array.from(map.values());
+                  })(),
                 }
               } : {}),
             },
@@ -432,7 +441,9 @@ class ProductRepository {
 
       // Replace colors if provided
       if (data.colors !== undefined) {
-        // Cascade deletes sizes linked to colors
+        // Delete all sizes for this product (both standalone and color-linked) to prevent duplication/orphaning
+        await tx.productSize.deleteMany({ where: { productId: id } });
+        // Delete all colors for this product
         await tx.productColor.deleteMany({ where: { productId: id } });
       }
 
@@ -525,8 +536,8 @@ class ProductRepository {
             },
           }),
 
-          // Sizes
-          ...(data.sizes && {
+          // Sizes (standalone sizes only if colors are not provided)
+          ...((!data.colors || data.colors.length === 0) && data.sizes && {
             sizes: {
               create: data.sizes.map((s: ProductSizeInput) =>
                 typeof s === "string"
@@ -570,11 +581,20 @@ class ProductRepository {
               productId: id,
               ...(col.sizes && col.sizes.length > 0 ? {
                 sizes: {
-                  create: col.sizes.map((sz) => ({
-                    size: sz.size,
-                    quantity: sz.quantity ?? sz.stock ?? 0,
-                    productId: id,
-                  })),
+                  create: (() => {
+                    const map = new Map<string, { size: string; quantity: number; productId: string }>();
+                    for (const sz of col.sizes) {
+                      const key = String(sz.size).trim().toLowerCase();
+                      if (!map.has(key)) {
+                        map.set(key, {
+                          size: String(sz.size).trim(),
+                          quantity: sz.quantity ?? sz.stock ?? 0,
+                          productId: id,
+                        });
+                      }
+                    }
+                    return Array.from(map.values());
+                  })(),
                 }
               } : {}),
             },

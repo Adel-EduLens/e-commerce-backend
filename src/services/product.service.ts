@@ -71,10 +71,31 @@ function validateBlankType(data: Partial<ProductCreateData>) {
   }
 }
 
+function validateColorSizes(colors?: any[]) {
+  if (!colors || !Array.isArray(colors)) return;
+  for (const c of colors) {
+    if (!c.sizes || !Array.isArray(c.sizes)) continue;
+    const seenSizes = new Set<string>();
+    for (const s of c.sizes) {
+      const szName = typeof s === "string" ? s.trim() : String(s?.size || "").trim();
+      if (!szName) continue;
+      const lower = szName.toLowerCase();
+      if (seenSizes.has(lower)) {
+        throw new AppError(
+          `Duplicate size '${szName}' for color '${c.color || c.name || "unnamed"}'`,
+          400
+        );
+      }
+      seenSizes.add(lower);
+    }
+  }
+}
+
 /**
  * Runs all type-specific validations for the given productTypes.
  */
 function runTypeValidations(types: ProductType[], data: Partial<ProductCreateData>) {
+  validateColorSizes(data.colors);
   for (const type of types) {
     switch (type) {
       case ProductType.SHOP:

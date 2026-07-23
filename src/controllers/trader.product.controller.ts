@@ -71,9 +71,9 @@ export const createTraderProduct = asyncHandler(
       color: string;
       minOrder?: number;
       stock?: number;
-      sizes?: { size: string }[];
+      sizes?: { size: string; quantity?: number }[];
     }[] = [];
-    const sizes: { size: string; quantity: number; color: string }[] = [];
+    const sizes: { size: string; quantity: number; color?: string }[] = [];
 
     for (const c of parsedColors) {
       const colorName = c.name || c.color;
@@ -81,25 +81,21 @@ export const createTraderProduct = asyncHandler(
         color: string;
         minOrder?: number;
         stock?: number;
-        sizes?: { size: string }[];
+        sizes?: { size: string; quantity?: number }[];
       } = {
         color: colorName,
       };
 
       if (c.minOrder !== undefined) colorInput.minOrder = c.minOrder;
       if (c.stock !== undefined) colorInput.stock = c.stock;
-      if (c.sizes) colorInput.sizes = c.sizes.map((s) => ({ size: String(s.size) }));
+      if (c.sizes) {
+        colorInput.sizes = c.sizes.map((s) => ({
+          size: String(s.size),
+          quantity: Number(s.quantity || 0),
+        }));
+      }
 
       colors.push(colorInput);
-      for (const s of c.sizes || []) {
-        if (s.size) {
-          sizes.push({
-            size: String(s.size),
-            quantity: Number(s.quantity || 0),
-            color: String(colorName),
-          });
-        }
-      }
     }
 
     const flashDealPriceNum = body.flashDealPrice
@@ -447,15 +443,26 @@ export const addProductSize = asyncHandler(
     if (!color) throw new AppError("Color not found", 404);
     await getProductAndVerifyOwner(color.productId, traderId);
 
-    await prisma.productSize.create({
-      data: {
-        size: String(size),
-        productId: color.productId,
-        quantity: Number(quantity || 0),
-        color: color.color,
-        productColorId: colorId,
-      },
+    const existingSize = await prisma.productSize.findFirst({
+      where: { productColorId: colorId, size: String(size) },
     });
+
+    if (existingSize) {
+      await prisma.productSize.update({
+        where: { id: existingSize.id },
+        data: { quantity: Number(quantity || 0) },
+      });
+    } else {
+      await prisma.productSize.create({
+        data: {
+          size: String(size),
+          productId: color.productId,
+          quantity: Number(quantity || 0),
+          color: color.color,
+          productColorId: colorId,
+        },
+      });
+    }
 
     const allSizes = await prisma.productSize.findMany({
       where: { productId: color.productId },
