@@ -153,6 +153,109 @@ class CouponRepository {
       where: { id }
     });
   }
+
+  async getAnalytics(traderId: number) {
+    const coupons = await prisma.coupon.findMany({
+      where: { traderId },
+      include: {
+        category: { select: { id: true, name: true } },
+        product: { select: { id: true, name: true } },
+        usages: true,
+      },
+      orderBy: {
+        usedCount: "desc",
+      },
+    });
+
+    const now = new Date();
+
+    const totalCoupons = coupons.length;
+    const activeCoupons = coupons.filter(c => c.isActive && new Date(c.validUntil) > now).length;
+    const expiredCoupons = coupons.filter(c => new Date(c.validUntil) <= now).length;
+    const inactiveCoupons = coupons.filter(c => !c.isActive).length;
+    const totalUsages = coupons.reduce((acc, c) => acc + c.usedCount, 0);
+
+    const avgDiscount = totalCoupons > 0
+      ? Math.round((coupons.reduce((acc, c) => acc + c.discount, 0) / totalCoupons) * 10) / 10
+      : 0;
+
+    // Discount range breakdown
+    const discountRanges = {
+      range1_15: coupons.filter(c => c.discount <= 15).length,
+      range16_30: coupons.filter(c => c.discount > 15 && c.discount <= 30).length,
+      range31_50: coupons.filter(c => c.discount > 30 && c.discount <= 50).length,
+      range51Plus: coupons.filter(c => c.discount > 50).length,
+    };
+
+    // Scope breakdown
+    const scopeBreakdown = {
+      global: coupons.filter(c => !c.categoryId && !c.productId).length,
+      category: coupons.filter(c => Boolean(c.categoryId)).length,
+      product: coupons.filter(c => Boolean(c.productId)).length,
+    };
+
+    // Last 6 months usage trend
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthlyTrend: { monthKey: string; defaultMonth: string; usages: number }[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthIdx = d.getMonth();
+      const year = d.getFullYear();
+      const mName = monthNames[monthIdx] || "Jan";
+      const monthKey = mName.toLowerCase();
+      const defaultMonth = mName;
+
+      // Count usages in this month
+      let count = 0;
+      coupons.forEach(c => {
+        c.usages.forEach(u => {
+          const uDate = new Date(u.usedAt);
+          if (uDate.getMonth() === monthIdx && uDate.getFullYear() === year) {
+            count++;
+          }
+        });
+      });
+
+      monthlyTrend.push({
+        monthKey,
+        defaultMonth,
+        usages: count,
+      });
+    }
+
+    // Top 5 coupons by usages
+    const topCoupons = coupons.slice(0, 5).map(c => {
+      const restrictionName = c.product?.name ?? c.category?.name ?? null;
+      return {
+        id: c.id,
+        code: c.code,
+        discount: c.discount,
+        usedCount: c.usedCount,
+        usageLimit: c.usageLimit,
+        validUntil: c.validUntil,
+        isActive: c.isActive,
+        restriction: restrictionName,
+        scope: c.product ? ("product" as const) : c.category ? ("category" as const) : ("global" as const),
+      };
+    });
+
+    return {
+      summary: {
+        totalCoupons,
+        activeCoupons,
+        expiredCoupons,
+        inactiveCoupons,
+        totalUsages,
+        avgDiscount,
+      },
+      discountRanges,
+      scopeBreakdown,
+      monthlyTrend,
+      topCoupons,
+    };
+  }
 }
 
 export const couponRepository = new CouponRepository();

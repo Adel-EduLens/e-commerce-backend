@@ -9,6 +9,7 @@
     "build": "prisma generate",
     "seed": "node prisma/seed.js",
     "seed:collections": "node prisma/add-collections.js",
+    "seed:coupons": "cross-env NODE_ENV=development tsx prisma/seed-coupons.ts",
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
     "dev:once": "cross-env NODE_ENV=development tsx src/index.ts"
   },

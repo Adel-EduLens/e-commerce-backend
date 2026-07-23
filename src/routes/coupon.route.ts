@@ -7,6 +7,7 @@ import {
   useCoupon,
   updateCoupon,
   deleteCoupon,
+  getCouponAnalytics,
 } from "../controllers/coupon.controller.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
@@ -16,6 +17,9 @@ import {
 import { requireRole, requireAuth } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+
+// Analytics route (must be before /:id)
+router.get("/analytics", requireAuth, requireRole("trader"), getCouponAnalytics);
 
 // Validate coupon by its code (e.g. at checkout)
 router.get("/validate/:code", requireAuth, getCouponByCode);

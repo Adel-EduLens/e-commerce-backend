@@ -104,3 +104,14 @@ export const deleteCoupon = asyncHandler(async (req: Request, res: Response) => 
         message: "Coupon deleted successfully",
     });
 });
+
+export const getCouponAnalytics = asyncHandler(async (req: Request, res: Response) => {
+    const traderId = Number(req.user!.id);
+    const result = await couponService.getAnalytics(traderId);
+
+    successResponse(res, {
+        message: "Coupon analytics fetched successfully",
+        data: result,
+    });
+});
+

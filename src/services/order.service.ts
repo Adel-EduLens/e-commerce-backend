@@ -353,6 +353,7 @@ export class OrderService {
         subtotal: `EGP ${traderSubtotal.toFixed(2)}`,
         shipping: `EGP ${order.shipping.toFixed(2)}`,
         discount: `EGP ${order.discount.toFixed(2)}`,
+        couponCode: order.couponCode || null,
         status: order.status,
         items: traderItems.map((item: any) => ({
           id: item.productId,

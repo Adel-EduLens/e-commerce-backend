@@ -139,5 +139,9 @@ export const couponService = {
 
   async delete(id: string, traderId: number) {
     throw new AppError("Deleting coupons is not permitted. Please deactivate instead.", 403);
+  },
+
+  async getAnalytics(traderId: number) {
+    return couponRepository.getAnalytics(traderId);
   }
 };
