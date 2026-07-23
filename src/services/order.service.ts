@@ -312,6 +312,22 @@ export class OrderService {
     return orderRepository.findUserOrders(userId);
   }
 
+  async getTraderCustomers(traderId: number) {
+    const customers = await orderRepository.findTraderCustomers(traderId);
+    return customers.map((c) => ({
+      email: c.email,
+      name: c.name,
+      phone: c.phone,
+      orders: c.orders,
+      totalSpent: `EGP ${Number(c.totalSpent).toFixed(2)}`,
+      lastPurchase: new Date(c.lastPurchase).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }),
+      status: c.lastStatus,
+    }));
+  }
   async getTraderOrders(traderId: number, query: GetTraderOrdersQuery) {
     const products = await orderRepository.findTraderProducts(traderId, query.type, query.categoryId);
     const traderProductIds = products.map((p) => p.id);
@@ -330,6 +346,7 @@ export class OrderService {
       return {
         id: order.id,
         orderId: `#${order.id.slice(-8).toUpperCase()}`,
+        orderType: order.orderType || "SHOP",
         customer: `${order.firstName || ""} ${order.lastName || ""}`.trim() || order.email,
         customerEmail: order.email,
         customerPhone: order.phone,

@@ -70,3 +70,17 @@ export const updateTraderOrderStatus = asyncHandler(async (req: Request, res: Re
     data: updatedOrder,
   });
 });
+
+export const getTraderCustomers = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== "trader") {
+    throw new AppError("Unauthorized: Trader access only", 401);
+  }
+
+  const traderId = Number(req.user.id);
+  const customers = await orderService.getTraderCustomers(traderId);
+
+  successResponse(res, {
+    message: "Trader customers fetched successfully",
+    data: customers,
+  });
+});

@@ -112,7 +112,7 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
         if (colorRecord.stock < qty) {
           throw new AppError(`Insufficient stock for color ${colorRecord.color} of ${product.name}. Available: ${colorRecord.stock}, requested: ${qty}`, 400);
         }
-        const sizesToUpdate = matchSizes(colorRecord.sizes, item.size);
+        const sizesToUpdate = colorRecord.sizes;
         for (const sz of sizesToUpdate) {
           if (sz.quantity < qty) {
             throw new AppError(`Insufficient stock for size ${sz.size} in color ${colorRecord.color} of ${product.name}. Available: ${sz.quantity}, requested: ${qty}`, 400);
@@ -145,7 +145,7 @@ export const createWholesaleOrder = asyncHandler(async (req: Request, res: Respo
           if (c.stock < qty) {
             throw new AppError(`Insufficient stock for color ${c.color} of ${product.name}. Available: ${c.stock}, requested: ${qty}`, 400);
           }
-          const sizesToUpdate = matchSizes(c.sizes, item.size);
+          const sizesToUpdate = c.sizes;
           for (const sz of sizesToUpdate) {
             if (sz.quantity < qty) {
               throw new AppError(`Insufficient stock for size ${sz.size} in color ${c.color} of ${product.name}. Available: ${sz.quantity}, requested: ${qty}`, 400);
@@ -589,7 +589,7 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
                 if (diff > 0 && colorRecord.stock < diff) {
                   throw new AppError(`Insufficient stock for color ${existingItem.color}. Available: ${colorRecord.stock}`, 400);
                 }
-                const sizesToUpdate = matchSizes(colorRecord.sizes, existingItem.size);
+                const sizesToUpdate = colorRecord.sizes;
                 if (diff > 0) {
                   for (const sz of sizesToUpdate) {
                     if (sz.quantity < diff) {
@@ -693,7 +693,7 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
               if (colorRecord.stock < qtyNum) {
                 throw new AppError(`Insufficient stock for color ${color}. Available: ${colorRecord.stock}`, 400);
               }
-              const sizesToUpdate = matchSizes(colorRecord.sizes, size);
+              const sizesToUpdate = colorRecord.sizes;
               for (const sz of sizesToUpdate) {
                 if (sz.quantity < qtyNum) {
                   throw new AppError(`Insufficient stock for size ${sz.size} in color ${color}. Available: ${sz.quantity}`, 400);
@@ -785,7 +785,7 @@ export const updateTraderWholesaleOrder = asyncHandler(async (req: Request, res:
             });
             const colorRecord = allColors.find((c: any) => c.color.toLowerCase() === itemToDelete.color!.toLowerCase());
             if (colorRecord) {
-              const sizesToUpdate = matchSizes(colorRecord.sizes, itemToDelete.size);
+              const sizesToUpdate = colorRecord.sizes;
               for (const sz of sizesToUpdate) {
                 await tx.productSize.update({
                   where: { id: sz.id },

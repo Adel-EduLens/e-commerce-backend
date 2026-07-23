@@ -1222,7 +1222,6 @@ async function main() {
   console.log('   - Influencer 2: influencer2@example.com (pass: password123)');
   console.log('📦 Seeded System Data:');
   console.log('   - 10 Products with CategoryToProduct relations');
-  console.log('   - SHOP Orders, WHOLESALE Orders & RETAIL Orders');
   console.log('   - 3 Coupons (NASU10, SUMMER20, WELCOME50) & Influencer Coupons (SARA15)');
   console.log('   - Influencer Commissions & Settlements');
   console.log('   - 3 Shipping Countries (Egypt, SA, UAE) with 13 Shipping Cities');
